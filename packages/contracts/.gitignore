@@ -12,7 +12,9 @@ coverage
 dist
 node_modules
 types
-deployments
+# Committed for public networks; only local deployments are ignored
+deployments/localhost
+deployments/hardhat
 tmp
 
 # files
