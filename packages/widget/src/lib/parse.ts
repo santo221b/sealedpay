@@ -50,6 +50,11 @@ export function parseRecipients(text: string, decimals: number): ParseResult {
       issues.push({ line: i + 1, text: line, problem: "expected `address, amount`" });
       return;
     }
+    // "0xabc, 1,250" would silently read as amount "1" — refuse rather than misparse.
+    if (parts.length > 2) {
+      issues.push({ line: i + 1, text: line, problem: "too many columns — write amounts without thousands separators" });
+      return;
+    }
     const [addressText, amountText] = parts;
 
     if (!isAddress(addressText, { strict: false })) {

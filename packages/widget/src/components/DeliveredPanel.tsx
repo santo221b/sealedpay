@@ -4,10 +4,12 @@
  * that catches ERC-7984's silent-zero footgun.
  */
 import { motion } from "framer-motion";
+import { useEffect } from "react";
 
 import type { DeliveryResult, VerificationEntry } from "../hooks/useDisperseFlow";
 import { formatAmount } from "../lib/format";
 import { short } from "../lib/parse";
+import { playSuccessChime } from "../lib/sound";
 import { Button, Card, CipherChip, Spinner } from "./ui";
 
 export function DeliveredPanel({
@@ -30,6 +32,12 @@ export function DeliveredPanel({
   onReset: () => void;
 }) {
   const allOk = verification?.every((v) => v.ok);
+
+  // One chime when the delivered panel first appears (StrictMode double-mount
+  // is dev-only and inaudible as an overlap).
+  useEffect(() => {
+    playSuccessChime();
+  }, []);
 
   return (
     <div className="flex flex-col gap-3">

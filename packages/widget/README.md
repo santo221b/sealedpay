@@ -1,32 +1,54 @@
-# React + TypeScript + Vite
+# @dispersekit/widget
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The product: a white-label React widget for confidential bulk payouts on the
+Zama Protocol, powered by the official TokenOps disperse contract.
 
-Currently, two official plugins are available:
+```tsx
+import { DisperseWidget } from "@dispersekit/widget";
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+<DisperseWidget token="0xYourConfidentialToken" theme={{ accent: "#635bff" }} />
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Full integration guide + props reference: [`docs/EMBED.md`](../../docs/EMBED.md).
+
+## What's inside
+
+```
+src/
+├── DisperseWidget.tsx    the single-import sender component
+├── ReceiptWidget.tsx     the recipient's "what did I get?" companion
+├── providers.tsx         self-contained wagmi + RainbowKit stack
+├── hooks/
+│   ├── useDisperseFlow.ts   the state machine (encrypt → authorize → disperse → confirm → verify)
+│   └── useTokenMeta.ts
+├── components/           presentational pieces (editor, review, timeline, receipt, privacy badge)
+├── lib/
+│   ├── fhe/              relayer SDK: init singleton, encryptAmounts, userDecryptHandles
+│   ├── contracts/        minimal ABIs + official singleton addresses
+│   ├── parse.ts          CSV/paste recipient parsing
+│   └── format.ts
+├── theme.ts              DisperseTheme → CSS variables
+└── dev/                  playground: live widget, fixture gallery of all states, test bench
+```
+
+## Development
+
+```bash
+npm run dev      # playground at http://localhost:5173
+                 # tabs: Widget (live), States (all states, no wallet), Test bench
+npx tsc -b       # type-check
+node scripts/relayer-smoke.mjs   # encrypt round-trip vs the live Sepolia relayer (no wallet)
+```
+
+## Design decisions worth knowing
+
+- **Direct mode** (`disperseConfidentialTokenDirect`) is the flow: no
+  registration, no subtotals to get wrong, funds never held by the contract.
+  The live singleton caps it (currently 20 recipients) — read at runtime.
+- **Delivery is verified, never assumed**: ERC-7984 transfers silently move an
+  encrypted zero if the sender is short. After the tx, the widget decrypts the
+  `transferred` handles (the sender holds ACL on them) and flags any zeros.
+- **ACL scopes**: `transferred` handles decrypt under the **token's** scope;
+  `requested` handles under the **disperse contract's**. See
+  [`docs/research/SUMMARY.md`](../../docs/research/SUMMARY.md).
+- The FHE instance uses a public Sepolia RPC for reads; the wallet only signs.
