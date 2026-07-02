@@ -1,0 +1,21 @@
+{
+  "name": "dispersekit",
+  "private": true,
+  "version": "0.1.0",
+  "description": "White-label confidential disperse widget — one-import React component for confidential bulk payouts on the Zama Protocol (TokenOps × Zama bounty)",
+  "workspaces": [
+    "packages/contracts",
+    "packages/widget",
+    "packages/demo-host"
+  ],
+  "scripts": {
+    "dev:widget": "npm run dev --workspace packages/widget",
+    "dev:demo": "npm run dev --workspace packages/demo-host",
+    "build": "npm run build --workspaces --if-present",
+    "test:contracts": "npm run test --workspace packages/contracts",
+    "compile": "npm run compile --workspace packages/contracts"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
