@@ -7,29 +7,23 @@
 import { RainbowKitProvider, lightTheme } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
-import { http, WagmiProvider, createConfig, type Config } from "wagmi";
+import { useState, type ReactNode } from "react";
+import { http, WagmiProvider, createConfig } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import { injected, walletConnect } from "wagmi/connectors";
 
 import type { DisperseTheme } from "./theme";
 import { defaultTheme } from "./theme";
 
-let sharedConfig: Config | undefined;
-let sharedQueryClient: QueryClient | undefined;
-
-function getConfig(walletConnectProjectId?: string): Config {
-  if (!sharedConfig) {
-    const projectId = walletConnectProjectId ?? (import.meta.env?.VITE_WALLETCONNECT_PROJECT_ID as string | undefined);
-    sharedConfig = createConfig({
-      chains: [sepolia],
-      // WalletConnect only when a project id is supplied; the injected
-      // connector keeps the demo dependency-free.
-      connectors: projectId ? [injected(), walletConnect({ projectId })] : [injected()],
-      transports: { [sepolia.id]: http() },
-    });
-  }
-  return sharedConfig;
+function makeConfig(walletConnectProjectId?: string) {
+  const projectId = walletConnectProjectId ?? (import.meta.env?.VITE_WALLETCONNECT_PROJECT_ID as string | undefined);
+  return createConfig({
+    chains: [sepolia],
+    // WalletConnect only when a project id is supplied; the injected
+    // connector keeps the demo dependency-free.
+    connectors: projectId ? [injected(), walletConnect({ projectId })] : [injected()],
+    transports: { [sepolia.id]: http() },
+  });
 }
 
 export function DisperseProviders({
@@ -41,11 +35,16 @@ export function DisperseProviders({
   theme?: DisperseTheme;
   walletConnectProjectId?: string;
 }) {
-  sharedQueryClient ??= new QueryClient();
+  // One config per mounted widget (NOT a module singleton): a shared config
+  // would be re-hydrated by every new provider mount, notifying subscribers
+  // in other trees mid-render — React's "setState while rendering" warning.
+  // Injected-wallet state converges across instances via the wallet itself.
+  const [config] = useState(() => makeConfig(walletConnectProjectId));
+  const [queryClient] = useState(() => new QueryClient());
   const accent = theme?.accent ?? defaultTheme.accent;
   return (
-    <WagmiProvider config={getConfig(walletConnectProjectId)}>
-      <QueryClientProvider client={sharedQueryClient}>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
         <RainbowKitProvider theme={lightTheme({ accentColor: accent, borderRadius: "medium" })} modalSize="compact">
           {children}
         </RainbowKitProvider>

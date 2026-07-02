@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* The widget ships as workspace source; tell Tailwind to scan it so its
+   utility classes are generated in this app's stylesheet. (A published build
+   of the widget would ship its own compiled CSS instead.) */
+@source "../../widget/src";

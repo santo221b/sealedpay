@@ -12,7 +12,6 @@ export { erc7984Abi, demoTokenAbi, disperseAbi } from "./lib/contracts/abis";
 export { DISPERSE_SINGLETON, disperseAddressFor, DEMO_TOKEN_ADDRESS, SEPOLIA_CHAIN_ID } from "./lib/contracts/addresses";
 
 export { DisperseWidget, type DisperseWidgetProps } from "./DisperseWidget";
+export { ReceiptWidget, type ReceiptWidgetProps } from "./ReceiptWidget";
 export type { DisperseTheme } from "./theme";
 export type { DeliveryResult, VerificationEntry } from "./hooks/useDisperseFlow";
-
-// ReceiptWidget (recipient side) is exported here when it lands — see docs/PROGRESS.md.
