@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {FHE, euint64, externalEuint64} from "@fhevm/solidity/lib/FHE.sol";
+import {FHE} from "@fhevm/solidity/lib/FHE.sol";
 import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 import {ERC7984} from "@openzeppelin/confidential-contracts/token/ERC7984/ERC7984.sol";
 
@@ -14,7 +14,11 @@ import {ERC7984} from "@openzeppelin/confidential-contracts/token/ERC7984/ERC798
  * a faucet has nothing to hide, and a plaintext mint needs no input proof, which
  * keeps "step 0: get demo tokens" to a single click. Everything that matters
  * afterwards (balances, every transfer amount) is encrypted end-to-end by ERC-7984.
- * `mintConfidential` is the proof-carrying variant for testing the encrypted path.
+ *
+ * There is deliberately NO encrypted-mint variant: an uncapped encrypted amount
+ * can't be range-checked in cleartext, so a single malicious mint of 2^64-1
+ * would saturate the encrypted total supply and silently brick the faucet for
+ * everyone after (ERC-7984 mints add encrypted zero on overflow).
  */
 contract ConfidentialTokenDemo is ERC7984, ZamaEthereumConfig {
     /// @dev Faucet cap per call — generous for demos, useless for abuse (6 decimals).
@@ -30,10 +34,5 @@ contract ConfidentialTokenDemo is ERC7984, ZamaEthereumConfig {
         // FHE.asEuint64 trivially encrypts the plaintext; from here on the amount
         // only ever exists on-chain as a ciphertext handle.
         _mint(to, FHE.asEuint64(amount));
-    }
-
-    /// @notice Encrypted mint: same faucet, but the amount arrives as an encrypted input.
-    function mintConfidential(address to, externalEuint64 encryptedAmount, bytes calldata inputProof) external {
-        _mint(to, FHE.fromExternal(encryptedAmount, inputProof));
     }
 }

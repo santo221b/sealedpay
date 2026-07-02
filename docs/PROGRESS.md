@@ -18,7 +18,7 @@
 3. **Record the video** (script ready) and **post the X thread** (draft ready).
 
 **Notes**
-- An adversarial multi-agent review was attempted but hit the session's subagent usage limit — re-run pending. A manual self-review pass fixed the parse guard + EIP-712 typing risk; the mock suite (5/5) and relayer smoke test still pass.
+- **Adversarial review complete**: 22 agents (5 lenses, per-finding adversarial verification against installed library source) confirmed 17 findings (10 distinct) — all fixed and redeployed. Highlights: chunked userDecrypt under one signature (2048-bit relayer cap), no silent decimals fallback, broadcast-tx-never-abandoned confirmation retry, strict EIP-55 validation, session-tracked operator grants. See commit b01cfa9.
 - Vendored TokenOps source must never be edited (`contracts/tokenops/`).
 
 ## 2026-07-02 — Session 1 (afternoon): Phases A–D
