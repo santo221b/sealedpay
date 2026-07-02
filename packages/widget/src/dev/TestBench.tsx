@@ -25,11 +25,8 @@ import { userDecryptHandles, type DecryptRequest } from "../lib/fhe/decrypt";
 import { encryptAmounts } from "../lib/fhe/encrypt";
 import { getFhevmInstance, type FhevmInstance } from "../lib/fhe/instance";
 
-declare global {
-  interface Window {
-    ethereum?: import("viem").EIP1193Provider;
-  }
-}
+// RainbowKit already declares `window.ethereum`; grab a typed alias instead.
+const injectedProvider = () => (window as { ethereum?: import("viem").EIP1193Provider }).ethereum;
 
 type LogLine = { kind: "info" | "ok" | "err"; text: string };
 
@@ -49,9 +46,10 @@ export function TestBench() {
   const say = (kind: LogLine["kind"], text: string) => setLog((l) => [...l, { kind, text }]);
 
   function clients() {
-    if (!window.ethereum) throw new Error("No injected wallet found");
-    const publicClient = createPublicClient({ chain, transport: custom(window.ethereum) });
-    const walletClient = createWalletClient({ chain, transport: custom(window.ethereum), account });
+    const provider = injectedProvider();
+    if (!provider) throw new Error("No injected wallet found");
+    const publicClient = createPublicClient({ chain, transport: custom(provider) });
+    const walletClient = createWalletClient({ chain, transport: custom(provider), account });
     return { publicClient, walletClient };
   }
 
@@ -69,11 +67,12 @@ export function TestBench() {
 
   const connect = () =>
     run("connect wallet", async () => {
-      if (!window.ethereum) throw new Error("No injected wallet found");
-      const [addr] = (await window.ethereum.request({ method: "eth_requestAccounts" })) as `0x${string}`[];
-      const chainIdHex = (await window.ethereum.request({ method: "eth_chainId" })) as string;
+      const provider = injectedProvider();
+      if (!provider) throw new Error("No injected wallet found");
+      const [addr] = (await provider.request({ method: "eth_requestAccounts" })) as `0x${string}`[];
+      const chainIdHex = (await provider.request({ method: "eth_chainId" })) as string;
       if (parseInt(chainIdHex, 16) !== chain.id) {
-        await window.ethereum.request({
+        await provider.request({
           method: "wallet_switchEthereumChain",
           params: [{ chainId: `0x${chain.id.toString(16)}` }],
         });
@@ -85,7 +84,7 @@ export function TestBench() {
   const boot = () =>
     run("boot FHE instance (WASM + relayer keys)", async () => {
       // Works without a wallet: encryption only needs a Sepolia read connection.
-      const network = window.ethereum ?? "https://ethereum-sepolia-rpc.publicnode.com";
+      const network = injectedProvider() ?? "https://ethereum-sepolia-rpc.publicnode.com";
       const inst = await getFhevmInstance(network);
       setInstance(inst);
       say("ok", "✓ FHE instance ready");
