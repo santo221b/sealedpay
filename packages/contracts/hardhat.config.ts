@@ -9,7 +9,16 @@ import type { HardhatUserConfig } from "hardhat/config";
 import { vars } from "hardhat/config";
 import "solidity-coverage";
 
+import * as dotenv from "dotenv";
+import * as path from "path";
+
 import "./tasks/accounts";
+
+// Hardhat does not auto-load .env files. Load the package-local one first
+// (wins on conflicts — dotenv never overrides an already-set variable), then
+// the repo-root .env shared by the whole monorepo.
+dotenv.config({ path: path.resolve(__dirname, ".env"), quiet: true });
+dotenv.config({ path: path.resolve(__dirname, "../../.env"), quiet: true });
 
 // Config comes from plain env vars first (works in CI and with a repo-root .env),
 // falling back to Hardhat configuration variables ('npx hardhat vars setup').
