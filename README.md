@@ -17,7 +17,12 @@ import { DisperseWidget } from "@dispersekit/widget";
 
 That's the whole integration. Recipients, amounts, encryption, operator approval, and the bulk transfer are all handled inside the widget.
 
-<!-- TODO(phase-g): live demo link, screenshots/GIF, deployed contract addresses -->
+## Live demos
+
+- **Widget playground** — [dispersekit-widget.vercel.app](https://dispersekit-widget.vercel.app) (the widget standalone + a gallery of every state + the integration test bench)
+- **White-label embed** — [dispersekit-demo.vercel.app](https://dispersekit-demo.vercel.app) ("Acme Payroll", a fictional partner product embedding the widget with one import)
+
+<!-- TODO(phase-g): screenshots/GIF, deployed contract addresses after the Sepolia token deploy -->
 
 ## What it does
 

@@ -53,12 +53,20 @@ export async function userDecryptHandles(options: {
 
   const eip712 = instance.createEIP712(keypair.publicKey, contractAddresses, startTimestamp, durationDays);
 
+  // The SDK stringifies the uint fields in `message`; viem validates typed
+  // data locally and wants proper numerics. BigInt-coercing changes nothing
+  // about the signed hash — uint256 encodes identically either way.
+  const message = eip712.message as unknown as Record<string, unknown>;
   const signature = await signTypedData({
     domain: eip712.domain as TypedDataDomain,
     // EIP712Domain must not be included when the wallet lib computes the domain itself.
     types: { UserDecryptRequestVerification: eip712.types.UserDecryptRequestVerification },
     primaryType: "UserDecryptRequestVerification",
-    message: eip712.message as unknown as Record<string, unknown>,
+    message: {
+      ...message,
+      startTimestamp: BigInt(message.startTimestamp as string | number),
+      durationDays: BigInt(message.durationDays as string | number),
+    },
   });
 
   const results = await instance.userDecrypt(

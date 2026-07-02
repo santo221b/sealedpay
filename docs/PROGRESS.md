@@ -3,23 +3,27 @@
 > What works, what's stubbed, what's blocked, and the exact next step.
 > Newest entries first.
 
-## 2026-07-02 — Session 1 (continued): Phases B, C, D
+## 2026-07-02 — Session 1 (evening): Phases E, F, most of G
 
 **Works — verified**
-- **Contracts (Phase B):** official audited TokenOps `DisperseConfidential` retrieved from the verified Sepolia deployment (`0x710dD9885Cc9986EfD234E7719483147a6d8DBb4`, via Sourcify) and vendored into `packages/contracts/contracts/tokenops/`. Compiles with the exact original settings. **5/5 mock tests pass** (`npm run test:contracts`): direct-mode delivery + per-recipient decryption, ACL privacy isolation (recipient A cannot decrypt recipient B), silent-zero on insufficient balance, wallet-mode subtotal split, guards (batch cap / fee / zero address).
-- **SDK round-trip (Phase C):** `packages/widget/src/lib/fhe/` helpers; `node packages/widget/scripts/relayer-smoke.mjs` **passes against the live Zama Sepolia relayer** (encrypts 3 euint64s, gets handles + proof). FHE instance boot verified in-browser (WASM under Vite, single-thread fallback as designed).
-- **Widget core (Phase D):** `<DisperseWidget />` — self-contained providers (wagmi + RainbowKit), CSV/paste input with per-line validation, review step (fee/batch-cap/operator reads at runtime — the live values are admin-mutable), encrypt → authorize → disperse → confirm state machine, post-delivery **verification that decrypts `transferred` handles and catches silent zeros**, white-label theming via CSS vars. All states visually verified via the playground's fixture gallery (`States` tab).
+- **Live deploys**: widget playground → https://dispersekit-widget.vercel.app · Acme embed demo → https://dispersekit-demo.vercel.app (both verified rendering in a browser; WASM assets ship correctly in the production build).
+- **ReceiptWidget (Phase E)**: finds incoming `ConfidentialTransfer` events (recipient + handle are indexed), decrypts all amounts + balance with one EIP-712 signature.
+- **Demo host (Phase E)**: "Acme Payroll" embeds both widgets with one import each, fully rebranded via the `theme` prop; "Show the integration code" reveal.
+- **Polish (Phase F)**: package READMEs, final EMBED.md props reference, success chime, thousands-separator parse guard, EIP-712 message bigint-coercion hardening, per-mount wagmi config fix (clean console).
+- **Delivery assets (Phase G)**: `docs/VIDEO_SCRIPT.md` (3-min shot-by-shot) and `docs/X_THREAD.md` (8-tweet draft).
 
-**Research** — `docs/research/` (5 reports + SUMMARY.md from the background fleet). Key decisions recorded there: relayer-sdk 0.4.4 `/web` entry, direct mode as primary flow, runtime reads for fee/caps, `transferred` handles decrypt under the TOKEN's ACL scope / `requested` under the disperse contract's.
+**Blocked / needs a human (the ONLY remaining items)**
+1. **Sepolia token deploy** — needs a funded key: set `MNEMONIC` + `INFURA_API_KEY` (or `SEPOLIA_RPC_URL`), run `npm run deploy:sepolia` in `packages/contracts`, put the printed address in `.env` as `VITE_CTOKEN_ADDRESS`, add the same env var to both Vercel projects (`vercel env add VITE_CTOKEN_ADDRESS production` in `packages/widget` and repo root), redeploy (`vercel deploy --prod --yes` in both). The disperse contract needs no deploy — the widget already points at the official TokenOps singleton (`0x710dD9885Cc9986EfD234E7719483147a6d8DBb4`).
+2. **Browser end-to-end on Sepolia** — after (1): use the playground Test bench (connect → boot → mint → authorize → disperse → decrypt) with a wallet holding a little Sepolia ETH (the official singleton charges 0.001 ETH per recipient). Then re-shoot happy-path screenshots for README.
+3. **Record the video** (script ready) and **post the X thread** (draft ready).
 
-**Stubbed / not started**
-- Recipient `ReceiptWidget` + demo-host partner app (Phase E — next).
-- Polish pass: sound, keyboard flows, responsive, empty states (Phase F).
-- Wallet-mode (>20 recipients) UI — helpers support it (`computeSubtotals`), widget uses direct mode only for now.
+**Notes**
+- An adversarial multi-agent review was attempted but hit the session's subagent usage limit — re-run pending. A manual self-review pass fixed the parse guard + EIP-712 typing risk; the mock suite (5/5) and relayer smoke test still pass.
+- Vendored TokenOps source must never be edited (`contracts/tokenops/`).
 
-**Blocked / needs a human**
-- **Sepolia deploy of the demo token** (the disperse contract is already live — official singleton): needs a funded key. `MNEMONIC` + `INFURA_API_KEY` (or `SEPOLIA_RPC_URL`) via env or `npx hardhat vars set`, then `npm run deploy:sepolia` in `packages/contracts`, then copy addresses into repo-root `.env` (`VITE_CTOKEN_ADDRESS`). Until then the browser flow can't send real txs — everything else is proven in mock + against the live relayer.
-- Vercel deploys (Phase G).
+## 2026-07-02 — Session 1 (afternoon): Phases A–D
 
-**Next step**
-- Phase E: `ReceiptWidget` (connect → decrypt own `ConfidentialTransfer`/`DirectDistribution` amounts → "You received X") + `demo-host` partner app embedding both with one import each.
+(see git history for detail)
+- Monorepo scaffold; official audited TokenOps `DisperseConfidential` vendored from the verified Sepolia deployment via Sourcify; `ConfidentialTokenDemo` (ERC-7984 + open faucet); **5/5 mock tests** proving disperse + per-recipient-only decryption + footguns.
+- FHE helpers (`lib/fhe/`), **passing relayer smoke test against live Sepolia relayer**, browser WASM boot verified.
+- `<DisperseWidget />` with self-contained providers, CSV/paste input, review step, four-step status timeline, post-delivery verification (silent-zero catch), white-label theming; fixture gallery of all states.

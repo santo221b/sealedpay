@@ -22,3 +22,4 @@ deployments/localhost/
 .vscode/
 .idea/
 *.log
+.vercel
