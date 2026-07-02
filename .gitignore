@@ -23,3 +23,6 @@ deployments/localhost/
 .idea/
 *.log
 .vercel
+
+# Private notes (talking points, drafts) — never committed
+*.private.md
