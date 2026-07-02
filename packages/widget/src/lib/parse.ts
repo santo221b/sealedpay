@@ -27,6 +27,9 @@ export interface ParseResult {
 }
 
 const MAX_EUINT64 = 2n ** 64n - 1n;
+// Plain decimal only: rejects '-', '.', '1.2.3', '1e5', '1,250' fragments —
+// anything parseUnits would otherwise coerce or round in surprising ways.
+const AMOUNT_RE = /^\d+(\.\d+)?$/;
 
 /**
  * Accepts one `address, amount` pair per line; comma, semicolon, tab or
@@ -37,13 +40,19 @@ export function parseRecipients(text: string, decimals: number): ParseResult {
   const issues: ParseIssue[] = [];
   const warnings: string[] = [];
   const seen = new Map<string, number>();
+  let sawContent = false;
 
   const lines = text.split(/\r?\n/);
   lines.forEach((raw, i) => {
     const line = raw.trim();
     if (!line || line.startsWith("#")) return;
-    // Tolerate headers exported from spreadsheets.
-    if (i === 0 && /address/i.test(line) && /amount|value/i.test(line)) return;
+    // Tolerate a header row exported from spreadsheets — wherever it appears
+    // as the first line with content.
+    if (!sawContent && /address/i.test(line) && /amount|value/i.test(line)) {
+      sawContent = true;
+      return;
+    }
+    sawContent = true;
 
     const parts = line.split(/[,;\t]+|\s{1,}/).map((p) => p.trim()).filter(Boolean);
     if (parts.length < 2) {
@@ -57,21 +66,23 @@ export function parseRecipients(text: string, decimals: number): ParseResult {
     }
     const [addressText, amountText] = parts;
 
-    if (!isAddress(addressText, { strict: false })) {
-      issues.push({ line: i + 1, text: line, problem: "not a valid address" });
+    // Strict EIP-55: a mixed-case address with a wrong checksum is most likely
+    // a typo, and a typo here sends someone's money to a stranger.
+    if (!isAddress(addressText)) {
+      issues.push({ line: i + 1, text: line, problem: "not a valid address (mixed-case must match its EIP-55 checksum)" });
       return;
     }
-    let amount: bigint;
-    try {
-      amount = parseUnits(amountText as `${number}`, decimals);
-    } catch {
-      issues.push({ line: i + 1, text: line, problem: "not a valid amount" });
+    if (!AMOUNT_RE.test(amountText)) {
+      issues.push({ line: i + 1, text: line, problem: "not a valid amount — plain decimals only, e.g. 1250.5" });
       return;
     }
-    if (amount < 0n) {
-      issues.push({ line: i + 1, text: line, problem: "amount must be positive" });
+    const fraction = amountText.split(".")[1];
+    if (fraction && fraction.length > decimals) {
+      // parseUnits would silently round; never round money.
+      issues.push({ line: i + 1, text: line, problem: `more decimal places than the token supports (${decimals})` });
       return;
     }
+    const amount = parseUnits(amountText, decimals);
     if (amount > MAX_EUINT64) {
       issues.push({ line: i + 1, text: line, problem: "amount exceeds the euint64 range" });
       return;

@@ -8,7 +8,7 @@
  * balance with a single EIP-712 signature. Nobody else can perform this read.
  */
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { parseAbiItem, zeroHash } from "viem";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 
@@ -72,6 +72,17 @@ function ReceiptBody(props: ReceiptWidgetProps) {
 
   const cssVars = useMemo(() => themeToCssVars(props.theme), [props.theme]);
   const ready = isConnected && chain?.id === chainId;
+
+  // Everything shown here belongs to one (account, token) pair — a wallet
+  // account switch must never keep showing the previous account's money.
+  useEffect(() => {
+    setTransfers(undefined);
+    setBalanceHandle(undefined);
+    setAmounts(undefined);
+    setBalance(undefined);
+    setPhase("idle");
+    setError(undefined);
+  }, [me, token]);
 
   const scan = useCallback(async () => {
     if (!publicClient || !me || !token) return;
@@ -158,7 +169,7 @@ function ReceiptBody(props: ReceiptWidgetProps) {
       <div className="mb-4 flex items-center justify-between gap-2">
         <div>
           <h2 className="text-base font-bold leading-tight">{props.title ?? "My confidential payments"}</h2>
-          <p className="text-[11px] text-[var(--dk-muted)]">{symbol} · only you can read these numbers</p>
+          <p className="text-[11px] text-[var(--dk-muted)]">{symbol ?? "…"} · only you can read these numbers</p>
         </div>
         <div className="flex items-center gap-1.5">
           <AccountChip />
@@ -192,8 +203,8 @@ function ReceiptBody(props: ReceiptWidgetProps) {
                   >
                     <p className="text-[11px] uppercase tracking-wide text-[var(--dk-muted)]">Your balance</p>
                     <p className="text-2xl font-bold">
-                      {balance !== undefined ? formatAmount(balance, decimals) : "—"}{" "}
-                      <span className="text-sm font-semibold text-[var(--dk-muted)]">{symbol}</span>
+                      {balance !== undefined && decimals !== undefined ? formatAmount(balance, decimals) : "—"}{" "}
+                      <span className="text-sm font-semibold text-[var(--dk-muted)]">{symbol ?? ""}</span>
                     </p>
                   </motion.div>
                 )}
@@ -215,13 +226,13 @@ function ReceiptBody(props: ReceiptWidgetProps) {
                               from {short(t.from)}
                             </td>
                             <td className="px-3 py-2 text-right">
-                              {amount !== undefined ? (
+                              {amount !== undefined && decimals !== undefined ? (
                                 <motion.span
                                   initial={{ opacity: 0 }}
                                   animate={{ opacity: 1 }}
                                   className="font-mono font-semibold"
                                 >
-                                  +{formatAmount(amount, decimals)} {symbol}
+                                  +{formatAmount(amount, decimals)} {symbol ?? ""}
                                 </motion.span>
                               ) : (
                                 <CipherChip handle={t.handle} />

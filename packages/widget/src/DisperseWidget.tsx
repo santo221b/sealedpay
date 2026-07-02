@@ -6,7 +6,7 @@
  * a theme and a token, and has confidential bulk payouts.
  */
 import { AnimatePresence, motion } from "framer-motion";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 
 import { AccountChip, ConnectGate } from "./components/ConnectGate";
@@ -15,9 +15,10 @@ import { PrivacyBadge } from "./components/PrivacyBadge";
 import { RecipientsEditor } from "./components/RecipientsEditor";
 import { ReviewPanel } from "./components/ReviewPanel";
 import { StatusTimeline } from "./components/StatusTimeline";
+import { Button } from "./components/ui";
 import { useDisperseFlow, type DeliveryResult } from "./hooks/useDisperseFlow";
 import { useTokenMeta } from "./hooks/useTokenMeta";
-import { DEMO_TOKEN_ADDRESS, SEPOLIA_CHAIN_ID } from "./lib/contracts/addresses";
+import { DEMO_TOKEN_ADDRESS, DISPERSE_ADDRESS_OVERRIDE, DISPERSE_SINGLETON, SEPOLIA_CHAIN_ID } from "./lib/contracts/addresses";
 import { DisperseProviders } from "./providers";
 import { themeToCssVars, type DisperseTheme } from "./theme";
 
@@ -58,12 +59,15 @@ function WidgetBody(props: DisperseWidgetProps) {
   const onSupportedChain = chain?.id === chainId;
   const { symbol, decimals } = useTokenMeta(token);
   const flow = useDisperseFlow({ token, chainId, onDispersed: props.onDispersed, onError: props.onError });
+  // The recipient draft lives HERE, not in the editor — "Back" from review
+  // must never eat a hand-typed list.
+  const [draft, setDraft] = useState(
+    () => props.recipients?.map((r) => `${r.address}, ${r.amount}`).join("\n") ?? "",
+  );
 
   const cssVars = useMemo(() => themeToCssVars(props.theme), [props.theme]);
-  const initialText = useMemo(
-    () => props.recipients?.map((r) => `${r.address}, ${r.amount}`).join("\n"),
-    [props.recipients],
-  );
+  const chainSupported = Boolean(DISPERSE_ADDRESS_OVERRIDE) || chainId in DISPERSE_SINGLETON;
+  const explorerBase = EXPLORER[chainId] ?? "https://sepolia.etherscan.io";
 
   const ready = isConnected && onSupportedChain;
   const inFlight = ["encrypting", "authorizing", "dispersing", "confirming"].includes(flow.phase);
@@ -77,7 +81,7 @@ function WidgetBody(props: DisperseWidgetProps) {
         <div>
           <h2 className="text-base font-bold leading-tight">{props.title ?? "Confidential payout"}</h2>
           <p className="text-[11px] text-[var(--dk-muted)]">
-            {symbol} · amounts encrypted end-to-end
+            {symbol ?? "…"} · amounts encrypted end-to-end
           </p>
         </div>
         <div className="flex items-center gap-1.5">
@@ -86,16 +90,31 @@ function WidgetBody(props: DisperseWidgetProps) {
         </div>
       </div>
 
-      {!token && (
+      {!chainSupported && (
+        <p className="rounded-[calc(var(--dk-radius)*0.6)] bg-[var(--dk-surface)] p-3 text-xs text-[var(--dk-muted)]">
+          No disperse deployment is known for chain {chainId}. DisperseKit currently supports Sepolia (11155111).
+        </p>
+      )}
+
+      {chainSupported && !token && (
         <p className="rounded-[calc(var(--dk-radius)*0.6)] bg-[var(--dk-surface)] p-3 text-xs text-[var(--dk-muted)]">
           No token configured. Pass <code className="font-mono">token=</code> or set{" "}
           <code className="font-mono">VITE_CTOKEN_ADDRESS</code>.
         </p>
       )}
 
-      {token && !ready && <ConnectGate />}
+      {chainSupported && token && !ready && <ConnectGate />}
 
-      {token && ready && (
+      {chainSupported && token && ready && decimals === undefined && (
+        // Amounts must never be parsed at a guessed scale — wait for the
+        // token's real decimals before showing the editor.
+        <div className="flex animate-pulse flex-col gap-2 py-4">
+          <div className="h-24 rounded-[calc(var(--dk-radius)*0.7)] bg-[var(--dk-surface)]" />
+          <div className="h-9 rounded-[calc(var(--dk-radius)*0.6)] bg-[var(--dk-surface)]" />
+        </div>
+      )}
+
+      {chainSupported && token && ready && decimals !== undefined && (
         <>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
@@ -108,8 +127,9 @@ function WidgetBody(props: DisperseWidgetProps) {
               {flow.phase === "input" && (
                 <RecipientsEditor
                   decimals={decimals}
-                  symbol={symbol}
-                  initialText={initialText}
+                  symbol={symbol ?? "tokens"}
+                  text={draft}
+                  onTextChange={setDraft}
                   onReview={(parsed) => void flow.goToReview(parsed.rows)}
                 />
               )}
@@ -118,7 +138,7 @@ function WidgetBody(props: DisperseWidgetProps) {
                   rows={flow.rows}
                   total={flow.total}
                   decimals={decimals}
-                  symbol={symbol}
+                  symbol={symbol ?? "tokens"}
                   gasFeePerRecipient={flow.gasFeePerRecipient}
                   maxRecipients={flow.maxRecipients}
                   operatorAlreadySet={flow.operatorAlreadySet}
@@ -133,10 +153,13 @@ function WidgetBody(props: DisperseWidgetProps) {
                   verification={flow.verification}
                   verifying={flow.verifying}
                   decimals={decimals}
-                  symbol={symbol}
-                  explorerBase={EXPLORER[chainId] ?? "https://sepolia.etherscan.io"}
+                  symbol={symbol ?? "tokens"}
+                  explorerBase={explorerBase}
                   onVerify={() => void flow.verifyDelivery()}
-                  onReset={flow.reset}
+                  onReset={() => {
+                    setDraft("");
+                    flow.reset();
+                  }}
                 />
               )}
             </motion.div>
@@ -146,6 +169,23 @@ function WidgetBody(props: DisperseWidgetProps) {
             <p role="alert" className="mt-3 rounded-[calc(var(--dk-radius)*0.6)] bg-red-50 p-2.5 text-xs text-red-600">
               {flow.error}
             </p>
+          )}
+
+          {flow.phase === "confirming" && flow.error && flow.pendingTxHash && (
+            // The tx is on-chain; never send the user back to review from here.
+            <div className="mt-2 flex items-center gap-2">
+              <Button className="flex-1" onClick={() => void flow.retryConfirmation()}>
+                Retry confirmation
+              </Button>
+              <a
+                className="text-xs font-medium text-[var(--dk-accent)] hover:underline"
+                href={`${explorerBase}/tx/${flow.pendingTxHash}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View on explorer ↗
+              </a>
+            </div>
           )}
         </>
       )}

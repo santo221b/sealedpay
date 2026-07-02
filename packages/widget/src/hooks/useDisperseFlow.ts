@@ -13,6 +13,9 @@
  *   an encrypted zero when the sender's balance is short, so after the tx we
  *   decrypt the `transferred` handles (the sender holds ACL on them) and
  *   compare against what was requested.
+ * - A broadcast transaction is never abandoned: if confirmation fails (RPC
+ *   hiccup), the flow stays in `confirming` with the tx hash on display and a
+ *   retry — going back to review there would invite a double payout.
  */
 import { useCallback, useMemo, useRef, useState } from "react";
 import { parseEventLogs } from "viem";
@@ -62,9 +65,12 @@ export interface DisperseFlow {
   verification?: VerificationEntry[];
   verifying: boolean;
   operatorAlreadySet?: boolean;
+  /** Set the moment a disperse tx is broadcast — survives confirmation failures. */
+  pendingTxHash?: `0x${string}`;
   goToReview: (rows: RecipientRow[]) => Promise<void>;
   backToInput: () => void;
   execute: () => Promise<void>;
+  retryConfirmation: () => Promise<void>;
   verifyDelivery: () => Promise<void>;
   reset: () => void;
 }
@@ -72,7 +78,21 @@ export interface DisperseFlow {
 // The FHE instance only needs read access to Sepolia; a fixed public RPC keeps
 // behavior identical whether or not a wallet is connected.
 const FHE_NETWORK = "https://ethereum-sepolia-rpc.publicnode.com";
-const OPERATOR_TTL_SECONDS = 3600; // time-boxed, not unlimited: re-granted per session if needed
+const OPERATOR_TTL_SECONDS = 3600; // time-boxed, not unlimited
+// Re-grant when a tracked grant has less than this left — a grant made ~55
+// minutes ago would pass isOperator at review time and expire mid-flow.
+const OPERATOR_MARGIN_SECONDS = 600;
+
+// ERC-7984 stores operator expiry privately (isOperator only returns a bool),
+// so we remember the `until` of grants WE made this session. An untracked
+// grant (from a previous session) has unknown expiry → re-grant to be safe.
+const sessionGrants = new Map<string, number>();
+const grantKey = (token: string, sender: string, operator: string) => `${token}:${sender}:${operator}`.toLowerCase();
+
+function hasFreshGrant(token: string, sender: string, operator: string): boolean {
+  const until = sessionGrants.get(grantKey(token, sender, operator));
+  return until !== undefined && until - Date.now() / 1000 > OPERATOR_MARGIN_SECONDS;
+}
 
 export function useDisperseFlow(options: {
   token: `0x${string}` | undefined;
@@ -94,10 +114,19 @@ export function useDisperseFlow(options: {
   const [delivery, setDelivery] = useState<DeliveryResult>();
   const [verification, setVerification] = useState<VerificationEntry[]>();
   const [verifying, setVerifying] = useState(false);
+  const [pendingTxHash, setPendingTxHash] = useState<`0x${string}`>();
   // Amounts in row order, kept out of state to avoid re-render churn mid-flow.
   const amountsRef = useRef<bigint[]>([]);
 
-  const disperse = useMemo(() => disperseAddressFor(chainId), [chainId]);
+  // No deployment on this chain is a configuration state, not an exception —
+  // the widget renders a friendly card instead of crashing the host app.
+  const disperse = useMemo(() => {
+    try {
+      return disperseAddressFor(chainId);
+    } catch {
+      return undefined;
+    }
+  }, [chainId]);
 
   const total = useMemo(() => rows.reduce((acc, r) => acc + r.amount, 0n), [rows]);
 
@@ -115,13 +144,13 @@ export function useDisperseFlow(options: {
 
   const goToReview = useCallback(
     async (nextRows: RecipientRow[]) => {
-      if (!publicClient) return;
+      if (!publicClient || !disperse) return;
       setError(undefined);
       setRows(nextRows);
       amountsRef.current = nextRows.map((r) => r.amount);
       setPhase("review");
       // Fee + batch cap + operator status are display data — fetch after the
-      // transition so review renders instantly with skeletons.
+      // transition so review renders instantly.
       try {
         const [fee, cap, operator] = await Promise.all([
           sender
@@ -134,21 +163,54 @@ export function useDisperseFlow(options: {
         ]);
         if (fee !== undefined) setGasFee(BigInt(fee));
         setMaxRecipients(Number(cap) || undefined);
-        if (operator !== undefined) setOperatorAlreadySet(operator);
+        if (operator !== undefined && sender && token) {
+          setOperatorAlreadySet(operator && hasFreshGrant(token, sender, disperse));
+        }
       } catch {
-        // Non-fatal: review still works; execute() re-reads what it needs.
+        // Non-fatal: review still works; execute() re-checks what it needs.
       }
     },
     [publicClient, sender, token, disperse],
   );
 
+  /** Confirmation + event parsing, shared by execute() and retryConfirmation(). */
+  const confirmDelivery = useCallback(
+    async (txHash: `0x${string}`) => {
+      if (!publicClient) throw new Error("No network connection");
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+      const [event] = parseEventLogs({ abi: disperseAbi, logs: receipt.logs, eventName: "DirectDistribution" });
+      if (!event) throw new Error("Transaction confirmed but no DirectDistribution event was emitted");
+      const result: DeliveryResult = {
+        txHash,
+        recipients: [...event.args.recipients],
+        requested: [...event.args.requested],
+        transferred: [...event.args.transferred],
+      };
+      setDelivery(result);
+      setPhase("delivered");
+      onDispersed?.(result);
+    },
+    [publicClient, onDispersed],
+  );
+
   const execute = useCallback(async () => {
-    if (!token) return fail(new Error("No token configured"), "review");
+    if (!token || !disperse) return fail(new Error("No token or disperse contract configured"), "review");
     if (!sender || !walletClient || !publicClient) return fail(new Error("Connect a wallet first"), "review");
     if (rows.length === 0) return fail(new Error("No recipients"), "input");
     setError(undefined);
 
+    let txHash: `0x${string}` | undefined;
     try {
+      // 0. The batch cap is admin-mutable on the live singleton — re-check at
+      //    execution time, falling back to the known live value if the read fails.
+      const cap = await publicClient
+        .readContract({ address: disperse, abi: disperseAbi, functionName: "maxBatchSizeDirect" })
+        .then((v) => Number(v) || Infinity)
+        .catch(() => 20);
+      if (rows.length > cap) {
+        throw new Error(`This batch has ${rows.length} recipients but the contract accepts ${cap} per transaction — split the list.`);
+      }
+
       // 1. Encrypt every amount client-side under one proof.
       setPhase("encrypting");
       const instance = await getFhevmInstance(FHE_NETWORK);
@@ -159,8 +221,9 @@ export function useDisperseFlow(options: {
         amounts: amountsRef.current,
       });
 
-      // 2. Grant the disperse contract a time-boxed operator permission
-      //    (skipped when a previous grant is still live).
+      // 2. Grant the disperse contract a time-boxed operator permission.
+      //    Skipped only for a grant WE made recently — expiry of older grants
+      //    is unreadable on-chain, and one expiring mid-flow reverts the tx.
       setPhase("authorizing");
       const isOperator = await publicClient.readContract({
         address: token,
@@ -168,7 +231,7 @@ export function useDisperseFlow(options: {
         functionName: "isOperator",
         args: [sender, disperse],
       });
-      if (!isOperator) {
+      if (!isOperator || !hasFreshGrant(token, sender, disperse)) {
         const until = Math.floor(Date.now() / 1000) + OPERATOR_TTL_SECONDS;
         const authHash = await walletClient.writeContract({
           address: token,
@@ -178,6 +241,7 @@ export function useDisperseFlow(options: {
           account: sender,
         });
         await publicClient.waitForTransactionReceipt({ hash: authHash });
+        sessionGrants.set(grantKey(token, sender, disperse), until);
       }
 
       // 3. One transaction pays everyone.
@@ -190,7 +254,7 @@ export function useDisperseFlow(options: {
       });
       const toHex = (u8: Uint8Array) =>
         `0x${Array.from(u8, (b) => b.toString(16).padStart(2, "0")).join("")}` as `0x${string}`;
-      const txHash = await walletClient.writeContract({
+      txHash = await walletClient.writeContract({
         address: disperse,
         abi: disperseAbi,
         functionName: "disperseConfidentialTokenDirect",
@@ -198,33 +262,44 @@ export function useDisperseFlow(options: {
         value: BigInt(fee) * BigInt(rows.length),
         account: sender,
       });
+      setPendingTxHash(txHash);
 
       // 4. Confirm delivery from the event — not from optimism.
       setPhase("confirming");
-      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
-      const [event] = parseEventLogs({ abi: disperseAbi, logs: receipt.logs, eventName: "DirectDistribution" });
-      if (!event) throw new Error("Transaction confirmed but no DirectDistribution event was emitted");
-
-      const result: DeliveryResult = {
-        txHash,
-        recipients: [...event.args.recipients],
-        requested: [...event.args.requested],
-        transferred: [...event.args.transferred],
-      };
-      setDelivery(result);
-      setPhase("delivered");
-      onDispersed?.(result);
+      await confirmDelivery(txHash);
     } catch (e) {
-      fail(e, "review");
+      if (txHash) {
+        // The payout is already in flight — returning to review here would
+        // invite a second send. Stay in confirming; the UI offers a retry.
+        setError(
+          `The payout transaction was sent (${txHash.slice(0, 10)}…) but confirmation failed: ${
+            e instanceof Error ? e.message : String(e)
+          }`,
+        );
+      } else {
+        fail(e, "review");
+      }
     }
-  }, [token, sender, walletClient, publicClient, rows, disperse, fail, onDispersed]);
+  }, [token, disperse, sender, walletClient, publicClient, rows, fail, confirmDelivery]);
+
+  const retryConfirmation = useCallback(async () => {
+    if (!pendingTxHash) return;
+    setError(undefined);
+    try {
+      await confirmDelivery(pendingTxHash);
+    } catch (e) {
+      setError(
+        `Still couldn't confirm ${pendingTxHash.slice(0, 10)}…: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+  }, [pendingTxHash, confirmDelivery]);
 
   /**
    * Post-delivery audit: decrypt what actually moved and flag any silent
    * zeroes. One EIP-712 signature; only the sender sees the values.
    */
   const verifyDelivery = useCallback(async () => {
-    if (!delivery || !sender || !walletClient || !token) return;
+    if (!delivery || !sender || !walletClient || !token || !disperse) return;
     setVerifying(true);
     setError(undefined);
     try {
@@ -265,6 +340,7 @@ export function useDisperseFlow(options: {
     setRows([]);
     setDelivery(undefined);
     setVerification(undefined);
+    setPendingTxHash(undefined);
     amountsRef.current = [];
   }, []);
 
@@ -279,9 +355,11 @@ export function useDisperseFlow(options: {
     verification,
     verifying,
     operatorAlreadySet,
+    pendingTxHash,
     goToReview,
     backToInput,
     execute,
+    retryConfirmation,
     verifyDelivery,
     reset,
   };

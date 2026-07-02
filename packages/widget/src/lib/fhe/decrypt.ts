@@ -69,16 +69,27 @@ export async function userDecryptHandles(options: {
     },
   });
 
-  const results = await instance.userDecrypt(
-    requests.map((r) => ({ handle: r.handle, contractAddress: r.contractAddress })),
-    keypair.privateKey,
-    keypair.publicKey,
-    signature,
-    contractAddresses,
-    userAddress,
-    startTimestamp,
-    durationDays,
-  );
+  // The SDK/relayer rejects requests over 2048 encrypted bits — 32 euint64
+  // handles. The EIP-712 signature binds (publicKey, contractAddresses,
+  // timestamps) but NOT the handles, so one signature legitimately covers as
+  // many chunked userDecrypt calls as needed. Without this, verifying a
+  // 17+ recipient payout — or revealing a busy receipt wallet — would fail.
+  const HANDLES_PER_REQUEST = 32; // 2048 bits / 64 bits per euint64
+  const results: Record<string, unknown> = {};
+  for (let i = 0; i < requests.length; i += HANDLES_PER_REQUEST) {
+    const chunk = requests.slice(i, i + HANDLES_PER_REQUEST);
+    const chunkResults = await instance.userDecrypt(
+      chunk.map((r) => ({ handle: r.handle, contractAddress: r.contractAddress })),
+      keypair.privateKey,
+      keypair.publicKey,
+      signature,
+      contractAddresses, // always the full signed list, not the chunk's subset
+      userAddress,
+      startTimestamp,
+      durationDays,
+    );
+    Object.assign(results, chunkResults);
+  }
 
   // Results are keyed by 0x-handle; euint64 values arrive as bigint.
   const out: Record<`0x${string}`, bigint> = {};

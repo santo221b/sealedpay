@@ -15,15 +15,26 @@ const PLACEHOLDER = `0x1234…abcd, 250
 export function RecipientsEditor({
   decimals,
   symbol,
+  text: controlledText,
+  onTextChange,
   initialText,
   onReview,
 }: {
   decimals: number;
   symbol: string;
+  /** Controlled mode (used by the widget so "Back" never loses the list). */
+  text?: string;
+  onTextChange?: (text: string) => void;
+  /** Uncontrolled mode fallback (fixtures, simple embeds). */
   initialText?: string;
   onReview: (parsed: ParseResult) => void;
 }) {
-  const [text, setText] = useState(initialText ?? "");
+  const [innerText, setInnerText] = useState(initialText ?? "");
+  const text = controlledText ?? innerText;
+  const setText = (value: string) => {
+    onTextChange?.(value);
+    if (controlledText === undefined) setInnerText(value);
+  };
   const [dragOver, setDragOver] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
