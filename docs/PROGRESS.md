@@ -12,10 +12,16 @@
 - **Polish (Phase F)**: package READMEs, final EMBED.md props reference, success chime, thousands-separator parse guard, EIP-712 message bigint-coercion hardening, per-mount wagmi config fix (clean console).
 - **Delivery assets (Phase G)**: `docs/VIDEO_SCRIPT.md` (3-min shot-by-shot) and `docs/X_THREAD.md` (8-tweet draft).
 
-**Blocked / needs a human (the ONLY remaining items)**
-1. **Sepolia token deploy** — needs a funded key: set `MNEMONIC` + `INFURA_API_KEY` (or `SEPOLIA_RPC_URL`), run `npm run deploy:sepolia` in `packages/contracts`, put the printed address in `.env` as `VITE_CTOKEN_ADDRESS`, add the same env var to both Vercel projects (`vercel env add VITE_CTOKEN_ADDRESS production` in `packages/widget` and repo root), redeploy (`vercel deploy --prod --yes` in both). The disperse contract needs no deploy — the widget already points at the official TokenOps singleton (`0x710dD9885Cc9986EfD234E7719483147a6d8DBb4`).
-2. **Browser end-to-end on Sepolia** — after (1): use the playground Test bench (connect → boot → mint → authorize → disperse → decrypt) with a wallet holding a little Sepolia ETH (the official singleton charges 0.001 ETH per recipient). Then re-shoot happy-path screenshots for README.
-3. **Record the video** (script ready) and **post the X thread** (draft ready).
+**DONE since — live Sepolia is fully wired (Jul 2, evening)**
+- `ConfidentialTokenDemo` (cUSDd) deployed: `0xCE27C522e403FA3d14dC245c0509c2f61AeD17E1` (deployments/ committed).
+- **Live E2E PASSED through the official TokenOps singleton** (`scripts/e2e-sepolia.mjs`): mint → setOperator → encrypt (one proof) → one disperse tx → sender decrypts requested+transferred (12.5/7.25 ✓) → recipient decrypts their own amount ✓. Tx: `0xc8d190a014015a8fe8aca9af82b49db44e61fd46a5ff2cece98033e81a6fe154`.
+- `VITE_CTOKEN_ADDRESS` set on both Vercel projects; both sites redeployed and functional. Vite `envDir` now points at the repo-root `.env` so local dev sees the same config; hardhat auto-loads it too (`dotenv`). `PRIVATE_KEY` supported as an alternative to `MNEMONIC`.
+- `scripts/rpc-check.ts` prints network/deployer/balance for instant config sanity.
+
+**Remaining (human-only)**
+1. **Browser walkthrough on Sepolia** for the video: use the live playground with a wallet (deployer key `0x3F9e…3Fc3` holds ~1.1 Sepolia ETH) — mint via Test bench, then run a payout in the Widget tab; receipt view with a second wallet.
+2. **Record the video** (docs/VIDEO_SCRIPT.md) and **post the X thread** (docs/X_THREAD.md) before Jul 7 AOE.
+3. Optional: Etherscan-verify the demo token (needs `ETHERSCAN_API_KEY`; Sourcify alternative available), screenshots/GIF for README.
 
 **Notes**
 - **Adversarial review complete**: 22 agents (5 lenses, per-finding adversarial verification against installed library source) confirmed 17 findings (10 distinct) — all fixed and redeployed. Highlights: chunked userDecrypt under one signature (2048-bit relayer cap), no silent decimals fallback, broadcast-tx-never-abandoned confirmation retry, strict EIP-55 validation, session-tracked operator grants. See commit b01cfa9.
