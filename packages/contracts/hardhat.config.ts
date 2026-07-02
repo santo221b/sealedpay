@@ -24,9 +24,16 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env"), quiet: true });
 // falling back to Hardhat configuration variables ('npx hardhat vars setup').
 const MNEMONIC: string =
   process.env.MNEMONIC ?? vars.get("MNEMONIC", "test test test test test test test test test test test junk");
+// A single funded key works too and takes precedence over the mnemonic
+// (deployer = that account). 0x prefix optional.
+const PRIVATE_KEY: string = process.env.PRIVATE_KEY ?? vars.get("PRIVATE_KEY", "");
 const INFURA_API_KEY: string =
   process.env.INFURA_API_KEY ?? vars.get("INFURA_API_KEY", "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
 const SEPOLIA_RPC_URL: string = process.env.SEPOLIA_RPC_URL ?? `https://sepolia.infura.io/v3/${INFURA_API_KEY}`;
+
+const sepoliaAccounts = PRIVATE_KEY
+  ? [PRIVATE_KEY.startsWith("0x") ? PRIVATE_KEY : `0x${PRIVATE_KEY}`]
+  : { mnemonic: MNEMONIC, path: "m/44'/60'/0'/0/", count: 10 };
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
@@ -60,11 +67,7 @@ const config: HardhatUserConfig = {
       url: "http://localhost:8545",
     },
     sepolia: {
-      accounts: {
-        mnemonic: MNEMONIC,
-        path: "m/44'/60'/0'/0/",
-        count: 10,
-      },
+      accounts: sepoliaAccounts,
       chainId: 11155111,
       url: SEPOLIA_RPC_URL,
     },
