@@ -12,6 +12,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--workspace", "packages/demo-host"],
       "port": 5174
+    },
+    {
+      "name": "payroll",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--workspace", "packages/payroll"],
+      "port": 5175
     }
   ]
 }
