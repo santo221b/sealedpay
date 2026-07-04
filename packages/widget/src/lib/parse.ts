@@ -31,6 +31,11 @@ const MAX_EUINT64 = 2n ** 64n - 1n;
 // anything parseUnits would otherwise coerce or round in surprising ways.
 const AMOUNT_RE = /^\d+(\.\d+)?$/;
 
+/** Entry-time amount check for custom skins (same rule the parser applies). */
+export function isValidAmountText(text: string): boolean {
+  return AMOUNT_RE.test(text.trim());
+}
+
 /**
  * Accepts one `address, amount` pair per line; comma, semicolon, tab or
  * whitespace separated. Ignores empty lines, `#` comments, and a header row.

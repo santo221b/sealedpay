@@ -12,6 +12,18 @@ import { short } from "../lib/parse";
 import { playSuccessChime } from "../lib/sound";
 import { Button, Card, CipherChip, Spinner } from "./ui";
 
+export interface DeliveredLabels {
+  title: string;
+  verify: string;
+  reset: string;
+}
+
+const DEFAULT_LABELS: DeliveredLabels = {
+  title: "Dispersed confidentially",
+  verify: "Verify delivery",
+  reset: "New payout",
+};
+
 export function DeliveredPanel({
   delivery,
   verification,
@@ -21,6 +33,8 @@ export function DeliveredPanel({
   explorerBase,
   onVerify,
   onReset,
+  labels,
+  nameFor,
 }: {
   delivery: DeliveryResult;
   verification?: VerificationEntry[];
@@ -30,7 +44,12 @@ export function DeliveredPanel({
   explorerBase: string;
   onVerify: () => void;
   onReset: () => void;
+  /** Skin wording (e.g. payroll: "Verify salaries were delivered"). */
+  labels?: Partial<DeliveredLabels>;
+  /** Optional display-name lookup; falls back to the short address. */
+  nameFor?: (address: `0x${string}`) => string | undefined;
 }) {
+  const text = { ...DEFAULT_LABELS, ...labels };
   const allOk = verification?.every((v) => v.ok);
 
   // One chime when the delivered panel first appears (StrictMode double-mount
@@ -50,7 +69,7 @@ export function DeliveredPanel({
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--dk-accent)] text-2xl text-[var(--dk-accent-text)]">
           ✓
         </div>
-        <p className="text-base font-bold text-[var(--dk-text)]">Dispersed confidentially</p>
+        <p className="text-base font-bold text-[var(--dk-text)]">{text.title}</p>
         <p className="text-xs text-[var(--dk-muted)]">
           {delivery.recipients.length} recipients paid in{" "}
           <a
@@ -71,7 +90,9 @@ export function DeliveredPanel({
               const entry = verification?.[i];
               return (
                 <tr key={i} className="border-t border-[var(--dk-border)] first:border-t-0">
-                  <td className="px-3 py-1.5 font-mono text-[var(--dk-text)]">{short(address)}</td>
+                  <td className="px-3 py-1.5 font-mono text-[var(--dk-text)]" title={address}>
+                    {nameFor?.(address) ?? short(address)}
+                  </td>
                   <td className="px-3 py-1.5 text-right">
                     {entry ? (
                       <span className={`font-mono font-semibold ${entry.ok ? "text-[var(--dk-text)]" : "text-red-500"}`}>
@@ -100,11 +121,11 @@ export function DeliveredPanel({
         {!verification && (
           <Button className="flex-1" disabled={verifying} onClick={onVerify}>
             {verifying ? <Spinner /> : null}
-            {verifying ? "Decrypting…" : "Verify delivery"}
+            {verifying ? "Decrypting…" : text.verify}
           </Button>
         )}
         <Button variant={verification ? "primary" : "ghost"} className={verification ? "flex-1" : ""} onClick={onReset}>
-          New payout
+          {text.reset}
         </Button>
       </div>
     </div>
