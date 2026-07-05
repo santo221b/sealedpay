@@ -12,10 +12,14 @@ import { useCallback, useEffect, useState } from "react";
 export interface Employee {
   id: string;
   name: string;
+  /** Optional job title, display only. */
+  role?: string;
   address: `0x${string}`;
   /** Human units, e.g. "2500.5" (cUSDd). */
   salary: string;
 }
+
+export type EmployeeInput = { name: string; role?: string; address: string; salary: string };
 
 const STORAGE_KEY = "dispersekit.payroll.employees.v1";
 
@@ -33,7 +37,7 @@ function load(): Employee[] {
 
 /** Validation shared by add + edit. Returns a problem string or null if OK. */
 export function validateEmployee(
-  input: { name: string; address: string; salary: string },
+  input: EmployeeInput,
   decimals?: number,
 ): string | null {
   if (!input.name.trim()) return "Name is required.";
@@ -53,23 +57,30 @@ export function useEmployees() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(employees));
   }, [employees]);
 
-  const add = useCallback((input: { name: string; address: string; salary: string }) => {
+  const add = useCallback((input: EmployeeInput) => {
     setEmployees((list) => [
       ...list,
       {
         id: crypto.randomUUID(),
         name: input.name.trim(),
+        role: input.role?.trim() || undefined,
         address: getAddress(input.address), // normalize to checksummed form
         salary: input.salary.trim(),
       },
     ]);
   }, []);
 
-  const update = useCallback((id: string, input: { name: string; address: string; salary: string }) => {
+  const update = useCallback((id: string, input: EmployeeInput) => {
     setEmployees((list) =>
       list.map((e) =>
         e.id === id
-          ? { ...e, name: input.name.trim(), address: getAddress(input.address), salary: input.salary.trim() }
+          ? {
+              ...e,
+              name: input.name.trim(),
+              role: input.role?.trim() || undefined,
+              address: getAddress(input.address),
+              salary: input.salary.trim(),
+            }
           : e,
       ),
     );

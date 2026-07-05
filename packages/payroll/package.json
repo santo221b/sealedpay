@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@dispersekit/widget": "*",
+    "@rainbow-me/rainbowkit": "^2.2.11",
+    "framer-motion": "^12.42.2",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "viem": "^2.38.0",

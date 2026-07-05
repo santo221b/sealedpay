@@ -8,6 +8,21 @@
  */
 import { useCallback, useEffect, useState } from "react";
 
+/**
+ * Per-employee snapshot of a run. Deliberately NO plaintext amounts — only
+ * the ciphertext HANDLES from the on-chain event. The employer holds
+ * permanent decrypt rights on them, so any past run can be re-verified
+ * ("private AND provable") without ever storing a salary in localStorage.
+ */
+export interface PayoutEntry {
+  name: string;
+  address: `0x${string}`;
+  /** Ciphertext handle of the requested amount (disperse-contract ACL scope). */
+  requested: `0x${string}`;
+  /** Ciphertext handle of what actually moved (token ACL scope). */
+  transferred: `0x${string}`;
+}
+
 export interface PayoutRun {
   id: string;
   /** ISO timestamp of the confirmed run. */
@@ -18,6 +33,8 @@ export interface PayoutRun {
   totalText: string;
   /** Set once the employer runs the decrypt-verify step and all rows match. */
   verified?: boolean;
+  /** Present for runs recorded after the history upgrade. */
+  entries?: PayoutEntry[];
 }
 
 const HISTORY_KEY = "dispersekit.payroll.history.v1";
