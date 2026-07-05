@@ -13,6 +13,7 @@ import {
   LockIcon,
   PrivacyBadge,
   SEPOLIA_CHAIN_ID,
+  themeToCssVars,
   useDisperseFlow,
   useTokenMeta,
   type DeliveryResult,
@@ -22,9 +23,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 
 import { Sidebar, type Screen } from "./components/Sidebar";
-import { PButton } from "./components/kit";
+import { PButton, Spinner } from "./components/kit";
 import { useEmployees } from "./lib/employees";
 import { useHistory, useNextDue } from "./lib/history";
+import { clearPendingRun, savePendingRun, useOrphanRun } from "./lib/orphan";
 import { rosterToRows } from "./lib/roster";
 import { useVerifyRun } from "./lib/verifyRun";
 import { Dashboard } from "./screens/Dashboard";
@@ -32,8 +34,7 @@ import { Payments } from "./screens/Payments";
 import { People } from "./screens/People";
 import { Run } from "./screens/Run";
 import { Settings } from "./screens/Settings";
-import { payrollTheme } from "./theme";
-import { themeToCssVars } from "@dispersekit/widget";
+import { EXPLORER, payrollTheme } from "./theme";
 
 const TOKEN = DEMO_TOKEN_ADDRESS;
 
@@ -59,14 +60,18 @@ function Shell() {
   const { employees, add, update, remove } = useEmployees();
   const { runs, addRun, markVerified } = useHistory();
   const { nextDue, manual, setManual } = useNextDue(runs[0]?.date);
-  const { symbol: rawSymbol, decimals } = useTokenMeta(TOKEN);
+  const { symbol: rawSymbol, decimals, metaError, refetchMeta } = useTokenMeta(TOKEN);
   const symbol = rawSymbol ?? "cUSDd";
   const retro = useVerifyRun(TOKEN);
-  const [openAddSignal, setOpenAddSignal] = useState(0);
+  const orphanRun = useOrphanRun(addRun);
+  const [autoOpenAdd, setAutoOpenAdd] = useState(false);
   const [runWarnings, setRunWarnings] = useState<string[]>([]);
   const [runProblems, setRunProblems] = useState<string[]>([]);
   // Snapshot taken when a run starts, consumed when delivery confirms.
-  const pendingRun = useRef<{ totalText: string; names: Map<string, string> }>(undefined);
+  // Names are POSITIONAL (aligned with the submitted rows): an address-keyed
+  // map would collapse duplicate-wallet employees onto one name in the
+  // permanent history.
+  const pendingRun = useRef<{ totalText: string; names: string[] }>(undefined);
 
   const onDispersed = useCallback(
     (result: DeliveryResult) => {
@@ -77,17 +82,31 @@ function Shell() {
         totalText: meta?.totalText ?? "",
         // Ciphertext handles only — provable later, never plaintext.
         entries: result.recipients.map((address, i) => ({
-          name: meta?.names.get(address.toLowerCase()) ?? "—",
+          name: meta?.names[i] ?? "—",
           address,
           requested: result.requested[i],
           transferred: result.transferred[i],
         })),
       });
+      clearPendingRun();
     },
     [addRun],
   );
 
   const flow = useDisperseFlow({ token: TOKEN, chainId: SEPOLIA_CHAIN_ID, onDispersed });
+
+  // The instant the engine has a broadcast hash, persist a recovery record —
+  // a closed tab between broadcast and confirmation must never lose the run.
+  useEffect(() => {
+    if (flow.pendingTxHash && pendingRun.current) {
+      savePendingRun({
+        txHash: flow.pendingTxHash,
+        names: pendingRun.current.names,
+        totalText: pendingRun.current.totalText,
+        startedAt: new Date().toISOString(),
+      });
+    }
+  }, [flow.pendingTxHash]);
 
   // Relay the immediate post-run verification into history's ✓ badge.
   const reportedFor = useRef<string>(undefined);
@@ -98,30 +117,44 @@ function Shell() {
     }
   }, [flow.verification, flow.delivery, markVerified]);
 
-  const canRun = isConnected && chain?.id === SEPOLIA_CHAIN_ID && employees.length > 0 && decimals !== undefined && Boolean(TOKEN);
+  // Roster edits invalidate previous "fix before running" messages.
+  useEffect(() => {
+    setRunProblems([]);
+  }, [employees]);
 
-  const total = useMemo(() => {
+  const walletReady = isConnected && chain?.id === SEPOLIA_CHAIN_ID;
+  const canRun = walletReady && employees.length > 0 && decimals !== undefined && Boolean(TOKEN);
+
+  const roster = useMemo(() => {
     if (decimals === undefined || employees.length === 0) return undefined;
-    try {
-      return rosterToRows(employees, decimals).total;
-    } catch {
-      return undefined;
-    }
+    return rosterToRows(employees, decimals);
   }, [employees, decimals]);
+  // An invalid roster must read as "needs attention", not as a smaller total.
+  const total = roster && roster.issues.length === 0 ? roster.total : undefined;
+  const rosterInvalid = Boolean(roster && roster.issues.length > 0);
 
-  /** The only path into the run screen: parse the roster, hand rows to the engine. */
+  /**
+   * The only path into the run screen. Gated on the engine being idle: a run
+   * already encrypting/paying/confirming must be RETURNED TO, never restarted
+   * — restarting mid-flight is a double-payout invitation.
+   */
   const startRun = useCallback(() => {
+    if (flow.phase !== "input") {
+      setScreen("run");
+      return;
+    }
     if (decimals === undefined) return;
     const parsed = rosterToRows(employees, decimals);
     setRunProblems(parsed.namedProblems);
-    setRunWarnings(parsed.warnings);
+    setRunWarnings(parsed.namedWarnings);
     if (parsed.issues.length > 0 || parsed.rows.length === 0) {
       setScreen("people"); // problems are fixed on the roster, show them there
       return;
     }
     pendingRun.current = {
       totalText: formatAmount(parsed.total, decimals),
-      names: new Map(employees.map((e) => [e.address.toLowerCase(), e.name])),
+      // rows[i] ↔ employees[i]: one line per employee, and issues.length === 0.
+      names: employees.map((e) => e.name),
     };
     void flow.goToReview(parsed.rows);
     setScreen("run");
@@ -129,6 +162,7 @@ function Shell() {
 
   const finishRun = useCallback(() => {
     flow.reset();
+    clearPendingRun();
     setScreen("dashboard");
   }, [flow]);
 
@@ -143,6 +177,8 @@ function Shell() {
 
   const header = TITLES[screen];
   const runInProgress = flow.phase !== "input" && screen !== "run";
+  // An orphan record matching the live flow isn't an orphan — it's this run.
+  const orphan = orphanRun.orphan && orphanRun.orphan.txHash !== flow.pendingTxHash ? orphanRun.orphan : null;
 
   return (
     <div style={themeToCssVars(payrollTheme) as React.CSSProperties} className="flex min-h-screen bg-stone-50 text-stone-900">
@@ -162,8 +198,8 @@ function Shell() {
             <div className="flex shrink-0 items-center gap-2">
               {screen !== "run" && (
                 // Hidden on very narrow widths — the Dashboard card carries the CTA there.
-                <PButton onClick={startRun} disabled={!canRun} className="hidden sm:inline-flex">
-                  <LockIcon /> Run payroll
+                <PButton onClick={startRun} disabled={!canRun && flow.phase === "input"} className="hidden sm:inline-flex">
+                  <LockIcon /> {flow.phase !== "input" ? "Return to run" : "Run payroll"}
                 </PButton>
               )}
               <PrivacyBadge
@@ -187,6 +223,36 @@ function Shell() {
         </header>
 
         <main className="px-8 py-6">
+          {metaError && (
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-xl bg-red-50 p-3 text-xs text-red-600">
+              <span>Couldn't load token details from Sepolia — amounts can't be shown until this succeeds.</span>
+              <PButton variant="outline" onClick={() => void refetchMeta()}>
+                Retry
+              </PButton>
+            </div>
+          )}
+
+          {orphan && flow.phase === "input" && (
+            <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 p-3 text-xs text-orange-800">
+              <p className="mb-2">
+                An earlier payroll run was sent (
+                <a className="font-mono underline" href={`${EXPLORER}/tx/${orphan.txHash}`} target="_blank" rel="noreferrer">
+                  {orphan.txHash.slice(0, 10)}…
+                </a>
+                ) but this page closed before it was recorded. Recover it before running payroll again.
+              </p>
+              <div className="flex items-center gap-2">
+                <PButton onClick={() => void orphanRun.recover()} disabled={orphanRun.busy}>
+                  {orphanRun.busy ? <Spinner /> : null} Check &amp; record
+                </PButton>
+                <PButton variant="ghost" onClick={orphanRun.dismiss}>
+                  Dismiss
+                </PButton>
+                {orphanRun.message && <span>{orphanRun.message}</span>}
+              </div>
+            </div>
+          )}
+
           {runProblems.length > 0 && screen === "people" && (
             <div className="mb-4 rounded-xl bg-red-50 p-3 text-xs text-red-600">
               <p className="mb-1 font-semibold">Fix these before running payroll:</p>
@@ -210,13 +276,15 @@ function Shell() {
                   runs={runs}
                   nextDue={nextDue}
                   total={total}
+                  rosterInvalid={rosterInvalid}
                   decimals={decimals}
                   symbol={symbol}
                   canRun={canRun}
+                  runPhase={flow.phase}
                   onRunPayroll={startRun}
                   onAddTeam={() => {
+                    setAutoOpenAdd(true);
                     setScreen("people");
-                    setOpenAddSignal((s) => s + 1);
                   }}
                   onSeeAll={() => setScreen("payments")}
                 />
@@ -229,7 +297,8 @@ function Shell() {
                   onAdd={add}
                   onUpdate={update}
                   onRemove={remove}
-                  openAddSignal={openAddSignal}
+                  autoOpenAdd={autoOpenAdd}
+                  onAutoOpenConsumed={() => setAutoOpenAdd(false)}
                 />
               )}
               {screen === "payments" && (
@@ -237,7 +306,7 @@ function Shell() {
                   runs={runs}
                   symbol={symbol}
                   decimals={decimals}
-                  canVerify={isConnected && chain?.id === SEPOLIA_CHAIN_ID}
+                  walletReady={walletReady}
                   busyRunId={retro.busyRunId}
                   verifyError={retro.error}
                   verified={retro.results}
@@ -248,7 +317,14 @@ function Shell() {
               )}
               {screen === "settings" && <Settings manual={manual} setManual={setManual} nextDue={nextDue} symbol={symbol} />}
               {screen === "run" && (
-                <Run flow={flow} employees={employees} decimals={decimals} symbol={symbol} warnings={runWarnings} onDone={finishRun} />
+                <Run
+                  flow={flow}
+                  names={pendingRun.current?.names}
+                  decimals={decimals}
+                  symbol={symbol}
+                  warnings={runWarnings}
+                  onDone={finishRun}
+                />
               )}
             </motion.div>
           </AnimatePresence>

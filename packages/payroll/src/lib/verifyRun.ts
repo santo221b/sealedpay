@@ -32,13 +32,21 @@ export function useVerifyRun(token: `0x${string}` | undefined) {
   const { address: employer } = useAccount();
   const { data: walletClient } = useWalletClient();
   const [busyRunId, setBusyRunId] = useState<string>();
-  const [error, setError] = useState<string>();
+  // Error is keyed to the run that failed — showing it under whichever row
+  // happens to be open would misattribute it.
+  const [error, setError] = useState<{ runId: string; message: string }>();
   // Decrypted views per run id — session-only, never persisted.
   const [results, setResults] = useState<Record<string, VerifiedEntry[]>>({});
 
   const verifyRun = useCallback(
     async (run: PayoutRun): Promise<boolean | undefined> => {
-      if (!run.entries?.length || !employer || !walletClient || !token) return undefined;
+      if (!run.entries?.length || !employer || !token) return undefined;
+      if (!walletClient) {
+        // Right after connecting, the wallet client hydrates async — a silent
+        // no-op here reads as a broken button.
+        setError({ runId: run.id, message: "Wallet is still connecting — try again in a second." });
+        return undefined;
+      }
       setBusyRunId(run.id);
       setError(undefined);
       try {
@@ -66,7 +74,10 @@ export function useVerifyRun(token: `0x${string}` | undefined) {
         return entries.every((e) => e.ok);
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
-        setError(/user rejected|denied/i.test(message) ? "Request cancelled in the wallet." : message);
+        setError({
+          runId: run.id,
+          message: /user rejected|denied/i.test(message) ? "Request cancelled in the wallet." : message,
+        });
         return undefined;
       } finally {
         setBusyRunId(undefined);

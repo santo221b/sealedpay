@@ -1,5 +1,5 @@
 /** Screen B — the team roster: search, add/edit via drawer, remove. */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AmountCell, AvatarInitials, Drawer, EmptyState, PButton, SectionCard, StatusChip, UsersIcon, WalletChip } from "../components/kit";
 import { validateEmployee, type Employee, type EmployeeInput } from "../lib/employees";
@@ -92,7 +92,8 @@ export function People({
   onAdd,
   onUpdate,
   onRemove,
-  openAddSignal,
+  autoOpenAdd,
+  onAutoOpenConsumed,
 }: {
   employees: Employee[];
   decimals?: number;
@@ -100,16 +101,21 @@ export function People({
   onAdd: (values: EmployeeInput) => void;
   onUpdate: (id: string, values: EmployeeInput) => void;
   onRemove: (id: string) => void;
-  /** Increment to open the add drawer from another screen's CTA. */
-  openAddSignal?: number;
+  /** Open the add drawer on arrival (another screen's CTA). */
+  autoOpenAdd?: boolean;
+  onAutoOpenConsumed?: () => void;
 }) {
   const [search, setSearch] = useState("");
   const [drawer, setDrawer] = useState<{ mode: "add" } | { mode: "edit"; employee: Employee } | null>(null);
-  const [lastSignal, setLastSignal] = useState(openAddSignal ?? 0);
-  if (openAddSignal !== undefined && openAddSignal !== lastSignal) {
-    setLastSignal(openAddSignal);
-    setDrawer({ mode: "add" });
-  }
+  // Mount-time consumption: this screen is unmounted while other screens set
+  // the flag, so a render-time "signal changed?" comparison never fires.
+  useEffect(() => {
+    if (autoOpenAdd) {
+      setDrawer({ mode: "add" });
+      onAutoOpenConsumed?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpenAdd]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();

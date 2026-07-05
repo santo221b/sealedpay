@@ -3,6 +3,19 @@
 > What works, what's stubbed, what's blocked, and the exact next step.
 > Newest entries first.
 
+## 2026-07-05 — Payroll UI polish pass (design brief implementation)
+
+**Works — verified in-browser**
+- Full fintech shell: sidebar (icon rail below `md`), sticky top bar with trust line + Run CTA, wallet status pinned in the sidebar, animated page transitions. Opens on the overview.
+- All four brief screens + Settings: Dashboard (4 stat cards, next-payout card, recent payouts, designed empty state), People (search, add/edit side drawer with name/role/wallet/salary + EIP-55/duplicate warnings), Run (named review → StatusTimeline with wallet-prompt hints → DeliveredPanel reveal in payroll language, cancel/retry paths), Payments (expandable history), Settings (schedule/display-only, addresses, privacy model, clear-data).
+- **Privacy motif throughout**: `AmountCell` masks every amount (`••••` + lock, reveal on click); trust banner; payroll-worded PrivacyBadge.
+- **History is private AND provable**: each run stores per-employee ciphertext HANDLES only (never plaintext) — "Verify this run" decrypts any past run on demand via the engine's exported helpers (employer holds permanent ACL).
+- A run in progress survives navigation (flow owned by the shell + return banner).
+
+**Guardrail — the frozen path did NOT break:** all packages type-check/build; contracts 7/7; **live Sepolia E2E re-run PASSING** after the reskin (tx `0x2a664012…cd76`).
+
+**Pending** — adversarial review fleet running over the new UI; findings will be applied + re-verified. Payroll Vercel deploy still deferred until owner sign-off on the look.
+
 ## 2026-07-05 — Payroll dashboard repackage (structure night)
 
 **Works — verified**

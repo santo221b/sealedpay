@@ -16,7 +16,7 @@ export function Payments({
   runs,
   symbol,
   decimals,
-  canVerify,
+  walletReady,
   busyRunId,
   verifyError,
   verified,
@@ -27,9 +27,10 @@ export function Payments({
   runs: PayoutRun[];
   symbol: string;
   decimals?: number;
-  canVerify: boolean;
+  walletReady: boolean;
   busyRunId?: string;
-  verifyError?: string;
+  /** Keyed to the run that failed — never shown under a different row. */
+  verifyError?: { runId: string; message: string };
   verified: Record<string, VerifiedEntry[]>;
   onVerifyRun: (run: PayoutRun) => void;
   onRunPayroll: () => void;
@@ -74,7 +75,14 @@ export function Payments({
                   </span>
                 </span>
                 <span className="text-stone-500">{run.employeeCount} paid</span>
-                <AmountCell value={run.totalText} suffix={symbol} />
+                <span className="flex items-center gap-1">
+                  <AmountCell value={run.totalText} suffix={symbol} />
+                  {run.verified !== true && (
+                    // Confidential transfers can move encrypted zero on a short
+                    // balance — until verified, the total is what was REQUESTED.
+                    <span className="text-[10px] text-stone-300">requested</span>
+                  )}
+                </span>
                 <span className="flex items-center gap-2">
                   {run.verified === true && <StatusChip tone="green">✓ verified</StatusChip>}
                   {run.verified === false && <StatusChip tone="red">⚠ check delivery</StatusChip>}
@@ -133,11 +141,14 @@ export function Payments({
                           {!entries && (
                             <div className="mt-2 flex items-center justify-between gap-2">
                               <p className="text-[11px] text-stone-400">
-                                Decrypt from the on-chain ciphertexts — one signature, visible only to you.
+                                {walletReady
+                                  ? "Decrypt from the on-chain ciphertexts — one signature, visible only to you."
+                                  : "Connect your employer wallet (Sepolia) to decrypt this run."}
                               </p>
                               <PButton
                                 variant="outline"
-                                disabled={!canVerify || busyRunId === run.id}
+                                disabled={!walletReady || busyRunId === run.id}
+                                title={walletReady ? undefined : "Connect a wallet on Sepolia first"}
                                 onClick={() => onVerifyRun(run)}
                               >
                                 {busyRunId === run.id ? <Spinner /> : <LockIcon />}
@@ -145,8 +156,8 @@ export function Payments({
                               </PButton>
                             </div>
                           )}
-                          {verifyError && busyRunId === undefined && openId === run.id && (
-                            <p className="mt-2 text-xs text-red-600">{verifyError}</p>
+                          {verifyError?.runId === run.id && busyRunId === undefined && (
+                            <p className="mt-2 text-xs text-red-600">{verifyError.message}</p>
                           )}
                         </>
                       )}

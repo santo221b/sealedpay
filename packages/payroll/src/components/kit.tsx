@@ -214,7 +214,8 @@ export function EmptyState({ icon, title, line, cta }: { icon: ReactNode; title:
 }
 
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded-lg bg-stone-100 ${className}`} />;
+  // A span (not div) so it can legally sit inside <p>/<button> containers.
+  return <span className={`block animate-pulse rounded-lg bg-stone-100 ${className}`} />;
 }
 
 export function Drawer({

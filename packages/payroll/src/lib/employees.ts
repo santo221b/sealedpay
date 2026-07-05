@@ -28,8 +28,18 @@ function load(): Employee[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as Employee[];
-    // Defensive: drop rows that no longer validate (manual localStorage edits).
-    return parsed.filter((e) => e.id && e.name && isAddress(e.address) && isValidAmountText(e.salary));
+    // Structural check only. Content problems (bad address, bad amount) are
+    // surfaced in the UI at run time — dropping rows here would silently and
+    // PERMANENTLY delete an employee (the persistence effect writes the
+    // filtered list straight back).
+    return parsed.filter(
+      (e) =>
+        e &&
+        typeof e.id === "string" &&
+        typeof e.name === "string" &&
+        typeof e.address === "string" &&
+        typeof e.salary === "string",
+    );
   } catch {
     return [];
   }

@@ -12,9 +12,11 @@ export function Dashboard({
   runs,
   nextDue,
   total,
+  rosterInvalid,
   decimals,
   symbol,
   canRun,
+  runPhase,
   onRunPayroll,
   onAddTeam,
   onSeeAll,
@@ -23,13 +25,17 @@ export function Dashboard({
   runs: PayoutRun[];
   nextDue?: Date;
   total?: bigint;
+  /** Roster has validation problems — the total must not silently understate. */
+  rosterInvalid: boolean;
   decimals?: number;
   symbol: string;
   canRun: boolean;
+  runPhase: string;
   onRunPayroll: () => void;
   onAddTeam: () => void;
   onSeeAll: () => void;
 }) {
+  const runIdle = runPhase === "input";
   const lastRun = runs[0];
   const daysToNext =
     nextDue !== undefined ? Math.max(0, Math.ceil((nextDue.getTime() - Date.now()) / 86_400_000)) : undefined;
@@ -64,13 +70,15 @@ export function Dashboard({
             icon={<LockIcon />}
             label="Monthly payroll"
             value={
-              total !== undefined && decimals !== undefined ? (
+              rosterInvalid ? (
+                "—"
+              ) : total !== undefined && decimals !== undefined ? (
                 <AmountCell value={formatAmount(total, decimals)} suffix={symbol} />
               ) : (
                 <Skeleton className="h-5 w-20" />
               )
             }
-            sub="encrypted on-chain"
+            sub={rosterInvalid ? <span className="text-red-500">fix roster issues in People</span> : "encrypted on-chain"}
           />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
@@ -112,11 +120,11 @@ export function Dashboard({
               Monthly cadence · display only — payroll runs when you click, never automatically
             </p>
           </div>
-          <PButton onClick={onRunPayroll} disabled={!canRun}>
-            <LockIcon /> Run payroll now
+          <PButton onClick={onRunPayroll} disabled={runIdle && !canRun}>
+            <LockIcon /> {runIdle ? "Run payroll now" : "Return to the run in progress"}
           </PButton>
         </div>
-        {!canRun && (
+        {runIdle && !canRun && (
           <p className="mt-2 text-xs text-stone-400">Connect a wallet (Sepolia) to run payroll.</p>
         )}
       </SectionCard>

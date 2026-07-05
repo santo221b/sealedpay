@@ -83,8 +83,14 @@ export function useNextDue(lastRunDate: string | undefined) {
   if (manual) {
     nextDue = new Date(`${manual}T00:00:00`);
   } else if (lastRunDate) {
+    // "+1 month" clamped to the target month's length — naive setMonth would
+    // turn Jan 31 into Mar 3.
     const d = new Date(lastRunDate);
+    const day = d.getDate();
+    d.setDate(1);
     d.setMonth(d.getMonth() + 1);
+    const daysInTarget = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(day, daysInTarget));
     nextDue = d;
   }
 

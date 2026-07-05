@@ -18,10 +18,9 @@ import {
   type DisperseFlow,
 } from "@dispersekit/widget";
 import { motion } from "framer-motion";
-import { useMemo } from "react";
+import { useCallback } from "react";
 
 import { AmountCell, AvatarInitials, LockIcon, PButton, SectionCard } from "../components/kit";
-import type { Employee } from "../lib/employees";
 import { EXPLORER, payrollTheme } from "../theme";
 
 const WALLET_HINTS: Record<string, string> = {
@@ -31,23 +30,36 @@ const WALLET_HINTS: Record<string, string> = {
 
 export function Run({
   flow,
-  employees,
+  names,
   decimals,
   symbol,
   warnings,
   onDone,
 }: {
   flow: DisperseFlow;
-  employees: Employee[];
+  /**
+   * POSITIONAL name snapshot taken at run start, aligned with flow.rows /
+   * the delivery arrays. An address-keyed lookup would collapse duplicate
+   * wallets onto one name; positional labels keep every row attributed.
+   */
+  names?: string[];
   decimals?: number;
   symbol: string;
   warnings: string[];
   onDone: () => void;
 }) {
-  const nameByAddress = useMemo(() => {
-    const map = new Map(employees.map((e) => [e.address.toLowerCase(), e.name]));
-    return (address: `0x${string}`) => map.get(address.toLowerCase());
-  }, [employees]);
+  // DeliveredPanel's nameFor is address-keyed (frozen widget API) — build it
+  // first-index-wins from the delivery so at least the first duplicate keeps
+  // its own name; the durable history is positional and always correct.
+  const nameFor = useCallback(
+    (address: `0x${string}`) => {
+      const recipients = flow.delivery?.recipients;
+      if (!recipients || !names) return undefined;
+      const index = recipients.findIndex((a) => a.toLowerCase() === address.toLowerCase());
+      return index >= 0 ? names[index] : undefined;
+    },
+    [flow.delivery, names],
+  );
 
   const inFlight = ["encrypting", "authorizing", "dispersing", "confirming"].includes(flow.phase);
   const overCap = flow.maxRecipients !== undefined && flow.rows.length > flow.maxRecipients;
@@ -60,7 +72,7 @@ export function Run({
         <SectionCard title={`Review payroll · ${flow.rows.length} ${flow.rows.length === 1 ? "person" : "people"}`}>
           <ul className="mb-4 max-h-64 divide-y divide-stone-100 overflow-y-auto">
             {flow.rows.map((row, i) => {
-              const name = nameByAddress(row.address) ?? "—";
+              const name = names?.[i] ?? "—";
               return (
                 <li key={i} className="flex items-center justify-between gap-2 py-2">
                   <span className="flex items-center gap-2.5">
@@ -141,7 +153,7 @@ export function Run({
             explorerBase={EXPLORER}
             onVerify={() => void flow.verifyDelivery()}
             onReset={onDone}
-            nameFor={nameByAddress}
+            nameFor={nameFor}
             labels={{
               title: "Salaries delivered confidentially",
               verify: "Verify salaries were delivered",
