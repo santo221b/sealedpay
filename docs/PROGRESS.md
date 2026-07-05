@@ -14,7 +14,9 @@
 
 **Guardrail — the frozen path did NOT break:** all packages type-check/build; contracts 7/7; **live Sepolia E2E re-run PASSING** after the reskin (tx `0x2a664012…cd76`).
 
-**Pending** — adversarial review fleet running over the new UI; findings will be applied + re-verified. Payroll Vercel deploy still deferred until owner sign-off on the look.
+**Review fleet applied (same evening)** — 27 agents, 4 lenses, per-finding adversarial verification: 23 confirmed findings (14 distinct), all fixed in commit `690be0e`. Highlights: the double-payout gate on `startRun` (critical), positional name snapshots for duplicate-wallet employees, **orphan-run recovery** (pending tx persisted at broadcast; after a refresh the dashboard offers "Check & record", which re-parses the real receipt — functionally verified against a live past Sepolia tx), no more silent employee-row deletion, invalid-roster totals read "fix roster" instead of understating. Re-verified after fixes: all builds green, contracts 7/7, **live Sepolia E2E passing** (tx `0x33a47373…9908`), browser console clean.
+
+**Pending** — payroll Vercel deploy deferred until owner sign-off on the look (project settings noted below).
 
 ## 2026-07-05 — Payroll dashboard repackage (structure night)
 
