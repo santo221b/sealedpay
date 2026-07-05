@@ -31,8 +31,9 @@ The recipient signs an EIP-712 decryption request; the relayer checks the on-cha
 
 ## Packages
 
-- **`packages/contracts`** — Hardhat (fhevm template). `ConfidentialTokenDemo` (ERC-7984 + public mint faucet for the demo) and the disperse contract. Mock-mode tests prove the full flow without any external service.
-- **`packages/widget`** — the product. `DisperseWidget.tsx` (sender flow), `ReceiptWidget.tsx` (recipient flow), `lib/fhe/` (SDK init + encrypt/decrypt helpers), self-contained wallet providers (wagmi + RainbowKit) so the host app needs nothing.
+- **`packages/payroll`** — **SealedPay**, the product: an employer-only confidential payroll dashboard skinned over the engine (roster/history in localStorage; the one engine touchpoint is documented as THE SEAM in `src/screens/Run.tsx`).
+- **`packages/widget`** — **DisperseKit**, the engine. `DisperseWidget.tsx` (sender flow), `ReceiptWidget.tsx` (recipient flow), `lib/fhe/` (SDK init + encrypt/decrypt helpers), the shared `useDisperseFlow` state machine, self-contained wallet providers (wagmi + RainbowKit) so a host app needs nothing.
+- **`packages/contracts`** — Hardhat (fhevm template). `ConfidentialTokenDemo` (ERC-7984 + public mint faucet for the demo) and the audited TokenOps disperse contract. Mock-mode tests prove the full flow without any external service.
 - **`packages/demo-host`** — a fictional partner app ("Acme Payroll") embedding both widgets with one import each, restyled via the theme prop.
 
 <!-- TODO(phase-b): pin down the exact disperse contract API once the TokenOps research lands; keep this file in sync with the deployed source. -->

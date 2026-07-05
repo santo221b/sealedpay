@@ -1,7 +1,8 @@
 /**
- * Confidential Payroll — employer-only dashboard over the frozen DisperseKit
- * engine. Shell owns all shared state (roster, history, THE flow instance) so
- * a payroll run survives navigation between screens.
+ * SealedPay — the confidential payroll product: an employer-only dashboard
+ * over the frozen DisperseKit engine. Shell owns all shared state (roster,
+ * history, THE flow instance) so a payroll run survives navigation between
+ * screens.
  *
  * Deliberately absent: employee logins, scheduling/automation (next-due is
  * display-only), taxes/compliance, and any new on-chain code.
@@ -328,6 +329,10 @@ function Shell() {
               )}
             </motion.div>
           </AnimatePresence>
+
+          <p className="mt-10 pb-4 text-center text-[10px] text-stone-400/80">
+            SealedPay · Powered by DisperseKit · TokenOps disperse · Zama FHE
+          </p>
         </main>
       </div>
     </div>

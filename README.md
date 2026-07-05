@@ -1,7 +1,11 @@
-# DisperseKit 🕊️
+# SealedPay 🔒
 
-**A white-label confidential disperse widget for the Zama Protocol.**
-One import. One click. A confidential bulk payout — every amount encrypted on-chain, decryptable only by its recipient.
+**SealedPay — confidential payroll on-chain. Pay your whole team in one transaction; salaries stay encrypted. Built on TokenOps confidential disperse × Zama FHE.**
+
+Two layers live in this repo:
+
+- **SealedPay** — the product: an employer-only payroll dashboard ([`packages/payroll`](packages/payroll)). Manage a team, click *Run payroll*, and every salary is delivered in a single confidential transaction — encrypted end-to-end, decryptable only by the employer and each individual employee, with delivery *proven* by decryption rather than assumed.
+- **DisperseKit** — the engine: a white-label confidential disperse widget ([`packages/widget`](packages/widget)). One import, one click, a confidential bulk payout. SealedPay is a skin over it; any partner app can be too.
 
 > Built for the Zama Developer Program Mainnet Season 3 — Special Bounty Track × TokenOps.
 
@@ -19,7 +23,8 @@ That's the whole integration. Recipients, amounts, encryption, operator approval
 
 ## Live demos
 
-- **Widget playground** — [dispersekit-widget.vercel.app](https://dispersekit-widget.vercel.app) (the widget standalone + a gallery of every state + the integration test bench)
+- **SealedPay (the product)** — `npm run dev:payroll` (Vercel deploy pending final sign-off; will live at a `sealedpay` project)
+- **DisperseKit widget playground** — [dispersekit-widget.vercel.app](https://dispersekit-widget.vercel.app) (the engine standalone + a gallery of every state + the integration test bench)
 - **White-label embed** — [dispersekit-demo.vercel.app](https://dispersekit-demo.vercel.app) ("Acme Payroll", a fictional partner product embedding the widget with one import)
 
 ## Deployed contracts (Sepolia)
@@ -55,9 +60,10 @@ Full model: [docs/CONFIDENTIALITY.md](docs/CONFIDENTIALITY.md)
 
 | Package | What it is |
 |---|---|
-| [`packages/contracts`](packages/contracts) | Hardhat project — ERC-7984 demo token + confidential disperse contract (Sepolia) |
-| [`packages/widget`](packages/widget) | The product: the single-import `<DisperseWidget />` React component |
-| [`packages/demo-host`](packages/demo-host) | A mock partner app that embeds the widget — the white-label story |
+| [`packages/payroll`](packages/payroll) | **SealedPay** — the confidential payroll dashboard (the product) |
+| [`packages/widget`](packages/widget) | **DisperseKit** — the engine: the single-import `<DisperseWidget />` + the shared disperse flow |
+| [`packages/contracts`](packages/contracts) | Hardhat project — ERC-7984 demo token + the audited TokenOps disperse contract (Sepolia) |
+| [`packages/demo-host`](packages/demo-host) | "Acme Payroll", a mock partner app embedding the widget — the white-label story |
 
 ## Quickstart
 
@@ -65,7 +71,8 @@ Full model: [docs/CONFIDENTIALITY.md](docs/CONFIDENTIALITY.md)
 git clone <this-repo> && cd dispersekit
 npm install
 npm run test:contracts   # bulk disperse + per-recipient decryption, proven in the FHEVM mock
-npm run dev:widget       # widget playground
+npm run dev:payroll      # SealedPay — the confidential payroll dashboard
+npm run dev:widget       # DisperseKit widget playground
 npm run dev:demo         # partner app embedding the widget
 ```
 

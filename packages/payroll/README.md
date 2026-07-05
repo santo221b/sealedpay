@@ -1,8 +1,13 @@
-# @dispersekit/payroll
+# SealedPay (`@dispersekit/payroll`)
 
-A minimal, employer-only **confidential payroll dashboard** — the second skin
-over the DisperseKit engine. "Run payroll" *is* the existing confidential
-disperse flow; this package adds zero on-chain or cryptographic code.
+**SealedPay — confidential payroll on-chain.** Pay your whole team in one
+transaction; salaries stay encrypted. Built on TokenOps confidential
+disperse × Zama FHE.
+
+SealedPay is the product; **DisperseKit is the engine** underneath. "Run
+payroll" *is* the existing confidential disperse flow; this package adds zero
+on-chain or cryptographic code. (The package keeps its `@dispersekit/payroll`
+name — code identifiers are engine-side.)
 
 ```bash
 npm run dev   # http://localhost:5175   (root: npm run dev:payroll)

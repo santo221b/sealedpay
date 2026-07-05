@@ -4,61 +4,62 @@
 > #ZamaDeveloperProgram. Add the live demo + repo links when deployed.
 
 **1/**
-Every on-chain payout is public. Payroll, grants, airdrops — amounts for the
-whole world to read.
+Run payroll on a public chain and you've published everyone's salary.
 
-We built DisperseKit: confidential bulk payouts as a one-import widget, on
-@zama_fhe's FHE protocol + the audited TokenOps disperse contract.
+We built SealedPay: confidential payroll on-chain. Pay your whole team in one
+transaction — salaries stay encrypted. Built on TokenOps confidential
+disperse × @zama_fhe FHE.
 
 🧵👇 #ZamaDeveloperProgram
 
 **2/**
-The sender flow: paste recipients + amounts → one click.
+The employer flow: a roster, one button.
 
-Amounts are encrypted *in the browser* — a single ZK proof covers the whole
-batch — and one transaction pays everyone. On-chain, each amount is an opaque
-ciphertext handle. [screenshot: review + timeline]
+Salaries are encrypted *in the browser* — one ZK proof covers the whole batch
+— and a single transaction pays everyone. On-chain, each salary is an opaque
+ciphertext handle. [screenshot: dashboard + run timeline]
 
 **3/**
 Honest privacy model (this matters):
-🔒 hidden — every amount, and the total
-👁️ visible — recipient addresses, and that a payout happened
+🔒 hidden — every salary, and the payroll total
+👁️ visible — employee wallet addresses, and that a payroll ran
 
-That's inherent to pushing tokens. The amounts are the secret, and they stay
-one. [screenshot: "What stays private?"]
+That's inherent to pushing tokens. What each person earns stays sealed.
+[screenshot: "What stays private?"]
 
 **4/**
 FHE has a sharp edge: confidential transfers can't revert on insufficient
 balance — they silently move an encrypted *zero*.
 
-DisperseKit decrypts what actually moved after every payout (one signature)
-and flags any zeros. Delivered means delivered. [screenshot: verified panel]
+So SealedPay proves delivery instead of assuming it: one signature decrypts
+what actually moved, per employee. [screenshot: verified panel]
 
 **5/**
-Recipients get a receipt view: connect → one EIP-712 signature → "you
-received X", decrypted locally. Only they can perform that read — enforced by
-the on-chain FHE ACL, not by a promise. [screenshot: receipt]
+Private AND provable, retroactively: payout history stores no amounts at all
+— only on-chain ciphertext handles. Any past payroll can be re-verified on
+demand, and each employee can decrypt only their own salary. Enforced by the
+on-chain FHE ACL, not by a promise. [screenshot: history verify]
 
 **6/**
-And the whole point — it's white-label:
+Under the hood is DisperseKit — our confidential disperse engine, packaged as
+a one-import widget:
 
 ```tsx
 import { DisperseWidget } from "@dispersekit/widget";
 <DisperseWidget token={TOKEN} theme={yourBrand} />
 ```
 
-Same widget, your product, your colors. Here it is living inside a fictional
-"Acme Payroll". [screenshot: Acme]
+Same engine, any product. [screenshot: Acme embed]
 
 **7/**
-Under the hood: @zama_fhe relayer SDK (client-side encrypt + user-decrypt),
-ERC-7984 confidential token (operator model, time-boxed), and TokenOps'
-audited DisperseConfidential singleton on Sepolia — we run against the real,
-verified deployment.
+Stack: @zama_fhe relayer SDK (client-side encrypt + user-decrypt), ERC-7984
+confidential token (time-boxed operator model), and TokenOps' audited
+DisperseConfidential singleton on Sepolia — we run against the real, verified
+deployment.
 
 **8/**
-Live demo: <vercel-url>
-Acme embed demo: <vercel-url-2>
+SealedPay (live demo): <vercel-url>
+DisperseKit playground: <vercel-url-2>
 Repo (docs incl. a 5-minute embed guide): <repo-url>
 
 Built for the Zama Developer Program Season 3 special bounty track with

@@ -1,6 +1,6 @@
 {
   "name": "@dispersekit/payroll",
-  "description": "Confidential payroll dashboard — an employer-only skin over the DisperseKit disperse engine. Salaries encrypted end-to-end.",
+  "description": "SealedPay — confidential payroll on-chain. An employer-only dashboard over the DisperseKit disperse engine; salaries encrypted end-to-end.",
   "private": true,
   "version": "0.1.0",
   "type": "module",

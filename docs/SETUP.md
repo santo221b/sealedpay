@@ -23,8 +23,9 @@ This runs the Hardhat suite in the **FHEVM mock** — fund a sender, `setOperato
 ## 3. Run the frontends
 
 ```bash
-npm run dev:widget   # widget playground → http://localhost:5173
-npm run dev:demo     # mock partner app  → http://localhost:5174
+npm run dev:payroll  # SealedPay (the product) → http://localhost:5175
+npm run dev:widget   # widget playground        → http://localhost:5173
+npm run dev:demo     # mock partner app         → http://localhost:5174
 ```
 
 ## 4. Deploy to Sepolia (optional — needed for the live demo)

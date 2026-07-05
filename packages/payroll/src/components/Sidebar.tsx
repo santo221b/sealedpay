@@ -23,8 +23,10 @@ export function Sidebar({ screen, onNav }: { screen: Screen; onNav: (screen: Scr
           <LockIcon />
         </span>
         <div className="hidden leading-tight md:block">
-          <p className="text-sm font-bold text-stone-900">Confidential</p>
-          <p className="text-sm font-bold text-orange-600">Payroll</p>
+          <p className="text-sm font-bold text-stone-900">
+            Sealed<span className="text-orange-600">Pay</span>
+          </p>
+          <p className="text-[10px] font-medium text-stone-400">confidential payroll</p>
         </div>
       </div>
 
