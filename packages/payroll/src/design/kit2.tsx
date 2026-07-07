@@ -183,7 +183,7 @@ export function SettingToggle({
       className="flex w-full items-center justify-between gap-3 py-2 text-left"
     >
       <span className="min-w-0">
-        <span className="block text-[13px] font-medium" style={{ color: tokens.text.nearWhite }}>
+        <span className="block text-[13px] font-normal" style={{ color: tokens.text.nearWhite }}>
           {label}
         </span>
         {sub && (

@@ -178,20 +178,13 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
       animation: reduced ? (false as const) : undefined,
       plugins: {
         legend: { display: false },
-        tooltip: {
-          backgroundColor: "rgba(236,244,240,0.96)",
-          titleColor: "#20302a",
-          bodyColor: "#20302a",
-          titleFont: { family: "Manrope", weight: 700 },
-          bodyFont: { family: "Manrope", weight: 600 },
-          displayColors: false,
-          padding: 10,
-          cornerRadius: 10,
-          callbacks: { label: (c) => ` ${counts[c.dataIndex]} people` },
-        },
+        // No canvas tooltip: it overlapped the slices and rendered beneath the
+        // "05 Employees" HTML center overlay. The legend on the right already
+        // lists every department + count; hover still grows the slice.
+        tooltip: { enabled: false },
       },
     }),
-    [counts, reduced],
+    [reduced],
   );
 
   const lastRun = data.runs[0];

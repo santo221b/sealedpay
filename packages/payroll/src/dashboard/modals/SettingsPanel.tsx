@@ -65,7 +65,7 @@ export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverif
               ))}
             </div>
             <p style={{ fontSize: 10, color: "#8ba297", lineHeight: 1.4, marginTop: 2 }}>
-              Decrypts and confirms each salary (one signature).
+              Decrypts and confirms each salary with one signature.
             </p>
 
             {/* Tapered divider — fades to transparent at both ends. */}
