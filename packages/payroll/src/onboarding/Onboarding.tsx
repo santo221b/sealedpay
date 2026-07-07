@@ -710,11 +710,7 @@ function FundStep() {
       </motion.button>
 
       <p style={{ fontSize: 10.5, color: "#7f9a8f", marginTop: 8, lineHeight: 1.45 }}>
-        A real Sepolia mint, so it needs a little test ETH for gas.{" "}
-        <a href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia" target="_blank" rel="noreferrer" style={{ color: "#5fe3ab", textDecoration: "none", whiteSpace: "nowrap" }}>
-          Get Sepolia ETH
-        </a>
-        . You can also fund later from the dashboard.
+        You can also fund later from the dashboard.
       </p>
     </motion.div>
   );
