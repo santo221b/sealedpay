@@ -151,11 +151,23 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
             {data.people.length} people
           </div>
         </div>
-        <div
-          className="slim-scroll flex flex-col overflow-y-auto overflow-x-hidden"
-          style={{ gap: 5, margin: "11px -13px 0 -13px", padding: "0 13px", maxHeight: 274 }}
-        >
-          {data.people.map((p) => (
+        {data.people.length === 0 ? (
+          <div className="flex flex-col items-center text-center" style={{ padding: "34px 0 26px" }}>
+            <p style={{ fontSize: 13.5, color: tokens.text.secondary }}>No employees yet</p>
+            <p style={{ fontSize: 11.5, color: tokens.text.muted, marginTop: 5 }}>Add someone to run a payroll.</p>
+            <PrimaryButton
+              onClick={onAddEmployee}
+              style={{ marginTop: 16, borderRadius: tokens.radius.pill, background: tokens.accent.primary, color: "#0b1512", fontSize: 12.5, fontWeight: 500, padding: "9px 20px" }}
+            >
+              Add employee
+            </PrimaryButton>
+          </div>
+        ) : (
+          <div
+            className="slim-scroll flex flex-col overflow-y-auto overflow-x-hidden"
+            style={{ gap: 5, margin: "11px -13px 0 -13px", padding: "0 13px", maxHeight: 274 }}
+          >
+            {data.people.map((p) => (
             <button
               key={p.id}
               type="button"
@@ -202,8 +214,9 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
                 </span>
               </span>
             </button>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </GlassCard>
     </div>
   );

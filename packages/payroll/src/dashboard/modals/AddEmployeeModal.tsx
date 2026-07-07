@@ -24,7 +24,8 @@ const inputStyle = {
 
 const labelStyle = { display: "block", fontSize: 10, color: "#9db3aa", marginBottom: 5 } as const;
 
-export function AddEmployeeModal({ open, onClose, onAdd }: AddEmployeeModalProps) {
+export function AddEmployeeModal({ open, onClose, onAdd, initial }: AddEmployeeModalProps) {
+  const editing = Boolean(initial);
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [salary, setSalary] = useState("");
@@ -34,13 +35,14 @@ export function AddEmployeeModal({ open, onClose, onAdd }: AddEmployeeModalProps
 
   useEffect(() => {
     if (open) {
-      setName("");
-      setRole("");
-      setSalary("");
-      setDept("Engineering");
-      setWallet("");
+      setName(initial?.name ?? "");
+      setRole(initial?.role ?? "");
+      setSalary(initial?.salary ?? "");
+      setDept(initial?.dept || "Engineering");
+      setWallet(initial?.wallet ?? "");
       setError(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const valid = name.trim().length > 0 && wallet.trim().length > 0;
@@ -56,10 +58,10 @@ export function AddEmployeeModal({ open, onClose, onAdd }: AddEmployeeModalProps
       <div style={{ padding: 25 }}>
         <StaggerItem index={0}>
           <h2 id="add-employee-title" style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
-            Add employee
+            {editing ? "Edit employee" : "Add employee"}
           </h2>
           <p style={{ fontSize: 12, color: "#9db3aa", marginTop: 5, lineHeight: 1.5 }}>
-            They get a claim link to view their salary privately.
+            {editing ? "Update their details, including the wallet their pay goes to." : "They view their salary privately from the My pay page."}
           </p>
         </StaggerItem>
 
@@ -170,7 +172,7 @@ export function AddEmployeeModal({ open, onClose, onAdd }: AddEmployeeModalProps
               className="flex-1 cursor-pointer rounded-full text-center font-medium transition-transform hover:scale-[1.03] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
               style={{ background: "#f5f8f6", color: "#14503b", fontSize: 12.6, padding: "11px 0" }}
             >
-              Add employee
+              {editing ? "Save changes" : "Add employee"}
             </button>
           </div>
         </StaggerItem>

@@ -55,7 +55,7 @@ import { MyPay } from "./dashboard/screens/MyPay";
 import { Insights } from "./dashboard/screens/Insights";
 import { Team } from "./dashboard/screens/Team";
 import { tokens } from "./design/tokens";
-import { validateEmployee, useEmployees } from "./lib/employees";
+import { validateEmployee, useEmployees, type Employee } from "./lib/employees";
 import { useHistory } from "./lib/history";
 import { useNotifications } from "./lib/notifications";
 import { savePendingRun, useOrphanRun } from "./lib/orphan";
@@ -121,7 +121,8 @@ function Dashboard({ onViewMyPay }: { onViewMyPay: () => void }) {
 
   /* ── data hooks ────────────────────────────────────────────────────────── */
   const { address: employer } = useAccount();
-  const { employees, add, replaceAll } = useEmployees();
+  const { employees, add, update, remove, replaceAll } = useEmployees();
+  const [editEmp, setEditEmp] = useState<Employee | null>(null); // employee being edited
   const { runs: liveRuns, addRun, markVerified } = useHistory();
   const { settings, set: setSetting } = useSettings();
   const { notifs, unread, add: addNotif, markRead, markAllRead } = useNotifications();
@@ -572,6 +573,16 @@ function Dashboard({ onViewMyPay }: { onViewMyPay: () => void }) {
                       onBack={() => setNav(1)}
                       employerAddress={employer}
                       onPay={onPayEmployee}
+                      onEdit={() => {
+                        const e = employees.find((x) => x.id === empId);
+                        if (e) setEditEmp(e);
+                      }}
+                      onRemove={() => {
+                        const e = employees.find((x) => x.id === empId);
+                        if (empId) remove(empId);
+                        if (e) addNotif({ title: "Employee removed", sub: e.name, color: "#9db3aa", tone: "info" });
+                        setNav(1);
+                      }}
                     />
                   )}
                 </motion.div>
@@ -630,6 +641,20 @@ function Dashboard({ onViewMyPay }: { onViewMyPay: () => void }) {
           add({ name: values.name, role: values.role || "Employee", dept: values.dept, address: values.wallet, salary: values.salary || "0" });
           addNotif({ title: "Employee added", sub: `${values.name.trim()} · ${values.dept}`, color: "#9db3aa", tone: "info" });
           setAddOpen(false);
+          return null;
+        }}
+      />
+      <AddEmployeeModal
+        open={Boolean(editEmp)}
+        onClose={() => setEditEmp(null)}
+        initial={editEmp ? { name: editEmp.name, role: editEmp.role ?? "", salary: editEmp.salary, dept: editEmp.dept ?? "Engineering", wallet: editEmp.address } : undefined}
+        onAdd={(values) => {
+          if (!editEmp) return null;
+          const problem = validateEmployee({ name: values.name, role: values.role, dept: values.dept, address: values.wallet, salary: values.salary || "0" }, decimals);
+          if (problem) return problem;
+          update(editEmp.id, { name: values.name, role: values.role || "Employee", dept: values.dept, address: values.wallet, salary: values.salary || "0" });
+          addNotif({ title: "Employee updated", sub: `${values.name.trim()} · ${values.dept}`, color: "#9db3aa", tone: "info" });
+          setEditEmp(null);
           return null;
         }}
       />
