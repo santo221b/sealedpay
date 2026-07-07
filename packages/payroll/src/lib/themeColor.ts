@@ -16,7 +16,9 @@ export function setThemeColor(color: string) {
 /** Top-of-page colours per screen (the very first stop of each background). */
 export const THEME_COLORS = {
   onboarding: "#070c0a",
-  dashboard: "#0c1310",
+  // The dashboard's top edge is now this same near-black, so the toolbar
+  // blends whether or not the browser honours theme-color.
+  dashboard: "#070c0a",
   recipient: "#070d0b",
   signedOut: "#0b1210",
 } as const;

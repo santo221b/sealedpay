@@ -6,7 +6,9 @@
 export const tokens = {
   bg: {
     body: "#070d0b",
-    app: "linear-gradient(180deg, #0c1310 0%, #101915 50%, #0d1411 100%)",
+    // Top edge starts at the onboarding's near-black (#070c0a) so the Safari
+    // toolbar blends with it, then eases into the dashboard tone by ~7%.
+    app: "linear-gradient(180deg, #070c0a 0%, #0c1310 7%, #101915 50%, #0d1411 100%)",
     scrim: "#0D1411F2",
   },
   accent: {

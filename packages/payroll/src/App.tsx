@@ -485,7 +485,7 @@ function Dashboard() {
       {/* Top-edge fade behind the top bar, visible once scrolled */}
       <div
         className="pointer-events-none absolute inset-x-0 top-0 z-30"
-        style={{ height: 96, background: "linear-gradient(180deg, #0c1310 20%, rgba(12,19,16,0) 100%)", opacity: scrolled ? 1 : 0, transition: "opacity .25s" }}
+        style={{ height: 96, background: "linear-gradient(180deg, #070c0a 20%, rgba(7,12,10,0) 100%)", opacity: scrolled ? 1 : 0, transition: "opacity .25s" }}
       />
 
       <TopBar
