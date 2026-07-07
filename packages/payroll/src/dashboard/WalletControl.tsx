@@ -51,28 +51,16 @@ export function WalletControl() {
               style={{ ...PILL, background: "rgba(224,122,106,0.16)", color: "#f0a99d", border: "1px solid rgba(224,122,106,0.5)" }}
             >
               <span style={{ width: 7, height: 7, borderRadius: 999, background: "#e07a6a" }} />
-              Wrong network — switch to Sepolia
+              Wrong network, switch to Sepolia
             </button>
           );
         }
 
-        return (
-          <button
-            type="button"
-            onClick={openChainModal}
-            title="Connected — click to switch network"
-            style={{
-              ...PILL,
-              background: tokens.glass.rail,
-              color: "#cfe6db",
-              border: `1px solid ${tokens.glass.railBorder}`,
-              backdropFilter: "blur(12px)",
-            }}
-          >
-            <span style={{ width: 7, height: 7, borderRadius: 999, background: tokens.accent.primary }} />
-            {account.displayName}
-          </button>
-        );
+        // Connected and on Sepolia: nothing to show here — the address already
+        // lives on the wallet card above Recent activity, so a chip would just
+        // duplicate it. The control only appears when action is needed.
+        void account;
+        return null;
       }}
     </ConnectButton.Custom>
   );
