@@ -219,12 +219,9 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
           margin: "-16px -20px -18px -20px",
           border: "1px solid rgba(255,255,255,0.05)",
           borderRadius: 42,
-          // No backdrop-filter: Safari doesn't clip a backdrop-filter to
-          // border-radius on an overflow-hidden box, so the blurred rectangle
-          // leaked out behind the rounded panel. A solid-ish fill + the green
-          // glow below give the same frosted look in every browser.
+          backdropFilter: "blur(5px)",
           padding: "14px 20px 22px 20px",
-          backgroundColor: "rgba(13,22,18,0.55)",
+          backgroundColor: "#21212145",
         }}
       >
         {/* blurred green glow behind the content */}
