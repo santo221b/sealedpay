@@ -302,7 +302,7 @@ export function Onboarding({ onDone, initialName = "", initialAvatar = "" }: { o
       </motion.div>
 
       {/* Attribution */}
-      <p className="absolute inset-x-0 text-center" style={{ bottom: 22, fontSize: 11, color: "rgba(233,244,238,0.62)", textShadow: "0 1px 5px rgba(6,20,14,0.55)" }}>
+      <p className="absolute inset-x-0 text-center" style={{ bottom: 14, fontSize: 11, color: "rgba(233,244,238,0.62)", textShadow: "0 1px 5px rgba(6,20,14,0.55)" }}>
         SealedPay · Powered by DisperseKit · TokenOps disperse · Zama FHE
       </p>
     </div>
