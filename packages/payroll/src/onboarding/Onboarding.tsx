@@ -23,6 +23,20 @@ const EXIT_EASE = [0.4, 0, 1, 1] as const;
 const TOTAL = 6;
 export const AVATARS = ["/avatars/avatar-1.svg", "/avatars/avatar-2.svg", "/avatars/avatar-3.svg", "/avatars/avatar-profile.svg"];
 
+/**
+ * The "Skip for now, explore with demo data" escape hatch on the wallet step
+ * is hidden by default (a real payroll always connects a wallet). Opt in with
+ * ?allowDemoData (or =true / =1) to expose it for a no-wallet walkthrough.
+ */
+const ALLOW_DEMO_DATA = (() => {
+  try {
+    const v = new URLSearchParams(window.location.search).get("allowDemoData");
+    return v !== null && v !== "false" && v !== "0";
+  } catch {
+    return false;
+  }
+})();
+
 /* ── Welcome decrypt-scramble (exact prototype parameters) ───────────────── */
 
 const GLYPHS = "*#$%";
@@ -244,6 +258,7 @@ export function Onboarding({ onDone, initialName = "", initialAvatar = "" }: { o
                   onConnect={() => openConnectModal?.()}
                   onSwitch={() => openChainModal?.()}
                   onSkip={finish}
+                  allowSkip={ALLOW_DEMO_DATA}
                 />
               )}
               {step === 5 && <StepAllSet nameComma={nameComma} avatar={avatar || AVATARS[0]} />}
@@ -483,6 +498,7 @@ function StepWallet({
   onConnect,
   onSwitch,
   onSkip,
+  allowSkip,
 }: {
   isConnected: boolean;
   onSepolia: boolean;
@@ -491,6 +507,7 @@ function StepWallet({
   onConnect: () => void;
   onSwitch: () => void;
   onSkip: () => void;
+  allowSkip: boolean;
 }) {
   const reduced = useReducedMotion();
   const walletReady = isConnected && onSepolia;
@@ -573,7 +590,7 @@ function StepWallet({
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#34d399" }} />
             </motion.div>
           )}
-          {!walletReady && (
+          {allowSkip && !walletReady && (
             <button
               type="button"
               onClick={onSkip}
