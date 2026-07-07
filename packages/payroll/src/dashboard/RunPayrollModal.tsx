@@ -27,7 +27,9 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 import { SealAmount, RevealAmount } from "../design/RevealAmount";
+import { CloseButton } from "../design/CloseButton";
 import { DocCheckGlyph, PersonKeyGlyph } from "../design/icons";
+import { humanizeError } from "../lib/humanizeError";
 import { fmtAmount, initials } from "../lib/seed";
 import type { Person } from "./contracts";
 
@@ -68,6 +70,9 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
   const [deliveredN, setDeliveredN] = useState(0);
   // Selected snapshot for steps 1-3 (selection order = row order = event order).
   const [running, setRunning] = useState<Person[]>([]);
+  // Holds the encrypting step on screen for a minimum time so the seal cascade
+  // always plays out, even when the browser seals the amount in a split second.
+  const [encHold, setEncHold] = useState(false);
 
   // One-off "Pay {name}" mode: opened from an Employee page for a single person.
   // The recipient + amount are editable and DO NOT persist to the roster — this
@@ -108,20 +113,44 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
   const total = selected.reduce((a, p) => a + p.salary, 0);
   const phase = flow.phase;
 
-  const step: DesignStep =
-    phase === "input" || phase === "review" ? 0 : phase === "encrypting" ? 1 : phase === "authorizing" ? 2 : 3;
-
-  /* Encrypting cascade: one card seals every 720ms while the REAL proof runs. */
+  /* Minimum encrypting dwell: keep the step visible long enough for the whole
+     seal cascade to land, no matter how fast the real FHE proof returns. */
   useEffect(() => {
-    if (phase !== "encrypting" || reduced) {
-      if (phase !== "encrypting") setEncIdx(0);
+    if (phase === "encrypting") {
+      setEncHold(true);
+      const ms = Math.max(1300, running.length * 720 + 500);
+      const t = window.setTimeout(() => setEncHold(false), ms);
+      return () => window.clearTimeout(t);
+    }
+    // A pre-broadcast error drops us back to review/input — never mask that.
+    if (phase === "input" || phase === "review") setEncHold(false);
+  }, [phase, running.length]);
+
+  // Visually "still encrypting" = the engine is encrypting OR we are holding the
+  // step open so the animation can finish. Never hold over review/input, so a
+  // pre-broadcast error surfaces immediately instead of flashing the cascade.
+  const showEncrypting = phase !== "input" && phase !== "review" && (phase === "encrypting" || encHold);
+
+  const step: DesignStep = showEncrypting
+    ? 1
+    : phase === "input" || phase === "review"
+      ? 0
+      : phase === "authorizing"
+        ? 2
+        : 3;
+
+  /* Encrypting cascade: one card seals every 720ms for as long as the step is
+     shown (real proof + the minimum-dwell hold). */
+  useEffect(() => {
+    if (!showEncrypting || reduced) {
+      if (!showEncrypting) setEncIdx(0);
       else setEncIdx(running.length + 1);
       return;
     }
     setEncIdx(0);
     const t = window.setInterval(() => setEncIdx((k) => k + 1), 720);
     return () => window.clearInterval(t);
-  }, [phase, reduced, running.length]);
+  }, [showEncrypting, reduced, running.length]);
 
   /* Real verification feeds the Paid cascade (140ms per row). */
   const verification = flow.verification;
@@ -245,19 +274,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
             </div>
 
             {/* Close — hidden mid-transaction so a broadcast is never abandoned. */}
-            {!inTx && (
-              <button
-                type="button"
-                onClick={requestClose}
-                aria-label="Close"
-                className="absolute z-[2] flex cursor-pointer items-center justify-center rounded-full"
-                style={{ top: 16, right: 16, width: 28, height: 28, background: "rgba(255,255,255,0.06)", color: "#9db3aa" }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden>
-                  <path d="M6 6l12 12M18 6L6 18" />
-                </svg>
-              </button>
-            )}
+            {!inTx && <CloseButton onClick={requestClose} className="absolute z-[2]" style={{ top: 15, right: 15 }} />}
 
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
@@ -281,7 +298,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
                     total={total}
                     payReveal={payReveal}
                     onToggleReveal={() => setPayReveal((r) => !r)}
-                    error={startError ?? flow.error}
+                    error={humanizeError(startError ?? flow.error)}
                     busy={phase === "review" && running.length > 0}
                     onContinue={() => void handleContinue()}
                     single={single}
@@ -307,7 +324,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
                     deliveredN={deliveredN}
                     people={running}
                     progressWidth={progressWidth}
-                    error={flow.error}
+                    error={humanizeError(flow.error)}
                     // Retry confirmation only BEFORE delivery is confirmed — once
                     // flow.delivery exists, retrying would re-fire onDispersed and
                     // double-record the run; a post-delivery verify error is
@@ -329,7 +346,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
                     // Offer a manual verify whenever no verification exists yet
                     // (covers both autoverify-off and a rejected auto-verify).
                     onVerify={verification ? undefined : () => void flow.verifyDelivery()}
-                    verifyError={flow.error}
+                    verifyError={humanizeError(flow.error)}
                     verifying={flow.verifying}
                     onDone={onClose}
                   />
@@ -755,7 +772,7 @@ function Finale(props: {
   void formatAmount;
   return (
     <div className="text-center" style={{ padding: "12px 6px 4px 6px" }}>
-      <div className="relative mx-auto flex items-center justify-center" style={{ width: 78, height: 78 }}>
+      <div className="relative mx-auto flex items-center justify-center" style={{ width: 96, height: 96 }}>
         <motion.span
           className="absolute rounded-full"
           style={{ inset: -12, background: "radial-gradient(circle, rgba(95,230,175,0.2), transparent 72%)" }}
@@ -764,7 +781,7 @@ function Finale(props: {
           transition={{ duration: 1.1, ease: "easeOut" }}
         />
         <motion.span initial={{ scale: 0 }} animate={{ scale: [0, 1.18, 1] }} transition={{ duration: 0.55, ease: EASE }}>
-          <DocCheckGlyph size={56} color="#5fe3ab" />
+          <DocCheckGlyph size={80} color="#5fe3ab" />
         </motion.span>
       </div>
       <h2 style={{ fontSize: 22, fontWeight: 700, color: "#f2f7f4", marginTop: 14 }}>{props.single ? "Payment delivered" : "Payroll delivered"}</h2>
@@ -779,7 +796,7 @@ function Finale(props: {
         <span style={{ fontSize: 12, color: "#9db3aa" }}>cUSDd</span>
       </button>
       <button type="button" onClick={props.onToggleResult} className="mt-2 cursor-pointer hover:underline" style={{ fontSize: 10.5, color: "#78e9c0" }}>
-        {props.resultReveal ? "Hide total" : "Reveal total (employer only)"}
+        {props.resultReveal ? "Hide total" : "Reveal total · Employer only"}
       </button>
 
       {props.onVerify && props.verifiedOk === undefined && (

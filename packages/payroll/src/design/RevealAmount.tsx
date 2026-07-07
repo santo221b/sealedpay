@@ -17,6 +17,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const SCRAMBLE_FRAME_MS = 40;
 const RESOLVE_STAGGER_MS = 60;
+// The encrypt "seal" runs a touch slower (~37%) than a reveal so the ciphertext
+// scramble reads as deliberate rather than a blink.
+const SEAL_FRAME_MS = 54;
+const SEAL_STAGGER_MS = 82;
 const HIDE_MS = 230;
 const GLOW_MS = 640;
 const DIGITS = "0123456789";
@@ -224,7 +228,7 @@ export function SealAmount({
     }
     setPhase("scrambling");
     hiddenCount.current = 0;
-    const scramble = window.setInterval(() => setFrame((f) => f + 1), SCRAMBLE_FRAME_MS);
+    const scramble = window.setInterval(() => setFrame((f) => f + 1), SEAL_FRAME_MS);
     const resolver = window.setInterval(() => {
       hiddenCount.current += 1;
       if (hiddenCount.current >= value.length) {
@@ -232,7 +236,7 @@ export function SealAmount({
         window.clearInterval(resolver);
         setPhase("sealed");
       }
-    }, RESOLVE_STAGGER_MS);
+    }, SEAL_STAGGER_MS);
     return () => {
       window.clearInterval(scramble);
       window.clearInterval(resolver);
