@@ -63,7 +63,7 @@ export function Rail({
         {(bellOpen || gearOpen) && (
           <motion.div
             className="fixed inset-0 z-[9]"
-            style={{ background: "rgba(6,12,10,0.55)" }}
+            style={{ background: "rgba(6,12,10,0.7)" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -126,7 +126,9 @@ export function Rail({
             <GearGlyph size={15} />
           </button>
           {gearPopover && (
-            <div className="absolute z-[10]" style={{ left: 50, top: -7 }} onMouseDown={(e) => e.stopPropagation()}>
+            // The gear sits low on the rail, so the (tall) settings popover
+            // opens UPWARD from the icon's bottom to stay on screen.
+            <div className="absolute z-[10]" style={{ left: 50, bottom: -7 }} onMouseDown={(e) => e.stopPropagation()}>
               {gearPopover}
             </div>
           )}
