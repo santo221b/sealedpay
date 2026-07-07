@@ -82,7 +82,7 @@ export function NotificationsPanel({ open, onClose, notifs, onRead, onMarkAllRea
 
             <div
               className="mt-[9px] flex flex-col gap-1 overflow-y-auto overflow-x-hidden"
-              style={{ maxHeight: "min(56vh, 400px)" }}
+              style={{ maxHeight: "min(40vh, 228px)" }}
             >
               {notifs.map((n) => (
                 <button
@@ -91,8 +91,8 @@ export function NotificationsPanel({ open, onClose, notifs, onRead, onMarkAllRea
                   onClick={() => {
                     if (!n.read) onRead(n.id);
                   }}
-                  className="flex cursor-pointer items-start gap-[9px] rounded-full text-left transition-colors hover:bg-[rgba(95,230,175,0.1)]"
-                  style={{ padding: 7 }}
+                  className="flex cursor-pointer items-start gap-[9px] rounded-2xl text-left transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+                  style={{ padding: "7px 9px" }}
                 >
                   <span
                     className="mt-1 shrink-0 rounded-full"

@@ -5,7 +5,7 @@
  */
 import { ArcElement, Chart as ChartJS, Tooltip } from "chart.js";
 import { motion, useReducedMotion } from "framer-motion";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Doughnut } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
 
@@ -120,6 +120,17 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
   // Which stacked block (month + segment id) the cursor is over, so the tooltip
   // and highlight reflect THAT block, not the whole column's aggregate.
   const [hoverSeg, setHoverSeg] = useState<{ month: string; id: string; total: number; paid: number } | null>(null);
+
+  // Hover-intent: a bar only becomes active after the cursor rests on it for a
+  // beat, so brushing past on the way to another element doesn't hijack it.
+  const HOVER_INTENT_MS = 300;
+  const hoverTimer = useRef<number | undefined>(undefined);
+  const armActive = (m: string) => {
+    window.clearTimeout(hoverTimer.current);
+    hoverTimer.current = window.setTimeout(() => data.setActiveBar(m), HOVER_INTENT_MS);
+  };
+  const cancelActive = () => window.clearTimeout(hoverTimer.current);
+  useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
 
   // Chart buckets: seed runs are the month bases, live runs stack as caps.
   const chart = useMemo(() => {
@@ -269,8 +280,9 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
                 if (hovHere && stacked) return hovHere.id === id ? BAR_COLOR : BAR_DIM;
                 return BAR_COLOR;
               };
+              // Track the hovered segment immediately (for the tooltip content);
+              // the column becomes ACTIVE only after the hover-intent delay.
               const enterSeg = (id: string, segTotal: number, segPaid: number) => () => {
-                data.setActiveBar(m);
                 setHoverSeg({ month: m, id, total: segTotal, paid: segPaid });
               };
               return (
@@ -278,8 +290,11 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
                   key={m}
                   className="relative flex cursor-pointer flex-col items-center justify-end"
                   style={{ height: CH }}
-                  onMouseEnter={() => data.setActiveBar(m)}
-                  onMouseLeave={() => setHoverSeg(null)}
+                  onMouseEnter={() => armActive(m)}
+                  onMouseLeave={() => {
+                    cancelActive();
+                    setHoverSeg(null);
+                  }}
                 >
                   <div className="relative flex flex-col-reverse" style={{ width: 54, gap: 3 }}>
                     {/* base segment */}

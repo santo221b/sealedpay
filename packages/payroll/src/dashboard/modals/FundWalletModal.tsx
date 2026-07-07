@@ -125,21 +125,24 @@ export function FundWalletModal({ open, onClose, employerShort, busy, phase, err
 
           <StaggerItem index={3}>
             <div className="flex gap-[11px]" style={{ marginTop: 23 }}>
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={busy}
-                className="flex-1 cursor-pointer rounded-full text-center font-medium transition-colors hover:bg-[rgba(95,230,175,0.1)] disabled:opacity-45"
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.09)",
-                  color: "#e8f0ec",
-                  fontSize: 12.6,
-                  padding: "11px 0",
-                }}
-              >
-                Cancel
-              </button>
+              {/* While the wallet signature is pending, drop Cancel and let the
+                  confirm button take the full width (its label needs the room). */}
+              {!busy && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 cursor-pointer rounded-full text-center font-medium transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+                  style={{
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.09)",
+                    color: "#e8f0ec",
+                    fontSize: 12.6,
+                    padding: "11px 0",
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {

@@ -171,7 +171,7 @@ export function activityRows(runs: RunView[], people: Person[], fundings: Fundin
     url: f.url,
     icon: "deposit",
   }));
-  return [...fundRows, ...rows].slice(0, 5);
+  return [...fundRows, ...rows].slice(0, 4);
 }
 
 /** Privacy scorecard: every per-recipient amount ever encrypted (seed + live). */
