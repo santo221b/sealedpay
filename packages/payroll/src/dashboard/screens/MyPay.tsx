@@ -37,6 +37,16 @@ const PILL: React.CSSProperties = {
   whiteSpace: "nowrap",
 };
 
+/** Block time as e.g. "7 Jul 2:10pm" (local time). */
+function fmtPaymentTime(ms: number): string {
+  const d = new Date(ms);
+  let h = d.getHours();
+  const ampm = h >= 12 ? "pm" : "am";
+  h = h % 12 || 12;
+  const m = d.getMinutes().toString().padStart(2, "0");
+  return `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })} ${h}:${m}${ampm}`;
+}
+
 /** Connect / switch-network / connected-address, all via RainbowKit. */
 function RecipientWallet({ big = false }: { big?: boolean }) {
   return (
@@ -186,50 +196,7 @@ export function MyPay({ onExit }: { onExit: () => void }) {
               </div>
             </div>
 
-            {/* Payments received */}
-            <div style={{ background: tokens.glass.card, boxShadow: tokens.glass.cardShadow, borderRadius: 18, padding: "20px 22px" }}>
-              <div className="flex items-center justify-between">
-                <div style={{ fontWeight: 400, fontSize: 16, color: tokens.text.heading }}>Payments received</div>
-                <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>{pay.payments.length} found</div>
-              </div>
-
-              {pay.payments.length === 0 ? (
-                <p style={{ fontSize: 12.5, color: tokens.text.muted, marginTop: 14, lineHeight: 1.5 }}>
-                  No confidential payments to this wallet in the recent history. If you were just paid, give the transaction
-                  a moment to settle, then scan again.
-                </p>
-              ) : (
-                <div className="flex flex-col" style={{ gap: 5, marginTop: 12 }}>
-                  {pay.payments.map((p) => (
-                    <div key={p.txHash + p.handle} className="flex items-center" style={{ gap: 12, padding: "8px 4px" }}>
-                      <span className="flex shrink-0 items-center justify-center rounded-full" style={{ width: 36, height: 36, background: tokens.accent.puckBg, border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <ReceiptCheckGlyph size={17} />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block" style={{ fontSize: 13, fontWeight: 500, color: "#eef4f1" }}>from {shortWallet(p.from)}</span>
-                        <span className="tnum block whitespace-nowrap" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
-                          {shortHash(p.txHash)} ·{" "}
-                          <a href={p.url} target="_blank" rel="noreferrer" className="hover:underline" style={{ color: "#4ecba0", textDecoration: "none" }}>
-                            Etherscan
-                          </a>
-                        </span>
-                      </span>
-                      <span className="ml-auto flex items-center" style={{ gap: 4, fontSize: 13.5, fontWeight: 500, color: "#eef4f1" }}>
-                        <span style={{ color: "#78e9c0" }}>+</span>
-                        <RevealAmount
-                          value={p.amount !== undefined ? fmt(p.amount) : undefined}
-                          revealed={p.amount !== undefined && pay.decimals !== undefined}
-                          pending={pay.phase === "revealing"}
-                          label="payment amount"
-                        />
-                        <span>{sym}</span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
+            {/* Reveal sits above the list, which can get long. */}
             {pay.phase !== "revealed" ? (
               // Always reachable after a scan: a recipient may hold a decryptable
               // balance even when no transfer rows fell inside the RPC lookback.
@@ -255,6 +222,51 @@ export function MyPay({ onExit }: { onExit: () => void }) {
                 your wallet can read them.
               </p>
             )}
+
+            {/* Payments received */}
+            <div style={{ background: tokens.glass.card, boxShadow: tokens.glass.cardShadow, borderRadius: 18, padding: "20px 22px" }}>
+              <div className="flex items-center justify-between">
+                <div style={{ fontWeight: 400, fontSize: 16, color: tokens.text.heading }}>Payments received</div>
+                <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>{pay.payments.length} found</div>
+              </div>
+
+              {pay.payments.length === 0 ? (
+                <p style={{ fontSize: 12.5, color: tokens.text.muted, marginTop: 14, lineHeight: 1.5 }}>
+                  No confidential payments to this wallet in the recent history. If you were just paid, give the transaction
+                  a moment to settle, then scan again.
+                </p>
+              ) : (
+                <div className="flex flex-col" style={{ gap: 5, marginTop: 12 }}>
+                  {pay.payments.map((p) => (
+                    <div key={p.txHash + p.handle} className="flex items-center" style={{ gap: 12, padding: "8px 4px" }}>
+                      <span className="flex shrink-0 items-center justify-center rounded-full" style={{ width: 36, height: 36, background: tokens.accent.puckBg, border: "1px solid rgba(255,255,255,0.06)" }}>
+                        <ReceiptCheckGlyph size={17} />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block" style={{ fontSize: 13, fontWeight: 500, color: "#eef4f1" }}>from {shortWallet(p.from)}</span>
+                        <span className="tnum block whitespace-nowrap" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
+                          {p.timestamp ? `${fmtPaymentTime(p.timestamp)} · ` : ""}
+                          {shortHash(p.txHash)} ·{" "}
+                          <a href={p.url} target="_blank" rel="noreferrer" className="hover:underline" style={{ color: "#4ecba0", textDecoration: "none" }}>
+                            Etherscan
+                          </a>
+                        </span>
+                      </span>
+                      <span className="ml-auto flex items-center" style={{ gap: 4, fontSize: 13.5, fontWeight: 500, color: "#eef4f1" }}>
+                        <span style={{ color: "#78e9c0" }}>+</span>
+                        <RevealAmount
+                          value={p.amount !== undefined ? fmt(p.amount) : undefined}
+                          revealed={p.amount !== undefined && pay.decimals !== undefined}
+                          pending={pay.phase === "revealing"}
+                          label="payment amount"
+                        />
+                        <span>{sym}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </>
         )}
 

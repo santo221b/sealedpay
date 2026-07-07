@@ -36,6 +36,8 @@ export interface MyPayment {
   from: `0x${string}`;
   handle: `0x${string}`;
   url: string;
+  /** Block time in ms (from the log's block); undefined if the block read failed. */
+  timestamp?: number;
   /** Set only after the recipient decrypts with their own signature. */
   amount?: bigint;
 }
@@ -87,12 +89,28 @@ export function useMyPay() {
             fromBlock: latest > span ? latest - span : 0n,
             toBlock: latest,
           });
+          // Attach each log's block time (same client that answered getLogs) so
+          // the recipient sees a human-readable date. Best-effort: a failed
+          // block read just leaves that row without a time.
+          const blockNos = [...new Set(logs.map((l) => l.blockNumber).filter((b): b is bigint => b != null))];
+          const timeByBlock = new Map<bigint, number>();
+          await Promise.all(
+            blockNos.map(async (bn) => {
+              try {
+                const blk = await client.getBlock({ blockNumber: bn });
+                timeByBlock.set(bn, Number(blk.timestamp) * 1000);
+              } catch {
+                /* leave this row without a time */
+              }
+            }),
+          );
           const incoming: MyPayment[] = logs
             .map((log) => ({
               txHash: log.transactionHash as `0x${string}`,
               from: log.args.from as `0x${string}`,
               handle: log.args.amount as `0x${string}`,
               url: `https://sepolia.etherscan.io/tx/${log.transactionHash}`,
+              timestamp: log.blockNumber != null ? timeByBlock.get(log.blockNumber) : undefined,
             }))
             .reverse();
           setPayments(incoming);
