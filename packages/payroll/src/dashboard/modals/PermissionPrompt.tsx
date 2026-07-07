@@ -25,6 +25,7 @@ export function PermissionPrompt({ open, onEnable, onDismiss }: PermissionPrompt
             border: "1px solid rgba(255,255,255,0.11)",
             background: "rgba(52,92,72,0.28)",
             backdropFilter: "blur(15px)",
+            WebkitBackdropFilter: "blur(15px)",
             boxShadow: "0 24px 60px -24px rgba(0,0,0,0.6)",
             padding: 18,
           }}

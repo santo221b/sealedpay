@@ -260,7 +260,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
             aria-modal
             aria-label="Run payroll"
             className="relative w-full overflow-hidden"
-            style={{ maxWidth: 468, borderRadius: 27, border: "1px solid rgba(255,255,255,0.11)", background: "#121D1AE6", backdropFilter: "blur(3px)", boxShadow: "0 30px 80px -30px rgba(0,0,0,0.6)", padding: "26px 24px 22px 24px" }}
+            style={{ maxWidth: 468, borderRadius: 27, border: "1px solid rgba(255,255,255,0.11)", background: "#121D1AE6", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", boxShadow: "0 30px 80px -30px rgba(0,0,0,0.6)", padding: "26px 24px 22px 24px" }}
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.97, transition: { duration: 0.17, ease: [0.4, 0, 1, 1] } }}

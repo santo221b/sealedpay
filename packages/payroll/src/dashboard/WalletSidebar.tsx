@@ -220,6 +220,7 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
           border: "1px solid rgba(255,255,255,0.05)",
           borderRadius: 42,
           backdropFilter: "blur(5px)",
+          WebkitBackdropFilter: "blur(5px)",
           padding: "14px 20px 22px 20px",
           backgroundColor: "#21212145",
         }}

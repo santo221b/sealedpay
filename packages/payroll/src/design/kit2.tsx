@@ -249,7 +249,7 @@ export function ModalShell({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: reduced ? 0 : 0.2 }}
-          style={{ background: tokens.bg.scrim, backdropFilter: "blur(10px)" }}
+          style={{ background: tokens.bg.scrim, backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) onClose();
           }}

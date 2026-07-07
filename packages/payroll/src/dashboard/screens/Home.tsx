@@ -340,6 +340,7 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
                             transform: "translateX(-64%)",
                             background: "rgba(57,70,67,0.82)",
                             backdropFilter: "blur(9px)",
+                            WebkitBackdropFilter: "blur(9px)",
                             border: "1px solid rgba(255,255,255,0.14)",
                             boxShadow:
                               "inset 0 1px 0 0 rgba(255,255,255,0.16), inset 0 -1px 0 0 rgba(255,255,255,0.04)",

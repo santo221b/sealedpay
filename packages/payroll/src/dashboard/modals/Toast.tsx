@@ -22,6 +22,7 @@ export function Toast({ toast }: { toast: ToastState | null }) {
               borderRadius: 999,
               padding: "11px 20px",
               backdropFilter: "blur(14px)",
+              WebkitBackdropFilter: "blur(14px)",
               boxShadow: "0 18px 44px -16px rgba(0,0,0,0.55)",
               border: `1px solid ${toast.kind === "ok" ? "rgba(95,230,175,0.45)" : "rgba(224,122,106,0.5)"}`,
               background: toast.kind === "ok" ? "rgba(24,58,44,0.92)" : "rgba(60,34,30,0.92)",
