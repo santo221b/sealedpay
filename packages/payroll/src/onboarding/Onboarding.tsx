@@ -528,8 +528,7 @@ function StepWallet({
       </Item>
       <Item i={2}>
         <p className="mt-3" style={{ fontSize: 14, color: "#9db3aa", lineHeight: 1.5 }}>
-          Payroll settles from your wallet on the Sepolia testnet. It is all free test money; you just need a little
-          Sepolia ETH for gas, from any faucet.
+          Payroll settles from your wallet on Sepolia, with free test money and a little Sepolia ETH for gas from any faucet.
         </p>
       </Item>
       <Item i={3}>
@@ -589,7 +588,6 @@ function StepWallet({
                   {shortDisplay} · Sepolia
                 </span>
               </span>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#34d399" }} />
             </motion.div>
           )}
           {walletReady && <FundStep />}
@@ -709,7 +707,7 @@ function FundStep() {
         {label}
       </motion.button>
 
-      <p style={{ fontSize: 10.5, color: "#7f9a8f", marginTop: 8, lineHeight: 1.45 }}>
+      <p style={{ fontSize: 10.5, color: "#7f9a8f", marginTop: 8, paddingLeft: 5, lineHeight: 1.45 }}>
         You can also fund later from the dashboard.
       </p>
     </motion.div>
