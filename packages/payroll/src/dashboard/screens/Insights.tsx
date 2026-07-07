@@ -1,7 +1,6 @@
 /**
- * INSIGHTS screen (dashboard-screens.md §4 + data-assets §9.2).
- * Payroll health dual-axis line chart, Payroll runway card, Privacy
- * scorecard. Presentation only.
+ * INSIGHTS screen. Payroll spend line chart (total cUSDd disbursed per month),
+ * Payroll runway card, Privacy scorecard. Presentation only.
  */
 import {
   CategoryScale,
@@ -25,29 +24,19 @@ import type { InsightsScreenProps } from "../contracts";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
-/** Seed gas values per seed run (oldest first), from the design's dataset. */
-const SEED_GAS = [0.0013, 0.0013, 0.0014, 0.0014, 0.0015, 0.0015];
-
 export function Insights({ data }: InsightsScreenProps) {
   const reduced = useReducedMotion();
 
-  const { labels, paidData, gasData, paidMax, gasMax } = useMemo(() => {
+  const { labels, spendData, spendMax } = useMemo(() => {
     const ordered = data.runs.slice().reverse(); // oldest first
-    let seedIdx = 0;
-    const paid = ordered.map((r) => r.paid);
-    // A confidential disperse is roughly flat in gas (base + a little per
-    // recipient) — keep it in the believable ~0.0013-0.0016 ETH band, not the
-    // old 0.001*paid which shot a 5-person run off the chart.
-    const gas = ordered.map((r) =>
-      r.live ? Number((0.0013 + 0.00004 * r.paid).toFixed(4)) : (SEED_GAS[seedIdx++] ?? 0.0015),
-    );
-    return {
-      labels: ordered.map((r) => r.month),
-      paidData: paid,
-      gasData: gas,
-      paidMax: Math.max(6, Math.ceil(Math.max(0, ...paid) / 2) * 2), // auto-scale, even step
-      gasMax: Math.max(0.002, Math.ceil((Math.max(0, ...gas) * 1.2) / 0.0005) * 0.0005),
-    };
+    const spend = ordered.map((r) => r.total); // cUSDd disbursed per month
+    // Smallest "nice" ceiling a little above the tallest month (auto-scale).
+    const target = Math.max(0, ...spend, 1) * 1.1;
+    const mag = Math.pow(10, Math.floor(Math.log10(target)));
+    const norm = target / mag;
+    const niceMax =
+      (norm <= 1 ? 1 : norm <= 1.5 ? 1.5 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 3 ? 3 : norm <= 4 ? 4 : norm <= 5 ? 5 : norm <= 6 ? 6 : norm <= 8 ? 8 : 10) * mag;
+    return { labels: ordered.map((r) => r.month), spendData: spend, spendMax: niceMax };
   }, [data.runs]);
 
   const chartData = useMemo<ChartData<"line", number[], string>>(
@@ -55,34 +44,20 @@ export function Insights({ data }: InsightsScreenProps) {
       labels,
       datasets: [
         {
-          label: "Employees paid",
-          yAxisID: "y",
-          data: paidData,
+          label: "Payroll paid",
+          data: spendData,
           borderColor: "#5fe3ab",
-          backgroundColor: "rgba(59,191,142,0.10)",
+          backgroundColor: "rgba(95,227,171,0.12)",
           fill: true,
-          tension: 0.45,
+          tension: 0.4,
           borderWidth: 3,
           pointRadius: 0,
           pointHoverRadius: 5,
           pointBackgroundColor: "#5fe3ab",
         },
-        {
-          label: "Gas (ETH)",
-          yAxisID: "y1",
-          data: gasData,
-          borderColor: "#8b7cf6",
-          backgroundColor: "rgba(139,124,246,0.08)",
-          fill: true,
-          tension: 0.45,
-          borderWidth: 3,
-          pointRadius: 0,
-          pointHoverRadius: 5,
-          pointBackgroundColor: "#8b7cf6",
-        },
       ],
     }),
-    [labels, paidData, gasData],
+    [labels, spendData],
   );
 
   const chartOptions = useMemo<ChartOptions<"line">>(
@@ -103,8 +78,7 @@ export function Insights({ data }: InsightsScreenProps) {
           padding: 10,
           cornerRadius: 10,
           callbacks: {
-            label: (c) =>
-              c.dataset.yAxisID === "y" ? ` ${c.parsed.y} paid` : ` ${(c.parsed.y ?? 0).toFixed(4)} ETH`,
+            label: (c) => ` ${(c.parsed.y ?? 0).toLocaleString("en-US")} cUSDd`,
           },
         },
       },
@@ -115,24 +89,21 @@ export function Insights({ data }: InsightsScreenProps) {
         },
         y: {
           min: 0,
-          max: paidMax,
+          max: spendMax,
           grid: { color: "rgba(255,255,255,0.05)" },
-          ticks: { stepSize: Math.max(1, Math.round(paidMax / 5)), color: "#8ba297", font: { family: "Manrope", size: 11 } },
-        },
-        y1: {
-          position: "right",
-          min: 0,
-          max: gasMax,
-          grid: { drawOnChartArea: false },
           ticks: {
+            stepSize: spendMax / 5,
             color: "#8ba297",
             font: { family: "Manrope", size: 11 },
-            callback: (v) => (Number(v) === 0 ? "0" : Number(v).toFixed(4)),
+            callback: (v) => {
+              const n = Number(v);
+              return n === 0 ? "0" : n >= 1000 ? `${n % 1000 === 0 ? n / 1000 : (n / 1000).toFixed(1)}k` : `${n}`;
+            },
           },
         },
       },
     }),
-    [reduced, paidMax, gasMax],
+    [reduced, spendMax],
   );
 
   return (
@@ -142,21 +113,14 @@ export function Insights({ data }: InsightsScreenProps) {
         Insights
       </h1>
 
-      {/* Payroll health line chart */}
+      {/* Payroll spend line chart — total cUSDd disbursed per month */}
       <GlassCard style={{ padding: "20px 23px" }}>
         <div className="flex items-center justify-between">
-          <div style={{ fontWeight: 400, fontSize: 17 }}>Payroll health</div>
-          <div className="flex items-center" style={{ gap: 14 }}>
-            {[
-              { color: "#5fe3ab", label: "Employees paid" },
-              { color: "#8b7cf6", label: "Gas (ETH)" },
-            ].map((chip) => (
-              <span key={chip.label} className="flex items-center" style={{ gap: 6 }}>
-                <span className="rounded-full" style={{ width: 8, height: 8, background: chip.color }} />
-                <span style={{ fontSize: 11, color: tokens.text.muted }}>{chip.label}</span>
-              </span>
-            ))}
-          </div>
+          <div style={{ fontWeight: 400, fontSize: 17 }}>Payroll spend</div>
+          <span className="flex items-center" style={{ gap: 6, fontSize: 11, color: tokens.accent.pillText }}>
+            <span className="rounded-full" style={{ width: 8, height: 8, background: "#5fe3ab" }} />
+            every run verified · encrypted
+          </span>
         </div>
         <div className="relative" style={{ height: 252, marginTop: 14 }}>
           <Line data={chartData} options={chartOptions} />
