@@ -75,7 +75,7 @@ function ActivityRowView({ row }: { row: ActivityRow }) {
         <span className="block" style={{ fontSize: 13.5, fontWeight: 600, color: "#eef4f1" }}>
           {row.title}
         </span>
-        <span className="tnum block" style={{ fontSize: 10.5, color: "#9eada5", marginTop: 1 }}>
+        <span className="block" style={{ fontSize: 10.5, color: "#9eada5", marginTop: 1 }}>
           {row.sub}
         </span>
       </span>
