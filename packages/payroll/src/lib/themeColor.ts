@@ -19,6 +19,6 @@ export const THEME_COLORS = {
   // The dashboard's top edge is now this same near-black, so the toolbar
   // blends whether or not the browser honours theme-color.
   dashboard: "#070c0a",
-  recipient: "#070d0b",
-  signedOut: "#0b1210",
+  recipient: "#070c0a",
+  signedOut: "#070c0a",
 } as const;

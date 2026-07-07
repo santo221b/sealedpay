@@ -191,7 +191,7 @@ export function useFundWallet(
         const friendly = /user rejected|denied/i.test(message)
           ? "Request cancelled in the wallet."
           : /insufficient funds/i.test(message)
-            ? "Not enough Sepolia ETH for gas — grab some from a faucet."
+            ? "Not enough Sepolia ETH for gas. Grab some from a faucet."
             : message;
         setError(friendly);
         onError?.(friendly);

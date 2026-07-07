@@ -9,14 +9,18 @@
  */
 import { DEMO_TOKEN_ADDRESS, SEPOLIA_CHAIN_ID, erc7984Abi, getFhevmInstance, userDecryptHandles, useTokenMeta } from "@dispersekit/widget";
 import { useCallback, useEffect, useState } from "react";
-import { parseAbiItem, zeroHash } from "viem";
-import { useAccount, usePublicClient, useWalletClient } from "wagmi";
+import { createPublicClient, http, parseAbiItem, zeroHash } from "viem";
+import { sepolia } from "viem/chains";
+import { useAccount, useWalletClient } from "wagmi";
 
 const TOKEN = DEMO_TOKEN_ADDRESS;
 const FHE_NETWORK = "https://ethereum-sepolia-rpc.publicnode.com";
 const TRANSFER_EVENT = parseAbiItem(
   "event ConfidentialTransfer(address indexed from, address indexed to, bytes32 indexed amount)",
 );
+// Dedicated read-only client on a permissive RPC. The wallet's default RPC
+// (thirdweb) caps eth_getLogs block ranges, which broke the payment scan.
+const scanClient = createPublicClient({ chain: sepolia, transport: http(FHE_NETWORK) });
 
 export interface MyPayment {
   txHash: `0x${string}`;
@@ -31,7 +35,6 @@ export type MyPayPhase = "idle" | "scanning" | "revealing" | "revealed";
 
 export function useMyPay() {
   const { address: me, isConnected, chain } = useAccount();
-  const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
   const { symbol, decimals } = useTokenMeta(TOKEN);
 
@@ -53,21 +56,23 @@ export function useMyPay() {
   }, [me]);
 
   const scan = useCallback(async () => {
-    if (!publicClient || !me) return;
+    if (!me) return;
     setPhase("scanning");
     setError(undefined);
     try {
-      const latest = await publicClient.getBlockNumber();
+      const latest = await scanClient.getBlockNumber();
       const getLogs = (span: bigint) =>
-        publicClient.getLogs({
+        scanClient.getLogs({
           address: TOKEN,
           event: TRANSFER_EVENT,
           args: { to: me },
           fromBlock: latest > span ? latest - span : 0n,
           toBlock: latest,
         });
-      // Public RPCs cap getLogs ranges inconsistently; fall back to a narrow scan.
-      const logs = await getLogs(100_000n).catch(() => getLogs(9_000n));
+      // Try a wide window first, then narrower ones if the RPC caps the range.
+      const logs = await getLogs(200_000n)
+        .catch(() => getLogs(20_000n))
+        .catch(() => getLogs(2_000n));
       const incoming: MyPayment[] = logs
         .map((log) => ({
           txHash: log.transactionHash,
@@ -78,7 +83,7 @@ export function useMyPay() {
         .reverse();
       setPayments(incoming);
 
-      const handle = (await publicClient.readContract({
+      const handle = (await scanClient.readContract({
         address: TOKEN,
         abi: erc7984Abi,
         functionName: "confidentialBalanceOf",
@@ -90,7 +95,7 @@ export function useMyPay() {
       setError(e instanceof Error ? e.message : String(e));
       setPhase("idle");
     }
-  }, [publicClient, me]);
+  }, [me]);
 
   const reveal = useCallback(async () => {
     if (!walletClient || !me || !payments) return;

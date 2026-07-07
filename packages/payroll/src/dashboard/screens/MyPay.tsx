@@ -92,7 +92,7 @@ export function MyPay({ onExit }: { onExit: () => void }) {
   return (
     <div
       className="slim-scroll fixed inset-0 z-[80] overflow-y-auto"
-      style={{ background: "radial-gradient(880px 560px at 78% 8%, rgba(52,148,106,0.32), rgba(0,0,0,0) 60%), #070d0b" }}
+      style={{ background: "radial-gradient(880px 560px at 78% 18%, rgba(52,148,106,0.32), rgba(0,0,0,0) 60%), #070c0a" }}
     >
       {/* Top bar */}
       <div className="flex items-center justify-between" style={{ padding: "18px 32px 9px 45px" }}>
@@ -118,8 +118,8 @@ export function MyPay({ onExit }: { onExit: () => void }) {
         <div>
           <h1 style={{ fontWeight: 500, fontSize: 40, color: tokens.text.heading, letterSpacing: 0.45, margin: 0 }}>My pay</h1>
           <p style={{ fontSize: 13.5, color: tokens.text.muted, marginTop: 8, lineHeight: 1.55 }}>
-            See exactly what you have been paid. The amounts are encrypted on-chain — only your wallet can decrypt them.
-            Connect the wallet that received the payments.
+            See exactly what you have been paid. The amounts are encrypted on-chain, so only your wallet can decrypt
+            them. Connect the wallet that received the payments.
           </p>
         </div>
 
@@ -241,8 +241,8 @@ export function MyPay({ onExit }: { onExit: () => void }) {
               </motion.button>
             ) : (
               <p className="text-center" style={{ fontSize: 11.5, color: tokens.text.muted, lineHeight: 1.55 }}>
-                Decrypted locally after your signature. These amounts never appear on-chain or on any server — only your
-                wallet can read them.
+                Decrypted locally after your signature. These amounts never appear on-chain or on any server. Only
+                your wallet can read them.
               </p>
             )}
           </>
