@@ -119,7 +119,7 @@ export function Insights({ data }: InsightsScreenProps) {
           <div style={{ fontWeight: 400, fontSize: 17 }}>Payroll spend</div>
           <span className="flex items-center" style={{ gap: 6, fontSize: 11, color: tokens.accent.pillText }}>
             <span className="rounded-full" style={{ width: 8, height: 8, background: "#5fe3ab" }} />
-            every run verified · encrypted
+            Every run verified · Encrypted
           </span>
         </div>
         <div className="relative" style={{ height: 252, marginTop: 14 }}>

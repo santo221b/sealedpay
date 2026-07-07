@@ -106,8 +106,6 @@ export interface EmployeeViewProps {
   paymentsCount: string; // zero-padded, e.g. "06"
   onBack: () => void;
   employerAddress?: string;
-  /** Validate + persist a new recipient wallet for this employee; returns an error string or null. */
-  onUpdateAddress: (address: string) => string | null;
   /** Open the Run Payroll flow for just this one employee. */
   onPay: () => void;
 }

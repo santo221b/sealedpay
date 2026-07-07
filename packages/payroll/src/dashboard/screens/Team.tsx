@@ -87,10 +87,10 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
             </span>
           </div>
           <div className="tnum relative z-[1]" style={{ fontSize: 25, fontWeight: 700, color: "#fff", marginTop: 18 }}>
-            {String(data.people.length).padStart(2, "0")} employees
+            {String(data.people.length).padStart(2, "0")} Employees
           </div>
           <div className="tnum relative z-[1]" style={{ fontSize: 11, color: "rgba(240,250,245,0.75)", marginTop: 2 }}>
-            {deptCount} departments
+            {deptCount} Departments
           </div>
           <div className="relative z-[1] flex items-end justify-between" style={{ marginTop: 16 }}>
             <span className="tnum" style={{ fontSize: 13, letterSpacing: 0.45, color: "rgba(240,250,245,0.95)" }}>
@@ -132,7 +132,7 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
             <span>cUSDd</span>
           </div>
           <div className="tnum relative z-[1]" style={{ fontSize: 11, color: tokens.text.muted, marginTop: 2 }}>
-            {data.people.length} salaries · encrypted on-chain
+            {data.people.length} Salaries · Encrypted on-chain
           </div>
           <div className="relative z-[1] flex items-end justify-between" style={{ marginTop: 16 }}>
             <span style={{ fontSize: 13, letterSpacing: 0.45, color: tokens.text.secondary }}>

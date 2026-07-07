@@ -43,11 +43,13 @@ export interface RunPayrollModalProps {
   onStart: (selected: Person[]) => Promise<string | null>;
   /** Close + flow.reset (only allowed when not mid-transaction). */
   onClose: () => void;
+  /** Single-employee runs: edit + persist the recipient wallet in the modal. Returns an error or null. */
+  onUpdateAddress?: (address: string) => string | null;
 }
 
 type DesignStep = 0 | 1 | 2 | 3;
 
-export function RunPayrollModal({ open, people, flow, decimals, autoverify, onStart, onClose }: RunPayrollModalProps) {
+export function RunPayrollModal({ open, people, flow, decimals, autoverify, onStart, onClose, onUpdateAddress }: RunPayrollModalProps) {
   const reduced = useReducedMotion();
   const [sel, setSel] = useState<Record<string, boolean>>({});
   const [payReveal, setPayReveal] = useState(false);
@@ -251,6 +253,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
                     error={startError ?? flow.error}
                     busy={phase === "review" && running.length > 0}
                     onContinue={() => void handleContinue()}
+                    onUpdateAddress={onUpdateAddress}
                   />
                 )}
                 {step === 1 && <StepEncrypting people={running} encIdx={encIdx} />}
@@ -314,18 +317,32 @@ function StepSelect(props: {
   error?: string | null;
   busy: boolean;
   onContinue: () => void;
+  onUpdateAddress?: (address: string) => string | null;
 }) {
-  const { people, sel, selectedCount } = props;
+  const { people, sel, selectedCount, onUpdateAddress } = props;
+  // Single-employee run (opened from an Employee page): let the judge retarget
+  // the payout to any address right here, then run the exact same payroll flow.
+  const single = people.length === 1 && onUpdateAddress ? people[0] : null;
+  const [addr, setAddr] = useState(single?.wallet ?? "");
+  const [addrErr, setAddrErr] = useState<string | null>(null);
+  useEffect(() => {
+    setAddr(single?.wallet ?? "");
+    setAddrErr(null);
+  }, [single?.id, single?.wallet]);
   return (
     <div className="mt-2.5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>Run payroll</h2>
-          <p style={{ fontSize: 12, color: "#9db3aa", marginTop: 4 }}>Review who gets paid this run.</p>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>{single ? `Pay ${single.name}` : "Run payroll"}</h2>
+          <p style={{ fontSize: 12, color: "#9db3aa", marginTop: 4 }}>
+            {single ? "Send this month's salary. Edit the wallet to pay a different address." : "Review who gets paid this run."}
+          </p>
         </div>
-        <button type="button" onClick={props.onSelectAll} className="cursor-pointer select-none hover:underline" style={{ fontSize: 12, color: "#78e9c0" }}>
-          {props.allChecked ? "Deselect all" : "Select all"}
-        </button>
+        {!single && (
+          <button type="button" onClick={props.onSelectAll} className="cursor-pointer select-none hover:underline" style={{ fontSize: 12, color: "#78e9c0" }}>
+            {props.allChecked ? "Deselect all" : "Select all"}
+          </button>
+        )}
       </div>
 
       <div className="slim-scroll -mx-1.5 mt-3.5 flex flex-col gap-0.5 overflow-y-auto px-1.5" style={{ maxHeight: 268 }}>
@@ -363,6 +380,41 @@ function StepSelect(props: {
         })}
       </div>
 
+      {single && (
+        <div className="mt-3">
+          <label htmlFor="pay-one-recipient" className="block" style={{ fontSize: 11, color: "#9db3aa", marginBottom: 6, paddingLeft: 5 }}>
+            Recipient wallet
+          </label>
+          <input
+            id="pay-one-recipient"
+            value={addr}
+            spellCheck={false}
+            autoComplete="off"
+            onChange={(e) => {
+              const v = e.target.value.trim();
+              setAddr(v);
+              setAddrErr(onUpdateAddress ? onUpdateAddress(v) : null);
+            }}
+            className="tnum w-full"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: `1px solid ${addrErr ? "rgba(224,110,98,0.55)" : "rgba(255,255,255,0.12)"}`,
+              borderRadius: 12,
+              color: "#eef4f1",
+              fontSize: 12.5,
+              letterSpacing: 0.3,
+              padding: "11px 13px",
+              outline: "none",
+            }}
+          />
+          {addrErr && (
+            <p role="alert" style={{ fontSize: 11, color: "#eb8f85", marginTop: 6, paddingLeft: 5 }}>
+              {addrErr}
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="mt-3.5 flex items-end justify-between" style={{ paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.09)" }}>
         <div>
           <p style={{ fontSize: 10.5, color: "#9db3aa" }}>
@@ -396,7 +448,7 @@ function StepSelect(props: {
         type="button"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        disabled={selectedCount === 0 || props.busy}
+        disabled={selectedCount === 0 || props.busy || Boolean(addrErr)}
         onClick={props.onContinue}
         className="mt-4 w-full rounded-full text-center font-semibold disabled:cursor-not-allowed disabled:opacity-40"
         style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 13.5, padding: "12.6px 0" }}

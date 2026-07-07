@@ -100,15 +100,13 @@ body {
   }
 }
 
-/* Thin translucent scrollbars for internal scroll areas. */
-.slim-scroll::-webkit-scrollbar {
-  width: 6px;
+/* Scrollbars are hidden app-wide — scrolling still works, just no visible bar. */
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
-.slim-scroll::-webkit-scrollbar-thumb {
-  background: rgba(157, 179, 170, 0.25);
-  border-radius: 899px;
-}
-.slim-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(157, 179, 170, 0.25) transparent;
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }

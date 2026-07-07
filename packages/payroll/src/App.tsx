@@ -508,7 +508,6 @@ function Dashboard() {
                       paymentsCount={String(personRows.length).padStart(2, "0")}
                       onBack={() => setNav(1)}
                       employerAddress={employer}
-                      onUpdateAddress={onUpdateEmployeeAddress}
                       onPay={onPayEmployee}
                     />
                   )}
@@ -595,7 +594,7 @@ function Dashboard() {
           setPermPrompt(false);
         }}
       />
-      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} />
+      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} onUpdateAddress={payrollOnlyId ? onUpdateEmployeeAddress : undefined} />
       <Toast toast={toast} />
     </div>
   );
