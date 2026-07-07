@@ -28,17 +28,17 @@ export function FundWalletModal({ open, onClose, employerShort, busy, error, onF
           <p style={{ fontSize: 12, color: "#9db3aa", marginTop: 5, lineHeight: 1.5 }}>
             Top up the payroll wallet so the next run has enough cUSDd.
           </p>
-          <p style={{ fontSize: 11, color: "#7f9a8f", marginTop: 6, lineHeight: 1.5 }}>
-            This is a real Sepolia mint, so you need a little test ETH for gas.{" "}
-            <a
-              href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia"
-              target="_blank"
-              rel="noreferrer"
-              style={{ color: "#5fe3ab", textDecoration: "none" }}
-            >
-              Get Sepolia ETH
-            </a>
+          <p style={{ fontSize: 12, color: "#9db3aa", marginTop: 4, lineHeight: 1.5 }}>
+            This is a real Sepolia mint, so you need a little test ETH for gas.
           </p>
+          <a
+            href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia"
+            target="_blank"
+            rel="noreferrer"
+            style={{ display: "inline-block", marginTop: 6, fontSize: 12, color: "#5fe3ab", textDecoration: "none" }}
+          >
+            Get Sepolia ETH
+          </a>
         </StaggerItem>
 
         <StaggerItem index={1}>
