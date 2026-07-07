@@ -338,12 +338,49 @@ function Dashboard() {
   const orphanRecord = orphan.orphanFor(flow.pendingTxHash);
 
   return (
-    <div className="relative flex h-screen w-full overflow-hidden" style={{ background: tokens.bg.app, fontFamily: "'Manrope', sans-serif", color: tokens.text.heading }}>
-      {/* Fixed background glows (per the extraction: 90% 45% and -1% 70%) */}
+    <div className="relative flex h-screen w-full flex-col overflow-hidden" style={{ background: tokens.bg.app, fontFamily: "'Manrope', sans-serif", color: tokens.text.heading }}>
+      {/* Fixed background glows (90% 45% and -1% 70%) */}
       <div className="pointer-events-none absolute" style={{ left: "90%", top: "45%", width: 760, height: 760, transform: "translate(-50%,-50%)", background: "radial-gradient(circle, rgba(73,169,130,0.36), rgba(0,0,0,0) 66%)", filter: "blur(30px)" }} />
       <div className="pointer-events-none absolute" style={{ left: "-1%", top: "70%", width: 520, height: 520, transform: "translate(-50%,-50%)", background: "radial-gradient(circle, rgba(73,169,130,0.22), rgba(0,0,0,0) 66%)", filter: "blur(34px)" }} />
 
-      <Rail
+      {/* Top-edge fade behind the top bar, visible once scrolled */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 z-30"
+        style={{ height: 96, background: "linear-gradient(180deg, #0c1310 20%, rgba(12,19,16,0) 100%)", opacity: scrolled ? 1 : 0, transition: "opacity .25s" }}
+      />
+
+      <TopBar
+        profile={data.profile}
+        onProfile={() => setProfileOpen(true)}
+        search={{
+          open: searchOpen,
+          query: searchQ,
+          setQuery: setSearchQ,
+          onOpen: () => setSearchOpen(true),
+          onClose: () => {
+            setSearchOpen(false);
+            setSearchQ("");
+          },
+          people,
+          runs: runsView,
+          onPickPerson: (id) => {
+            openEmployee(id);
+            setSearchOpen(false);
+            setSearchQ("");
+          },
+          onPickRun: (month) => {
+            setNav(0);
+            setActiveBar(month);
+            setSearchOpen(false);
+            setSearchQ("");
+          },
+        }}
+      />
+
+      {/* Body: the shared left padding aligns the rail's left edge with the
+          top-bar logo's left edge (both at 32.4px from the viewport). */}
+      <div className="flex min-h-0 flex-1" style={{ paddingLeft: 32.4 }}>
+        <Rail
         navSel={navSel}
         onNav={(n) => {
           setNav(n);
@@ -364,51 +401,13 @@ function Dashboard() {
         }
       />
 
-      <div className="relative min-w-0 flex-1">
-        <TopBar
-          profile={data.profile}
-          onProfile={() => setProfileOpen(true)}
-          search={{
-            open: searchOpen,
-            query: searchQ,
-            setQuery: setSearchQ,
-            onOpen: () => setSearchOpen(true),
-            onClose: () => {
-              setSearchOpen(false);
-              setSearchQ("");
-            },
-            people,
-            runs: runsView,
-            onPickPerson: (id) => {
-              openEmployee(id);
-              setSearchOpen(false);
-              setSearchQ("");
-            },
-            onPickRun: (month) => {
-              setNav(0);
-              setActiveBar(month);
-              setSearchOpen(false);
-              setSearchQ("");
-            },
-          }}
-        />
-
-        {/* Top-edge fade, visible only once scrolled */}
+        {/* The ONLY scrolling element (paddings verbatim from the handoff). */}
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 z-20"
-          style={{ height: 96, background: "linear-gradient(180deg, #0c1310 20%, rgba(12,19,16,0) 100%)", opacity: scrolled ? 1 : 0, transition: "opacity .25s" }}
-        />
-
-        {/* The ONLY scrolling element */}
-        <div
-          className="slim-scroll h-full overflow-y-auto"
+          className="slim-scroll min-h-0 flex-1 overflow-y-auto"
           onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 6)}
-          style={{ paddingTop: 97 }}
+          style={{ padding: "97.2px 32.4px 21.6px 25.2px" }}
         >
-          <div
-            className="mx-auto grid px-7 pb-4"
-            style={{ maxWidth: 1088, gridTemplateColumns: "1fr 368px", gap: 25, alignItems: "start" }}
-          >
+          <div className="grid" style={{ gridTemplateColumns: "1fr 368.28px", gap: 25.2, alignItems: "start" }}>
             <main className="min-w-0">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div key={nav === 3 ? `emp-${empId}` : nav} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}>
@@ -454,10 +453,6 @@ function Dashboard() {
                   </span>
                 </div>
               )}
-
-              <p className="pt-8 pb-5 text-center" style={{ fontSize: 10, color: "rgba(233,244,238,0.5)" }}>
-                SealedPay · Powered by DisperseKit · TokenOps disperse · Zama FHE
-              </p>
             </main>
 
             {/* Right column: Payroll Wallet (nav 0-2) or the employee's Next-payout panel */}
@@ -472,6 +467,10 @@ function Dashboard() {
               <WalletSidebar data={data} onFund={() => setFundOpen(true)} activity={activity} />
             )}
           </div>
+
+          <p className="text-center" style={{ fontSize: 9.9, color: "#6f8577", paddingTop: 35, paddingBottom: 9 }}>
+            SealedPay · Powered by DisperseKit · TokenOps disperse · Zama FHE
+          </p>
         </div>
       </div>
 
