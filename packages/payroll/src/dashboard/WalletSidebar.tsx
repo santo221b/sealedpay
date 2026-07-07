@@ -285,11 +285,28 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
             <div style={{ fontSize: 17, fontWeight: 400 }}>Recent activity</div>
           </div>
 
-          <div className="flex flex-col" style={{ gap: 22, marginTop: 20 }}>
-            {activity.map((row) => (
-              <ActivityRowView key={row.key} row={row} />
-            ))}
-          </div>
+          {activity.length === 0 ? (
+            <div className="flex flex-col items-center text-center" style={{ padding: "24px 8px 12px", gap: 4 }}>
+              <span
+                className="flex items-center justify-center rounded-full"
+                style={{ width: 40, height: 40, background: "rgba(95,230,175,0.1)", border: "1px solid rgba(95,230,175,0.18)", marginBottom: 5 }}
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M3 12h4l2 5 4-12 2 7h6" />
+                </svg>
+              </span>
+              <div style={{ fontSize: 13, fontWeight: 500, color: "#e8f0ec" }}>No activity yet</div>
+              <div style={{ fontSize: 11, color: "#8ba297", maxWidth: 210, lineHeight: 1.5 }}>
+                Fund the wallet or run a payroll to see it here.
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col" style={{ gap: 22, marginTop: 20 }}>
+              {activity.map((row) => (
+                <ActivityRowView key={row.key} row={row} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
