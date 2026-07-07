@@ -1,11 +1,12 @@
 /**
- * Pre-loaded sample data — intended by the design ("a demo team of 8 and
- * 6 months of payroll history", acknowledged during onboarding).
+ * Pre-loaded sample data — a demo team of 5 and 6 months of payroll history,
+ * acknowledged during onboarding.
  *
  * Real-wiring choices (flagged in docs/PROGRESS.md):
- * - Seed employees carry REAL, valid Sepolia addresses (well-known dev
- *   accounts) so a real payroll run against the seed roster settles on-chain.
- *   The design's truncated wallet strings were display-only.
+ * - Test-flow roster: all 5 seed employees share ONE wallet (the connected
+ *   employer's own address) so an end-to-end run can be exercised from the UI
+ *   without funding five separate wallets — the disperse becomes a verifiable
+ *   self-payment. Swap TEST_WALLET / add per-employee addresses for a real team.
  * - Seed history rows link to REAL Sepolia transactions from this project's
  *   earlier live runs (the design's Jul row already referenced one of them).
  * - Live runs from useHistory() merge ON TOP of these constants everywhere
@@ -15,16 +16,20 @@ import type { Employee } from "./employees";
 
 export const SEEDED_KEY = "sealedpay_seeded.v1";
 
-/** Design seed roster (names/roles/salaries verbatim; addresses real dev accounts). */
+/**
+ * Shared recipient for the test roster — the project wallet that holds the
+ * demo cUSDd. Connect THIS wallet as the employer so a run pays it back to
+ * itself and every amount decrypts for you.
+ */
+const TEST_WALLET = "0x3F9eEc56BC421da1decF8D03C50798882F943Fc3";
+
+/** Test roster: 5 named employees, all sharing TEST_WALLET; salaries sum to 90 (fits a 100 cUSDd balance). */
 export const SEED_EMPLOYEES: (Omit<Employee, "id"> & { seedIndex: number; joined: string; historyStart: number })[] = [
-  { name: "Priya Sharma", role: "Engineer", dept: "Engineering", address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", salary: "850", seedIndex: 0, joined: "Feb 2026", historyStart: 0 },
-  { name: "Arjun Mehta", role: "Engineer", dept: "Engineering", address: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", salary: "780", seedIndex: 1, joined: "Feb 2026", historyStart: 0 },
-  { name: "Mei Lin", role: "Backend Engineer", dept: "Engineering", address: "0x90F79bf6EB2c4f870365E785982E1f101E93b906", salary: "720", seedIndex: 2, joined: "Feb 2026", historyStart: 0 },
-  { name: "Daniel Okafor", role: "Platform Engineer", dept: "Engineering", address: "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65", salary: "650", seedIndex: 3, joined: "Apr 2026", historyStart: 2 },
-  { name: "Sofia Reyes", role: "Product Designer", dept: "Design", address: "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc", salary: "560.5", seedIndex: 4, joined: "Feb 2026", historyStart: 0 },
-  { name: "Elena Petrova", role: "Brand Designer", dept: "Design", address: "0x976EA74026E726554dB657fA54763abd0C3a0aa9", salary: "420", seedIndex: 5, joined: "May 2026", historyStart: 3 },
-  { name: "Rohan Gupta", role: "Operations Lead", dept: "Operations", address: "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955", salary: "320", seedIndex: 6, joined: "Feb 2026", historyStart: 0 },
-  { name: "Marcus Chen", role: "Community Manager", dept: "Operations", address: "0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f", salary: "200", seedIndex: 7, joined: "Jun 2026", historyStart: 4 },
+  { name: "Lewis Hamilton", role: "Engineer", dept: "Engineering", address: TEST_WALLET, salary: "24", seedIndex: 0, joined: "Feb 2026", historyStart: 0 },
+  { name: "Max Verstappen", role: "Backend Engineer", dept: "Engineering", address: TEST_WALLET, salary: "20", seedIndex: 1, joined: "Feb 2026", historyStart: 0 },
+  { name: "Charles Leclerc", role: "Product Designer", dept: "Design", address: TEST_WALLET, salary: "18", seedIndex: 2, joined: "Feb 2026", historyStart: 0 },
+  { name: "Satoshi Nakamoto", role: "Protocol Architect", dept: "Engineering", address: TEST_WALLET, salary: "16", seedIndex: 3, joined: "Feb 2026", historyStart: 0 },
+  { name: "Lionel Messi", role: "Community Manager", dept: "Operations", address: TEST_WALLET, salary: "12", seedIndex: 4, joined: "Feb 2026", historyStart: 0 },
 ];
 
 export interface SeedRun {
@@ -78,6 +83,11 @@ export function fmtAmountFull(v: number): string {
 /** Design wallet display: 0x + 4 chars + ellipsis + last 4 (e.g. 0x8626…1799). */
 export function shortWallet(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
+}
+
+/** Middle-truncate a long 0x string (e.g. a 66-char tx hash) for tidy display. */
+export function shortHash(hash: string): string {
+  return hash.length <= 20 ? hash : `${hash.slice(0, 10)}…${hash.slice(-8)}`;
 }
 
 export function initials(name: string): string {

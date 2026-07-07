@@ -11,7 +11,7 @@ import { RevealAmount } from "../../design/RevealAmount";
 import { CheckGlyph, ChevronLeftGlyph, PadlockGlyph, ReceiptCheckGlyph } from "../../design/icons";
 import { GhostButton, GlassCard } from "../../design/kit2";
 import { tokens } from "../../design/tokens";
-import { fmtAmountFull, shortWallet } from "../../lib/seed";
+import { fmtAmountFull, shortHash, shortWallet } from "../../lib/seed";
 import type { EmployeeViewProps } from "../contracts";
 
 const GRADIENT = "linear-gradient(135deg,#41b091 0%,#2e9478 50%,#26826a 100%)";
@@ -167,7 +167,7 @@ export function EmployeeView({
                   className="tnum block whitespace-nowrap"
                   style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}
                 >
-                  {row.tx} ·{" "}
+                  {shortHash(row.tx)} ·{" "}
                   <a
                     href={row.url}
                     target="_blank"
