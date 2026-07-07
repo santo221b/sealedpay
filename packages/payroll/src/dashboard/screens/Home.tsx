@@ -28,15 +28,26 @@ const DONUT_COLORS = ["#8b7cf6", "#d7ee59", "#5fe3ab"];
 /* ── Payout Activity scale (data-assets §8) ─────────────────────────────── */
 
 function yScale(maxVal: number) {
-  // A "nice" step (1 / 2 / 5 × 10ⁿ) so five gridlines comfortably cover the
-  // largest bar — works whether a month totals 90 cUSDd or 4,500.
-  const rough = Math.max(maxVal, 1) / 5;
-  const mag = Math.pow(10, Math.floor(Math.log10(rough)));
-  const norm = rough / mag;
-  const yStep = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag;
-  const niceMax = yStep * 5;
+  // Auto-hug the data: the ceiling is the smallest "nice" number just above the
+  // tallest month (~10-45% headroom), not a fixed 5x overshoot. So an 11k max
+  // scales to a 15k axis (bars ~73%) instead of the old 25k (bars ~44%).
+  const target = Math.max(maxVal, 1) * 1.1;
+  const mag = Math.pow(10, Math.floor(Math.log10(target)));
+  const norm = target / mag; // 1 … <10
+  const niceMax =
+    (norm <= 1 ? 1
+      : norm <= 1.5 ? 1.5
+      : norm <= 2 ? 2
+      : norm <= 2.5 ? 2.5
+      : norm <= 3 ? 3
+      : norm <= 4 ? 4
+      : norm <= 5 ? 5
+      : norm <= 6 ? 6
+      : norm <= 8 ? 8
+      : 10) * mag;
+  const yStep = niceMax / 5;
   const fmt = (v: number) =>
-    v === 0 ? "0" : v >= 1000 ? (v % 1000 === 0 ? `${v / 1000}k` : `${(v / 1000).toFixed(1)}k`) : `${v}`;
+    v === 0 ? "0" : v >= 1000 ? (v % 1000 === 0 ? `${v / 1000}k` : `${(v / 1000).toFixed(1)}k`) : `${Math.round(v)}`;
   return { niceMax, labels: [5, 4, 3, 2, 1, 0].map((i) => fmt(yStep * i)) };
 }
 
