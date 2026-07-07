@@ -5,10 +5,11 @@
  */
 export const tokens = {
   bg: {
-    body: "#070d0b",
-    // Top edge starts at the onboarding's near-black (#070c0a) so the Safari
-    // toolbar blends with it, then eases into the dashboard tone by ~7%.
-    app: "linear-gradient(180deg, #070c0a 0%, #0c1310 7%, #101915 50%, #0d1411 100%)",
+    body: "#070c0a",
+    // The whole top region stays near-black (#070c0a), lightening only slowly
+    // like the onboarding — macOS Safari samples the top area to tint its
+    // toolbar, so a fast jump back to a lighter tone read as a block.
+    app: "linear-gradient(180deg, #070c0a 0%, #0a1210 34%, #101915 62%, #0d1411 100%)",
     scrim: "#0D1411F2",
   },
   accent: {

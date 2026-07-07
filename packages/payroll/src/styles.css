@@ -19,7 +19,7 @@ body,
 }
 body {
   margin: 0;
-  background: #070d0b;
+  background: #070c0a;
   color: #f2f7f4;
   font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
   /* The document itself never scrolls — only the dashboard content column. */
