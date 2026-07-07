@@ -396,18 +396,18 @@ function StepSelect(props: {
   const { people, sel, selectedCount, single } = props;
   return (
     <div className="mt-2.5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>{single ? `Pay ${single.name}` : "Run payroll"}</h2>
-          <p style={{ fontSize: 12, color: "#9db3aa", marginTop: 4, fontWeight: single ? 600 : 400 }}>
+      <div>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>{single ? `Pay ${single.name}` : "Run payroll"}</h2>
+        <div className="flex items-center justify-between gap-3" style={{ marginTop: 4 }}>
+          <p style={{ fontSize: 12, color: "#9db3aa", fontWeight: single ? 600 : 400 }}>
             {single ? "A one-off confidential payment." : "Review who gets paid this run."}
           </p>
+          {!single && (
+            <button type="button" onClick={props.onSelectAll} className="shrink-0 cursor-pointer select-none hover:underline" style={{ fontSize: 12, color: "#78e9c0" }}>
+              {props.allChecked ? "Deselect all" : "Select all"}
+            </button>
+          )}
         </div>
-        {!single && (
-          <button type="button" onClick={props.onSelectAll} className="cursor-pointer select-none hover:underline" style={{ fontSize: 12, color: "#78e9c0", marginRight: 34 }}>
-            {props.allChecked ? "Deselect all" : "Select all"}
-          </button>
-        )}
       </div>
 
       {single ? (

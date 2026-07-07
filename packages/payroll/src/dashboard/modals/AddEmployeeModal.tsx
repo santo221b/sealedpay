@@ -24,7 +24,7 @@ const inputStyle = {
 
 const labelStyle = { display: "block", fontSize: 10, color: "#9db3aa", marginBottom: 5 } as const;
 
-export function AddEmployeeModal({ open, onClose, onAdd, initial }: AddEmployeeModalProps) {
+export function AddEmployeeModal({ open, onClose, onAdd, initial, onRemove }: AddEmployeeModalProps) {
   const editing = Boolean(initial);
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
@@ -32,6 +32,7 @@ export function AddEmployeeModal({ open, onClose, onAdd, initial }: AddEmployeeM
   const [dept, setDept] = useState<string>("Engineering");
   const [wallet, setWallet] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -41,6 +42,7 @@ export function AddEmployeeModal({ open, onClose, onAdd, initial }: AddEmployeeM
       setDept(initial?.dept || "Engineering");
       setWallet(initial?.wallet ?? "");
       setError(null);
+      setConfirmRemove(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -176,6 +178,18 @@ export function AddEmployeeModal({ open, onClose, onAdd, initial }: AddEmployeeM
             </button>
           </div>
         </StaggerItem>
+
+        {editing && onRemove && (
+          <button
+            type="button"
+            onClick={() => (confirmRemove ? onRemove() : setConfirmRemove(true))}
+            onMouseLeave={() => setConfirmRemove(false)}
+            className="mt-3 w-full cursor-pointer rounded-full transition-colors hover:bg-[rgba(224,122,106,0.14)]"
+            style={{ background: "transparent", border: "1px solid rgba(224,122,106,0.4)", color: "#f0a99d", fontSize: 12, fontWeight: 500, padding: "9px 0" }}
+          >
+            {confirmRemove ? "Tap again to remove this employee" : "Remove employee"}
+          </button>
+        )}
       </div>
     </ModalShell>
   );

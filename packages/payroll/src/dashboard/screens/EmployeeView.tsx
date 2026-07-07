@@ -6,7 +6,6 @@
  * links). Presentation only.
  */
 import { motion, useReducedMotion } from "framer-motion";
-import { useState } from "react";
 
 import { RevealAmount } from "../../design/RevealAmount";
 import { CheckGlyph, ChevronLeftGlyph, PadlockGlyph, ReceiptCheckGlyph } from "../../design/icons";
@@ -28,12 +27,9 @@ export function EmployeeView({
   onBack,
   employerAddress,
   onPay,
-  onEdit,
-  onRemove,
 }: EmployeeViewProps) {
   const reduced = useReducedMotion();
   const salaryShown = showAll || salaryRevealed;
-  const [confirmRemove, setConfirmRemove] = useState(false);
 
   return (
     <div className="flex flex-col" style={{ gap: 20 }}>
@@ -63,31 +59,14 @@ export function EmployeeView({
           />
           {employerAddress ? `Connected · ${shortWallet(employerAddress)}` : "Not connected"}
         </span>
-        <div className="flex items-center" style={{ gap: 9 }}>
-          <GhostButton
-            onClick={onEdit}
-            className="hover:bg-[rgba(255,255,255,0.06)] hover:text-[#e8f0ec]"
-            style={{ borderRadius: tokens.radius.pill, border: "1px solid rgba(255,255,255,0.14)", color: "#b8c6bf", fontWeight: 500, fontSize: 13, padding: "9px 16px" }}
-          >
-            Edit
-          </GhostButton>
-          <GhostButton
-            onClick={() => (confirmRemove ? onRemove() : setConfirmRemove(true))}
-            onMouseLeave={() => setConfirmRemove(false)}
-            className="hover:bg-[rgba(224,122,106,0.14)]"
-            style={{ borderRadius: tokens.radius.pill, border: "1px solid rgba(224,122,106,0.4)", color: "#f0a99d", fontWeight: 500, fontSize: 13, padding: "9px 16px" }}
-          >
-            {confirmRemove ? "Confirm remove" : "Remove"}
-          </GhostButton>
-          <GhostButton
-            onClick={onBack}
-            className="hover:bg-[rgba(255,255,255,0.06)] hover:text-[#e8f0ec]"
-            style={{ borderRadius: tokens.radius.pill, border: "1px solid rgba(255,255,255,0.14)", color: "#b8c6bf", fontWeight: 500, fontSize: 13, padding: "9px 16px" }}
-          >
-            <ChevronLeftGlyph size={13} />
-            Back
-          </GhostButton>
-        </div>
+        <GhostButton
+          onClick={onBack}
+          className="hover:bg-[rgba(255,255,255,0.06)] hover:text-[#e8f0ec]"
+          style={{ borderRadius: tokens.radius.pill, border: "1px solid rgba(255,255,255,0.14)", color: "#b8c6bf", fontWeight: 500, fontSize: 13, padding: "9px 18px" }}
+        >
+          <ChevronLeftGlyph size={13} />
+          Back
+        </GhostButton>
       </div>
 
       {/* Salary hero card */}

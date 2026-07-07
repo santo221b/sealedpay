@@ -573,16 +573,6 @@ function Dashboard({ onViewMyPay }: { onViewMyPay: () => void }) {
                       onBack={() => setNav(1)}
                       employerAddress={employer}
                       onPay={onPayEmployee}
-                      onEdit={() => {
-                        const e = employees.find((x) => x.id === empId);
-                        if (e) setEditEmp(e);
-                      }}
-                      onRemove={() => {
-                        const e = employees.find((x) => x.id === empId);
-                        if (empId) remove(empId);
-                        if (e) addNotif({ title: "Employee removed", sub: e.name, color: "#9db3aa", tone: "info" });
-                        setNav(1);
-                      }}
                     />
                   )}
                 </motion.div>
@@ -617,6 +607,10 @@ function Dashboard({ onViewMyPay }: { onViewMyPay: () => void }) {
                 paymentsCount={String(personRows.length).padStart(2, "0")}
                 reminderSet={settings.reminderSet}
                 onRemind={() => setRemindOpen(true)}
+                onEdit={() => {
+                  const e = employees.find((x) => x.id === empId);
+                  if (e) setEditEmp(e);
+                }}
               />
             ) : (
               <WalletSidebar data={data} onFund={() => setFundOpen(true)} activity={activity} />
@@ -656,6 +650,14 @@ function Dashboard({ onViewMyPay }: { onViewMyPay: () => void }) {
           addNotif({ title: "Employee updated", sub: `${values.name.trim()} · ${values.dept}`, color: "#9db3aa", tone: "info" });
           setEditEmp(null);
           return null;
+        }}
+        onRemove={() => {
+          if (editEmp) {
+            remove(editEmp.id);
+            addNotif({ title: "Employee removed", sub: editEmp.name, color: "#9db3aa", tone: "info" });
+          }
+          setEditEmp(null);
+          setNav(1);
         }}
       />
       <FundWalletModalWired

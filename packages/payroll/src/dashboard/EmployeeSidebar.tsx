@@ -19,11 +19,14 @@ export function EmployeeSidebar({
   paymentsCount,
   reminderSet,
   onRemind,
+  onEdit,
 }: {
   person: Person;
   paymentsCount: string;
   reminderSet: boolean;
   onRemind: () => void;
+  /** Open the edit modal (edit fields / wallet, or remove) for this employee. */
+  onEdit: () => void;
 }) {
   const reduced = useReducedMotion();
 
@@ -80,8 +83,25 @@ export function EmployeeSidebar({
           <div aria-hidden className="pointer-events-none absolute" style={{ top: 9, right: 0, height: "44%", width: 1.5, borderRadius: 2, background: "linear-gradient(180deg, rgba(235,255,246,0.30) 0%, rgba(235,255,246,0.42) 12%, rgba(235,255,246,0.10) 60%, rgba(235,255,246,0) 100%)" }} />
 
           <div className="relative">
-            <div className="tnum" style={{ fontSize: 12.6, letterSpacing: 0.9, color: "#ffffff", paddingLeft: 21 }}>
-              {shortWallet(person.wallet)}
+            <div className="flex items-center justify-between" style={{ paddingLeft: 21 }}>
+              <span className="tnum" style={{ fontSize: 12.6, letterSpacing: 0.9, color: "#ffffff" }}>
+                {shortWallet(person.wallet)}
+              </span>
+              <motion.button
+                type="button"
+                onClick={onEdit}
+                aria-label="Edit employee"
+                title="Edit employee"
+                whileHover={reduced ? undefined : { scale: 1.08 }}
+                whileTap={reduced ? undefined : { scale: 0.94 }}
+                className="flex shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-[rgba(255,255,255,0.09)]"
+                style={{ width: 30, height: 30, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#cfe0d8" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                </svg>
+              </motion.button>
             </div>
             <div style={{ fontSize: 10, color: "rgba(240,250,245,0.85)", marginTop: 3, paddingLeft: 21 }}>Sepolia</div>
             <div style={{ height: 1, background: "rgba(255,255,255,0.10)", margin: "14px -20px 0 -20px" }} />

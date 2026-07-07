@@ -108,10 +108,6 @@ export interface EmployeeViewProps {
   employerAddress?: string;
   /** Open the Run Payroll flow for just this one employee. */
   onPay: () => void;
-  /** Open the edit modal (name / role / dept / wallet / salary). */
-  onEdit: () => void;
-  /** Remove this employee from the roster (then navigate back). */
-  onRemove: () => void;
 }
 
 export interface WalletSidebarProps {
@@ -155,6 +151,8 @@ export interface AddEmployeeModalProps {
   onAdd: (values: { name: string; role: string; salary: string; dept: string; wallet: string }) => string | null;
   /** Present → edit mode: prefills the form and switches the copy to "Save". */
   initial?: { name: string; role: string; salary: string; dept: string; wallet: string };
+  /** Edit mode only: remove this employee (rendered as a confirm inside the modal). */
+  onRemove?: () => void;
 }
 
 export interface FundWalletModalProps {
