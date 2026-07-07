@@ -165,7 +165,6 @@ export interface FundWalletModalProps {
   busy: boolean;
   /** idle → confirming (awaiting wallet signature) → minting (tx on-chain). */
   phase: "idle" | "confirming" | "minting";
-  error?: string;
   /** Real faucet mint; resolves true on success (shell closes + refreshes balance). */
   onFund: (amount: string) => Promise<boolean>;
 }

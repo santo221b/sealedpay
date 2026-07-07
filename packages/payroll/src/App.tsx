@@ -734,7 +734,6 @@ function FundWalletModalWired({
       employerFull={employer}
       busy={fund.busy}
       phase={fund.phase}
-      error={fund.error}
       onFund={async (amount) => {
         // Success closes via onFunded (batched with the phase reset); only a
         // failure keeps the modal open to show the inline error.

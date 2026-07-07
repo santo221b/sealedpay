@@ -13,7 +13,7 @@ import { DepositBoxGlyph } from "../../design/icons";
 import { ModalShell, StaggerItem } from "../../design/kit2";
 import type { FundWalletModalProps } from "../contracts";
 
-export function FundWalletModal({ open, onClose, employerShort, employerFull, busy, phase, error, onFund }: FundWalletModalProps) {
+export function FundWalletModal({ open, onClose, employerShort, employerFull, busy, phase, onFund }: FundWalletModalProps) {
   const [amount, setAmount] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -150,16 +150,6 @@ export function FundWalletModal({ open, onClose, employerShort, employerFull, bu
               </span>
             </div>
           </StaggerItem>
-
-          {error && (
-            <p
-              role="alert"
-              className="mt-3 rounded-xl p-2.5"
-              style={{ background: "rgba(224,110,98,0.1)", border: "1px solid rgba(224,110,98,0.4)", color: "#eb8f85", fontSize: 11.5 }}
-            >
-              {error}
-            </p>
-          )}
 
           <StaggerItem index={3}>
             <div className="flex gap-[11px]" style={{ marginTop: 23 }}>
