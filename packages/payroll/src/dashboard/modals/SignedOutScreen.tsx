@@ -35,7 +35,7 @@ export function SignedOutScreen({ name, onSignIn }: SignedOutScreenProps) {
           whileHover={reduced ? undefined : { scale: 1.04 }}
           whileTap={reduced ? undefined : { scale: 0.97 }}
           className="cursor-pointer rounded-full"
-          style={{ background: "#3bbf8e", color: "#0b1512", fontSize: 12.6, fontWeight: 700, padding: "12px 30px", marginTop: 23 }}
+          style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 12.6, fontWeight: 700, padding: "12px 30px", marginTop: 23 }}
         >
           Sign back in
         </motion.button>

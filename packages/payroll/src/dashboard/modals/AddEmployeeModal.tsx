@@ -109,7 +109,7 @@ export function AddEmployeeModal({ open, onClose, onAdd }: AddEmployeeModalProps
                     style={{
                       fontSize: 11,
                       padding: "7px 14px",
-                      background: selected ? "#3bbf8e" : "rgba(255,255,255,0.05)",
+                      background: selected ? "#5fe3ab" : "rgba(255,255,255,0.05)",
                       color: selected ? "#0b1512" : "#cfdcd6",
                       transition: "background .15s, color .15s",
                     }}

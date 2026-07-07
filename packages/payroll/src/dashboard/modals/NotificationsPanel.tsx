@@ -57,7 +57,7 @@ export function NotificationsPanel({ open, onClose, notifs, onRead, onMarkAllRea
                 <span
                   className="tnum"
                   style={{
-                    background: "#3bbf8e",
+                    background: "#5fe3ab",
                     color: "#0b1512",
                     fontSize: 9,
                     fontWeight: 400,

@@ -10,7 +10,7 @@ export const tokens = {
     scrim: "#0D1411F2",
   },
   accent: {
-    primary: "#3bbf8e",
+    primary: "#5fe3ab",
     pillText: "#78e9c0",
     liveDot: "#34d399",
     puckBg: "rgba(59,191,142,0.18)",

@@ -23,7 +23,7 @@ const CH = 112; // chart height px
 const BAR_COLOR = "#8fd7c0";
 const TABS = ["All", "Payouts", "Verifications", "Team"];
 const DONUT_DEPTS = ["Engineering", "Design", "Operations"];
-const DONUT_COLORS = ["#8b7cf6", "#d7ee59", "#3bbf8e"];
+const DONUT_COLORS = ["#8b7cf6", "#d7ee59", "#5fe3ab"];
 
 /* ── Payout Activity scale (data-assets §8) ─────────────────────────────── */
 

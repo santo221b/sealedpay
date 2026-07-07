@@ -56,7 +56,7 @@ export interface SeedNotification {
 }
 
 export const SEED_NOTIFS: SeedNotification[] = [
-  { id: 1, title: "Payroll delivered", sub: "8 employees paid · verified · Just now", color: "#3bbf8e", read: false, tone: "ok" },
+  { id: 1, title: "Payroll delivered", sub: "8 employees paid · verified · Just now", color: "#5fe3ab", read: false, tone: "ok" },
   { id: 2, title: "Authorization expiring", sub: "operator access ends in 45 min · 1 h ago", color: "#e3b25f", read: false, tone: "warn" },
   { id: 3, title: "Upcoming payout", sub: "Jul 31 · 8 employees scheduled · Yesterday", color: "#9db3aa", read: false, tone: "info" },
 ];

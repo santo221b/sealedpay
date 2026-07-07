@@ -51,14 +51,14 @@ export function Insights({ data }: InsightsScreenProps) {
           label: "Employees paid",
           yAxisID: "y",
           data: paidData,
-          borderColor: "#3bbf8e",
+          borderColor: "#5fe3ab",
           backgroundColor: "rgba(59,191,142,0.10)",
           fill: true,
           tension: 0.45,
           borderWidth: 3,
           pointRadius: 0,
           pointHoverRadius: 5,
-          pointBackgroundColor: "#3bbf8e",
+          pointBackgroundColor: "#5fe3ab",
         },
         {
           label: "Gas (ETH)",
@@ -141,7 +141,7 @@ export function Insights({ data }: InsightsScreenProps) {
           <div style={{ fontWeight: 400, fontSize: 17 }}>Payroll health</div>
           <div className="flex items-center" style={{ gap: 14 }}>
             {[
-              { color: "#3bbf8e", label: "Employees paid" },
+              { color: "#5fe3ab", label: "Employees paid" },
               { color: "#8b7cf6", label: "Gas (ETH)" },
             ].map((chip) => (
               <span key={chip.label} className="flex items-center" style={{ gap: 6 }}>

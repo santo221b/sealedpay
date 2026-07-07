@@ -74,7 +74,7 @@ export function PermissionPrompt({ open, onEnable, onDismiss }: PermissionPrompt
               whileHover={reduced ? undefined : { scale: 1.03 }}
               whileTap={reduced ? undefined : { scale: 0.97 }}
               className="flex-1 cursor-pointer rounded-full text-center"
-              style={{ background: "#3bbf8e", color: "#0b1512", fontSize: 12, fontWeight: 600, padding: "8.5px 0" }}
+              style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 12, fontWeight: 600, padding: "8.5px 0" }}
             >
               Enable
             </motion.button>

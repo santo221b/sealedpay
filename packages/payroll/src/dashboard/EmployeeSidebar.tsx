@@ -63,7 +63,7 @@ export function EmployeeSidebar({
               >
                 <BellGlyph size={15} color="#14503b" glow={false} />
                 {reminderSet && (
-                  <span className="absolute rounded-full" style={{ top: 1, right: 1, width: 9, height: 9, background: "#3bbf8e", border: "2px solid #f5f8f6" }} />
+                  <span className="absolute rounded-full" style={{ top: 1, right: 1, width: 9, height: 9, background: "#5fe3ab", border: "2px solid #f5f8f6" }} />
                 )}
               </motion.button>
             </div>

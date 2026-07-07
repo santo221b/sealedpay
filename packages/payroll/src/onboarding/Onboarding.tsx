@@ -269,7 +269,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
               else go(step + 1);
             }}
             className="flex select-none items-center gap-2 rounded-full font-medium"
-            style={{ background: "#3bbf8e", color: "#08331f", fontSize: 14.5, padding: "13px 26px", opacity: canContinue ? 1 : 0.4, cursor: canContinue ? "pointer" : "not-allowed" }}
+            style={{ background: "#5fe3ab", color: "#08331f", fontSize: 14.5, padding: "13px 26px", opacity: canContinue ? 1 : 0.4, cursor: canContinue ? "pointer" : "not-allowed" }}
           >
             {continueLabel}
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#08331f" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -398,7 +398,7 @@ function StepRole({ nameComma, understood, setUnderstood }: { nameComma: string;
               width: 26,
               height: 26,
               borderRadius: "50%",
-              background: understood ? "#3bbf8e" : "rgba(255,255,255,0.05)",
+              background: understood ? "#5fe3ab" : "rgba(255,255,255,0.05)",
               border: understood ? "1px solid rgba(0,0,0,0)" : "1px solid rgba(255,255,255,0.18)",
             }}
             animate={understood && !reduced ? { scale: [1, 1.22, 1] } : { scale: 1 }}
@@ -455,7 +455,7 @@ function StepAvatar({ avatar, setAvatar }: { avatar: string; setAvatar: (v: stri
               >
                 <img src={src} alt="Avatar" className="block h-full w-full rounded-full object-cover" style={{ background: "rgba(20,40,32,0.6)" }} />
                 {selected && (
-                  <span className="absolute flex items-center justify-center" style={{ bottom: 2, right: 2, width: 28, height: 28, borderRadius: "50%", background: "#3bbf8e", border: "3px solid #101915" }}>
+                  <span className="absolute flex items-center justify-center" style={{ bottom: 2, right: 2, width: 28, height: 28, borderRadius: "50%", background: "#5fe3ab", border: "3px solid #101915" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#08331f" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
@@ -513,7 +513,7 @@ function StepWallet({
               whileHover={reduced ? undefined : { scale: 1.02 }}
               whileTap={reduced ? undefined : { scale: 0.98 }}
               className="flex w-full cursor-pointer items-center justify-center gap-2.5 font-medium"
-              style={{ background: "#3bbf8e", color: "#08331f", fontSize: 15, borderRadius: 85, padding: "16px 0" }}
+              style={{ background: "#5fe3ab", color: "#08331f", fontSize: 15, borderRadius: 85, padding: "16px 0" }}
             >
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#08331f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <rect x="2" y="6" width="20" height="13" rx="2.5" />
@@ -535,7 +535,7 @@ function StepWallet({
               onClick={onSwitch}
               whileHover={reduced ? undefined : { scale: 1.02 }}
               className="flex w-full cursor-pointer items-center justify-center gap-2.5 font-medium"
-              style={{ background: "#3bbf8e", color: "#08331f", fontSize: 15, borderRadius: 85, padding: "16px 0" }}
+              style={{ background: "#5fe3ab", color: "#08331f", fontSize: 15, borderRadius: 85, padding: "16px 0" }}
             >
               Switch to Sepolia
             </motion.button>
@@ -577,7 +577,7 @@ function StepAllSet({ nameComma, avatar }: { nameComma: string; avatar: string }
         <div className="relative mb-1.5" style={{ width: 96, height: 96 }}>
           <span className="absolute inset-0 rounded-full" style={{ background: "rgba(95,230,175,0.14)", border: "1px solid rgba(95,230,175,0.3)" }} />
           <img src={avatar} alt="You" className="absolute rounded-full object-cover" style={{ inset: 6, width: 84, height: 84, background: "rgba(20,40,32,0.6)" }} />
-          <span className="absolute flex items-center justify-center" style={{ bottom: 0, right: 0, width: 30, height: 30, borderRadius: "50%", background: "#3bbf8e", border: "3px solid #101915" }}>
+          <span className="absolute flex items-center justify-center" style={{ bottom: 0, right: 0, width: 30, height: 30, borderRadius: "50%", background: "#5fe3ab", border: "3px solid #101915" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#08331f" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <polyline points="20 6 9 17 4 12" />
             </svg>

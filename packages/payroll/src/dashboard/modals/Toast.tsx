@@ -35,7 +35,7 @@ export function Toast({ toast }: { toast: ToastState | null }) {
             transition={{ duration: reduced ? 0.12 : 0.34, ease: [0.2, 1.06, 0.3, 1] }}
           >
             {toast.kind === "ok" ? (
-              <CheckGlyph size={20} color="#3bbf8e" />
+              <CheckGlyph size={20} color="#5fe3ab" />
             ) : (
               <span
                 className="flex shrink-0 items-center justify-center rounded-full"

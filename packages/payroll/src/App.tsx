@@ -168,7 +168,7 @@ function Dashboard() {
       // Clear this run's pending record from persistence AND in-memory state so
       // the orphan banner can never re-surface it after a confirmed delivery.
       orphan.dismiss(result.txHash);
-      addNotif({ title: "Payroll delivered", sub: `${result.recipients.length} paid · verified · just now`, color: "#3bbf8e", tone: "ok" });
+      addNotif({ title: "Payroll delivered", sub: `${result.recipients.length} paid · verified · just now`, color: "#5fe3ab", tone: "ok" });
       showToast("ok", `Payroll delivered · ${result.recipients.length} paid · verified`);
       void balance.refresh();
     },
@@ -443,7 +443,7 @@ function Dashboard() {
                     ) but this page closed before it was recorded.
                   </p>
                   <span className="flex items-center gap-3">
-                    <button className="rounded-full px-3 py-1.5 font-semibold" style={{ background: "#3bbf8e", color: "#0b1512" }} onClick={() => void orphan.recover(orphanRecord)} disabled={orphan.busy}>
+                    <button className="rounded-full px-3 py-1.5 font-semibold" style={{ background: "#5fe3ab", color: "#0b1512" }} onClick={() => void orphan.recover(orphanRecord)} disabled={orphan.busy}>
                       {orphan.busy ? "Checking" : "Check & record"}
                     </button>
                     <button className="hover:underline" onClick={() => orphan.dismiss(orphanRecord.txHash)}>
@@ -489,7 +489,7 @@ function Dashboard() {
           return null;
         }}
       />
-      <FundWalletModalWired open={fundOpen} onClose={() => setFundOpen(false)} employer={employer} decimals={decimals} onFunded={() => { void balance.refresh(); showToast("ok", "Wallet funded"); addNotif({ title: "Funds deposited", sub: "faucet mint confirmed on Sepolia", color: "#3bbf8e", tone: "ok" }); }} />
+      <FundWalletModalWired open={fundOpen} onClose={() => setFundOpen(false)} employer={employer} decimals={decimals} onFunded={() => { void balance.refresh(); showToast("ok", "Wallet funded"); addNotif({ title: "Funds deposited", sub: "faucet mint confirmed on Sepolia", color: "#5fe3ab", tone: "ok" }); }} />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); setLoggedOut(true); }} />
       <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} />
       <ReminderModal

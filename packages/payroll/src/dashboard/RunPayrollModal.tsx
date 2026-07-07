@@ -198,7 +198,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
             {/* Top progress bar: 25/50/75/100% by design step */}
             <div className="absolute inset-x-0 top-0 overflow-hidden" style={{ height: 6, background: "rgba(255,255,255,0.06)", borderRadius: "27px 27px 0 0" }}>
               <div
-                style={{ height: "100%", width: `${((step + 1) / 4) * 100}%`, background: "linear-gradient(90deg,#3bbf8e,#78e9c0)", transition: "width .45s cubic-bezier(.22,1,.36,1)" }}
+                style={{ height: "100%", width: `${((step + 1) / 4) * 100}%`, background: "linear-gradient(90deg,#5fe3ab,#78e9c0)", transition: "width .45s cubic-bezier(.22,1,.36,1)" }}
               />
             </div>
 
@@ -315,7 +315,7 @@ function StepSelect(props: {
               className="flex cursor-pointer items-center gap-3 text-left transition-colors hover:bg-[rgba(95,230,175,0.1)]"
               style={{ padding: 8, borderRadius: 14 }}
             >
-              <span className="flex shrink-0 items-center justify-center" style={{ width: 20, height: 20, borderRadius: "50%", background: checked ? "#3bbf8e" : "rgba(255,255,255,0.04)", border: checked ? "1px solid transparent" : "1px solid rgba(255,255,255,0.16)", transition: "background .18s" }}>
+              <span className="flex shrink-0 items-center justify-center" style={{ width: 20, height: 20, borderRadius: "50%", background: checked ? "#5fe3ab" : "rgba(255,255,255,0.04)", border: checked ? "1px solid transparent" : "1px solid rgba(255,255,255,0.16)", transition: "background .18s" }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0b1512" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: checked ? 1 : 0, transition: "opacity .18s" }} aria-hidden>
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
@@ -375,7 +375,7 @@ function StepSelect(props: {
         disabled={selectedCount === 0 || props.busy}
         onClick={props.onContinue}
         className="mt-4 w-full rounded-full text-center font-semibold disabled:cursor-not-allowed disabled:opacity-40"
-        style={{ background: "#3bbf8e", color: "#0b1512", fontSize: 13.5, padding: "12.6px 0" }}
+        style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 13.5, padding: "12.6px 0" }}
       >
         {props.busy ? "Preparing" : "Continue"}
       </motion.button>
@@ -587,7 +587,7 @@ function Finale(props: {
           transition={{ duration: 1.1, ease: "easeOut" }}
         />
         <motion.span initial={{ scale: 0 }} animate={{ scale: [0, 1.18, 1] }} transition={{ duration: 0.55, ease: EASE }}>
-          <ReceiptCheckGlyph size={56} color="#3bbf8e" />
+          <ReceiptCheckGlyph size={56} color="#5fe3ab" />
         </motion.span>
       </div>
       <h2 style={{ fontSize: 22, fontWeight: 700, color: "#f2f7f4", marginTop: 14 }}>Payroll delivered</h2>
@@ -620,7 +620,7 @@ function Finale(props: {
         View on Etherscan
       </a>
 
-      <motion.button type="button" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={props.onDone} className="mt-[18px] w-full rounded-full font-semibold" style={{ background: "#3bbf8e", color: "#0b1512", fontSize: 13.5, padding: "12.6px 0" }}>
+      <motion.button type="button" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={props.onDone} className="mt-[18px] w-full rounded-full font-semibold" style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 13.5, padding: "12.6px 0" }}>
         Done
       </motion.button>
     </div>
