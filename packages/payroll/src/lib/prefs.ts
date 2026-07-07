@@ -33,19 +33,12 @@ export function saveIdentity(name: string, avatar: string) {
 }
 
 /**
- * Logout is a soft session lock (the SignedOutScreen offers a one-click
- * "Sign back in"), so it must survive a reload — otherwise reloading while
- * logged out drops you straight back into the dashboard.
+ * Logout returns the employer to the onboarding front door: clear only the
+ * onboarded flag (so a reload stays on onboarding) while keeping name and
+ * avatar, so the flow pre-fills for a returning employer.
  */
-const LOGGED_OUT_KEY = "sealedpay_logged_out";
-
-export function loadLoggedOut(): boolean {
-  return localStorage.getItem(LOGGED_OUT_KEY) === "1";
-}
-
-export function setLoggedOutPref(value: boolean) {
-  if (value) localStorage.setItem(LOGGED_OUT_KEY, "1");
-  else localStorage.removeItem(LOGGED_OUT_KEY);
+export function clearOnboarded() {
+  localStorage.removeItem(IDENTITY_KEYS.onboarded);
 }
 
 /**

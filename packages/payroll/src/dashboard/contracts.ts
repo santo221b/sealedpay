@@ -201,13 +201,6 @@ export interface ReminderModalProps {
   onConfirm: () => void;
 }
 
-export interface SignedOutScreenProps {
-  name: string;
-  onSignIn: () => void;
-  /** Second door: connect as a recipient to view your own pay. */
-  onViewMyPay: () => void;
-}
-
 export interface ToastState {
   kind: "ok" | "err";
   msg: string;

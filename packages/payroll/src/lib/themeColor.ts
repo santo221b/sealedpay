@@ -20,5 +20,4 @@ export const THEME_COLORS = {
   // blends whether or not the browser honours theme-color.
   dashboard: "#070c0a",
   recipient: "#070c0a",
-  signedOut: "#070c0a",
 } as const;

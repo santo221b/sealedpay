@@ -47,7 +47,6 @@ import { PermissionPrompt } from "./dashboard/modals/PermissionPrompt";
 import { ProfilePopup } from "./dashboard/modals/ProfilePopup";
 import { ReminderModal } from "./dashboard/modals/ReminderModal";
 import { SettingsPanel } from "./dashboard/modals/SettingsPanel";
-import { SignedOutScreen } from "./dashboard/modals/SignedOutScreen";
 import { Toast } from "./dashboard/modals/Toast";
 import { EmployeeView } from "./dashboard/screens/EmployeeView";
 import { Home } from "./dashboard/screens/Home";
@@ -60,7 +59,7 @@ import { useHistory } from "./lib/history";
 import { useNotifications } from "./lib/notifications";
 import { savePendingRun, useOrphanRun } from "./lib/orphan";
 import { THEME_COLORS, setThemeColor } from "./lib/themeColor";
-import { loadIdentity, loadLoggedOut, setLoggedOutPref } from "./lib/prefs";
+import { clearOnboarded, loadIdentity } from "./lib/prefs";
 import { useSettings } from "./lib/prefs";
 import { rosterToRows } from "./lib/roster";
 import { SEEDED_KEY, SEED_EMPLOYEES, fmtAmount, midWallet, shortWallet } from "./lib/seed";
@@ -86,10 +85,6 @@ function compactAmount(v: number): string {
 
 export function App() {
   const [onboarded, setOnboarded] = useState(() => loadIdentity().onboarded);
-  // Signing back in after logout replays the onboarding flow (pre-filled with
-  // the saved identity), so "Sign back in as employer" leads through the
-  // branded welcome and wallet reconnect instead of dropping into the dashboard.
-  const [reonboard, setReonboard] = useState(false);
   // A ?view=mypay deep link opens the recipient view directly — shareable, works
   // on any device, and needs no employer login (the real recipient use case).
   const [recipient, setRecipient] = useState(() => {
@@ -99,25 +94,29 @@ export function App() {
       return false;
     }
   });
+  // Logout un-onboards you (clears the flag, keeps the identity), so it lands
+  // back on the onboarding front door — pre-filled for a returning employer,
+  // blank on a genuine first run.
   const identity = loadIdentity();
+  const returning = identity.name.trim().length > 0;
   return (
     <DisperseProviders theme={sealedTheme} appName="SealedPay">
       {recipient ? (
         <MyPay onExit={() => setRecipient(false)} />
       ) : onboarded ? (
-        <Dashboard onViewMyPay={() => setRecipient(true)} onSignBackIn={() => { setReonboard(true); setOnboarded(false); }} />
+        <Dashboard onViewMyPay={() => setRecipient(true)} onLoggedOut={() => { clearOnboarded(); setOnboarded(false); }} />
       ) : (
         <Onboarding
-          onDone={() => { setReonboard(false); setOnboarded(true); }}
-          initialName={reonboard ? identity.name : ""}
-          initialAvatar={reonboard ? identity.avatar : ""}
+          onDone={() => setOnboarded(true)}
+          initialName={returning ? identity.name : ""}
+          initialAvatar={returning ? identity.avatar : ""}
         />
       )}
     </DisperseProviders>
   );
 }
 
-function Dashboard({ onViewMyPay, onSignBackIn }: { onViewMyPay: () => void; onSignBackIn: () => void }) {
+function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLoggedOut: () => void }) {
   /* ── toast (top-center) — also surfaces balance reveal / decrypt errors ── */
   const [toast, setToastState] = useState<ToastState | null>(null);
   const toastTimer = useRef<number>(undefined);
@@ -147,12 +146,11 @@ function Dashboard({ onViewMyPay, onSignBackIn }: { onViewMyPay: () => void; onS
   const [activeBar, setActiveBar] = useState(""); // defaulted to the third-last bar on load (effect below)
   const [popup, setPopup] = useState<PopupKind>(null);
   const [logoutOpen, setLogoutOpen] = useState(false);
-  const [loggedOut, setLoggedOut] = useState(() => loadLoggedOut());
 
-  // Keep the browser toolbar tinted to whichever screen is on top (Safari).
+  // Keep the browser toolbar tinted to the dashboard (Safari).
   useEffect(() => {
-    setThemeColor(loggedOut ? THEME_COLORS.signedOut : THEME_COLORS.dashboard);
-  }, [loggedOut]);
+    setThemeColor(THEME_COLORS.dashboard);
+  }, []);
   const [profileOpen, setProfileOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [fundOpen, setFundOpen] = useState(false);
@@ -480,11 +478,6 @@ function Dashboard({ onViewMyPay, onSignBackIn }: { onViewMyPay: () => void; onS
   );
 
   /* ── layout ────────────────────────────────────────────────────────────── */
-  if (loggedOut) {
-    return (
-      <SignedOutScreen name={identity.name || "there"} onSignIn={() => { setLoggedOutPref(false); setLoggedOut(false); onSignBackIn(); }} onViewMyPay={onViewMyPay} />
-    );
-  }
 
   const navSel = (nav === 3 ? 1 : nav) as 0 | 1 | 2;
   // The oldest pending record that isn't the run currently in flight.
@@ -687,7 +680,7 @@ function Dashboard({ onViewMyPay, onSignBackIn }: { onViewMyPay: () => void; onS
           setFundOpen(false);
         }}
       />
-      <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); disconnect(); setLoggedOut(true); setLoggedOutPref(true); }} />
+      <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); disconnect(); onLoggedOut(); }} />
       <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} />
       <ReminderModal
         open={remindOpen}
