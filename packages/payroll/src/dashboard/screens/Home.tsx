@@ -20,6 +20,9 @@ ChartJS.register(ArcElement, Tooltip);
 const EASE = [0.22, 1, 0.36, 1] as const;
 const CH = 112; // chart height px
 const BAR_COLOR = "#8fd7c0";
+// Siblings of the hovered block in an active column dim to this so the block
+// you are pointing at stands out (stacked-bar per-segment hover).
+const BAR_DIM = "rgba(143,215,192,0.34)";
 const TABS = ["All", "Payouts", "Verifications", "Team"];
 const DONUT_DEPTS = ["Engineering", "Design", "Operations"];
 const DONUT_COLORS = ["#8b7cf6", "#d7ee59", "#5fe3ab"];
@@ -113,6 +116,10 @@ function ViewAll() {
 
 export function Home({ data, tab, setTab }: HomeScreenProps) {
   const reduced = useReducedMotion();
+
+  // Which stacked block (month + segment id) the cursor is over, so the tooltip
+  // and highlight reflect THAT block, not the whole column's aggregate.
+  const [hoverSeg, setHoverSeg] = useState<{ month: string; id: string; total: number; paid: number } | null>(null);
 
   // Chart buckets: seed runs are the month bases, live runs stack as caps.
   const chart = useMemo(() => {
@@ -249,24 +256,43 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
               const total = (base?.total ?? 0) + caps.reduce((s, r) => s + r.total, 0);
               const paid = (base?.paid ?? 0) + caps.reduce((s, r) => s + r.paid, 0);
               const active = data.activeBar === m;
+              // A stacked column has more than one block (a run cap on top of the
+              // base). When one is hovered, the tooltip + highlight track THAT
+              // block; otherwise the column shows its month aggregate.
+              const stacked = caps.length > 0;
+              const hovHere = hoverSeg && hoverSeg.month === m ? hoverSeg : null;
+              const tipTotal = hovHere ? hovHere.total : total;
+              const tipPaid = hovHere ? hovHere.paid : paid;
+              // The hovered block stays bright; its siblings dim so it stands out.
+              const segBg = (id: string) => {
+                if (!active) return undefined; // hatch class paints inactive columns
+                if (hovHere && stacked) return hovHere.id === id ? BAR_COLOR : BAR_DIM;
+                return BAR_COLOR;
+              };
+              const enterSeg = (id: string, segTotal: number, segPaid: number) => () => {
+                data.setActiveBar(m);
+                setHoverSeg({ month: m, id, total: segTotal, paid: segPaid });
+              };
               return (
                 <div
                   key={m}
                   className="relative flex cursor-pointer flex-col items-center justify-end"
                   style={{ height: CH }}
                   onMouseEnter={() => data.setActiveBar(m)}
+                  onMouseLeave={() => setHoverSeg(null)}
                 >
                   <div className="relative flex flex-col-reverse" style={{ width: 54, gap: 3 }}>
                     {/* base segment */}
                     <div
                       className={active ? "" : "hatch"}
+                      onMouseEnter={enterSeg("base", base?.total ?? 0, base?.paid ?? 0)}
                       style={{
                         width: 54,
                         height: Math.max(((base?.total ?? 0) / chart.niceMax) * CH, 3),
                         borderRadius: 14,
                         transformOrigin: "bottom",
                         transition: "background .25s",
-                        background: active ? BAR_COLOR : undefined,
+                        background: segBg("base"),
                       }}
                     />
                     {/* run caps (grow in from the bottom) */}
@@ -274,6 +300,7 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
                       <motion.div
                         key={r.id}
                         className={active ? "" : "hatch"}
+                        onMouseEnter={enterSeg(r.id, r.total, r.paid)}
                         initial={reduced ? false : { scaleY: 0, opacity: 0.4 }}
                         animate={{ scaleY: 1, opacity: 1 }}
                         transition={{ duration: reduced ? 0 : 0.52, ease: EASE }}
@@ -283,13 +310,13 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
                           borderRadius: 14,
                           transformOrigin: "bottom",
                           transition: "background .25s",
-                          background: active ? BAR_COLOR : undefined,
+                          background: segBg(r.id),
                         }}
                       />
                     ))}
                     {active && (
                       <>
-                        {/* glass tooltip */}
+                        {/* glass tooltip — reflects the hovered block */}
                         <div
                           className="tnum absolute z-[3] whitespace-nowrap"
                           style={{
@@ -308,7 +335,7 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
                             padding: "6px 11px",
                           }}
                         >
-                          {fmtAmount(total)} cUSDd · {paid} paid
+                          {fmtAmount(tipTotal)} cUSDd · {tipPaid} paid
                         </div>
                         {/* halo ring marker */}
                         <div
