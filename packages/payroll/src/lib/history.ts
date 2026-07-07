@@ -56,7 +56,12 @@ export function useHistory() {
   }, [runs]);
 
   const addRun = useCallback((run: Omit<PayoutRun, "id" | "date">) => {
-    setRuns((list) => [{ ...run, id: crypto.randomUUID(), date: new Date().toISOString() }, ...list]);
+    setRuns((list) => {
+      // Idempotent by txHash: one on-chain payout is one history row, even if a
+      // confirmation is retried or an orphan record is recovered after the fact.
+      if (list.some((r) => r.txHash === run.txHash)) return list;
+      return [{ ...run, id: crypto.randomUUID(), date: new Date().toISOString() }, ...list];
+    });
   }, []);
 
   /** Called when the decrypt-verify step confirms every salary moved in full. */

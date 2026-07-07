@@ -131,6 +131,14 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
     }
   }
 
+  // A pre-broadcast failure (no wallet, wrong chain, rejected signature, encrypt
+  // error) sends the engine back to review/input WITH an error. execute() is
+  // fired by the shell, not handleContinue, so its error branch never runs —
+  // clear the running snapshot here so Continue leaves the "Preparing" state.
+  useEffect(() => {
+    if ((phase === "input" || phase === "review") && flow.error) setRunning([]);
+  }, [phase, flow.error]);
+
   const inTx = ["encrypting", "authorizing", "dispersing", "confirming"].includes(phase);
   const requestClose = () => {
     // Never abandon a broadcast tx by accident; scrim clicks are ignored mid-flight.
@@ -153,7 +161,14 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
               ? "96%"
               : "6%";
 
-  const finale = phase === "delivered" && (!autoverify || Boolean(verification)) && !flow.verifying && (verification ? deliveredN >= verification.length : true);
+  // The finale (with its Done button) must render on ANY settled delivered
+  // state — verified, unverified, or verify-failed — so a rejected auto-verify
+  // signature can never strand the modal with no way out.
+  const finale =
+    phase === "delivered" &&
+    !flow.verifying &&
+    (!autoverify || Boolean(verification) || Boolean(flow.error)) &&
+    (verification ? deliveredN >= verification.length : true);
 
   return (
     <AnimatePresence>
@@ -226,7 +241,11 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
                     people={running}
                     progressWidth={progressWidth}
                     error={flow.error}
-                    pendingTxHash={flow.pendingTxHash}
+                    // Retry confirmation only BEFORE delivery is confirmed — once
+                    // flow.delivery exists, retrying would re-fire onDispersed and
+                    // double-record the run; a post-delivery verify error is
+                    // handled in the finale instead.
+                    pendingTxHash={flow.delivery ? undefined : flow.pendingTxHash}
                     onRetryConfirm={() => void flow.retryConfirmation()}
                   />
                 )}
@@ -239,7 +258,10 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
                     resultReveal={resultReveal}
                     onToggleResult={() => setResultReveal((r) => !r)}
                     url={flow.delivery ? `https://sepolia.etherscan.io/tx/${flow.delivery.txHash}` : "https://sepolia.etherscan.io"}
-                    onVerify={autoverify ? undefined : () => void flow.verifyDelivery()}
+                    // Offer a manual verify whenever no verification exists yet
+                    // (covers both autoverify-off and a rejected auto-verify).
+                    onVerify={verification ? undefined : () => void flow.verifyDelivery()}
+                    verifyError={flow.error}
                     verifying={flow.verifying}
                     onDone={onClose}
                   />
@@ -549,6 +571,7 @@ function Finale(props: {
   onToggleResult: () => void;
   url: string;
   onVerify?: () => void;
+  verifyError?: string;
   verifying: boolean;
   onDone: () => void;
 }) {
@@ -586,6 +609,11 @@ function Finale(props: {
         <button type="button" onClick={props.onVerify} disabled={props.verifying} className="mx-auto mt-3 block w-full rounded-full font-semibold disabled:opacity-50" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
           {props.verifying ? "Decrypting" : "Verify salaries were delivered"}
         </button>
+      )}
+      {props.verifyError && props.verifiedOk === undefined && !props.verifying && (
+        <p className="mt-2" style={{ fontSize: 11, color: "#eb8f85" }}>
+          {props.verifyError}
+        </p>
       )}
 
       <a href={props.url} target="_blank" rel="noreferrer" className="mt-3.5 block transition-colors hover:text-[#e8f0ec]" style={{ fontSize: 12, color: "#9db3aa", textDecoration: "none" }}>

@@ -61,9 +61,18 @@ export const SEED_NOTIFS: SeedNotification[] = [
   { id: 3, title: "Upcoming payout", sub: "Jul 31 · 8 employees scheduled · Yesterday", color: "#9db3aa", read: false, tone: "info" },
 ];
 
-/** Design number formatting: 850 / 560.5 / 4,500.5 / 25,303. */
+/** Design summary formatting: 850 / 560.5 / 4,500.5 / 25,303 (1 decimal). */
 export function fmtAmount(v: number): string {
   return v.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+}
+
+/**
+ * Full-precision formatting for real, exact amounts (a decrypted salary or a
+ * dispersed total). Trailing zeros are trimmed, so seed values render the same
+ * as fmtAmount, but a real 6-decimal cUSDd amount is never rounded away.
+ */
+export function fmtAmountFull(v: number): string {
+  return v.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 6 });
 }
 
 /** Design wallet display: 0x + 4 chars + ellipsis + last 4 (e.g. 0x8626…1799). */

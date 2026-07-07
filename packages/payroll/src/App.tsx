@@ -55,7 +55,7 @@ import { tokens } from "./design/tokens";
 import { validateEmployee, useEmployees } from "./lib/employees";
 import { useHistory } from "./lib/history";
 import { useNotifications } from "./lib/notifications";
-import { clearPendingRun, savePendingRun, useOrphanRun } from "./lib/orphan";
+import { savePendingRun, useOrphanRun } from "./lib/orphan";
 import { loadIdentity } from "./lib/prefs";
 import { useSettings } from "./lib/prefs";
 import { rosterToRows } from "./lib/roster";
@@ -148,10 +148,12 @@ function Dashboard() {
   }, []);
 
   /* ── the frozen engine flow (one instance, owned here) ─────────────────── */
+  const orphan = useOrphanRun(addRun);
   const pendingRun = useRef<{ totalText: string; names: string[] }>(undefined);
   const onDispersed = useCallback(
     (result: DeliveryResult) => {
       const meta = pendingRun.current;
+      // addRun is idempotent by txHash, so a confirmation retry can't duplicate.
       addRun({
         txHash: result.txHash,
         employeeCount: result.recipients.length,
@@ -163,12 +165,14 @@ function Dashboard() {
           transferred: result.transferred[i],
         })),
       });
-      clearPendingRun();
+      // Clear this run's pending record from persistence AND in-memory state so
+      // the orphan banner can never re-surface it after a confirmed delivery.
+      orphan.dismiss(result.txHash);
       addNotif({ title: "Payroll delivered", sub: `${result.recipients.length} paid · verified · just now`, color: "#3bbf8e", tone: "ok" });
       showToast("ok", `Payroll delivered · ${result.recipients.length} paid · verified`);
       void balance.refresh();
     },
-    [addRun, addNotif, showToast, balance],
+    [addRun, orphan, addNotif, showToast, balance],
   );
   const onFlowError = useCallback(
     (error: Error) => {
@@ -196,8 +200,6 @@ function Dashboard() {
       markVerified(flow.delivery.txHash, flow.verification.every((v) => v.ok));
     }
   }, [flow.verification, flow.delivery, markVerified]);
-
-  const orphan = useOrphanRun(addRun);
 
   // startRun: selection → validated rows → goToReview, then execute once the
   // engine state reflects the rows (the frozen hook commits state per render).
@@ -313,7 +315,12 @@ function Dashboard() {
       const run = liveRuns.find((r) => r.id === runId);
       if (run) {
         void retro.verifyRun(run).then((ok) => {
-          if (ok !== undefined) markVerified(run.txHash, ok);
+          // Only consume the reveal when the decrypt actually resolved; a
+          // rejected signature or disconnected wallet leaves the row masked
+          // (the failure surfaces via retro.error) rather than silently
+          // flipping to a blank "revealed" state.
+          if (ok === undefined) return;
+          markVerified(run.txHash, ok);
           setEmpRows((m) => ({ ...m, [row.key]: true }));
         });
       }
@@ -327,6 +334,8 @@ function Dashboard() {
   }
 
   const navSel = (nav === 3 ? 1 : nav) as 0 | 1 | 2;
+  // The oldest pending record that isn't the run currently in flight.
+  const orphanRecord = orphan.orphanFor(flow.pendingTxHash);
 
   return (
     <div className="relative flex h-screen w-full overflow-hidden" style={{ background: tokens.bg.app, fontFamily: "'Manrope', sans-serif", color: tokens.text.heading }}>
@@ -393,20 +402,20 @@ function Dashboard() {
                 </motion.div>
               </AnimatePresence>
 
-              {orphan.orphan && flow.phase === "input" && orphan.orphan.txHash !== flow.pendingTxHash && (
+              {orphanRecord && flow.phase === "input" && (
                 <div className="mt-5 rounded-2xl p-3.5" style={{ background: "rgba(224,178,95,0.08)", border: "1px solid rgba(224,178,95,0.35)", color: "#e6c082", fontSize: 12 }}>
                   <p className="mb-2">
                     An earlier payroll run was sent (
-                    <a className="underline" href={`https://sepolia.etherscan.io/tx/${orphan.orphan.txHash}`} target="_blank" rel="noreferrer">
-                      {orphan.orphan.txHash.slice(0, 10)}
+                    <a className="underline" href={`https://sepolia.etherscan.io/tx/${orphanRecord.txHash}`} target="_blank" rel="noreferrer">
+                      {orphanRecord.txHash.slice(0, 10)}
                     </a>
                     ) but this page closed before it was recorded.
                   </p>
                   <span className="flex items-center gap-3">
-                    <button className="rounded-full px-3 py-1.5 font-semibold" style={{ background: "#3bbf8e", color: "#0b1512" }} onClick={() => void orphan.recover()} disabled={orphan.busy}>
+                    <button className="rounded-full px-3 py-1.5 font-semibold" style={{ background: "#3bbf8e", color: "#0b1512" }} onClick={() => void orphan.recover(orphanRecord)} disabled={orphan.busy}>
                       {orphan.busy ? "Checking" : "Check & record"}
                     </button>
-                    <button className="hover:underline" onClick={orphan.dismiss}>
+                    <button className="hover:underline" onClick={() => orphan.dismiss(orphanRecord.txHash)}>
                       Dismiss
                     </button>
                     {orphan.message && <span>{orphan.message}</span>}

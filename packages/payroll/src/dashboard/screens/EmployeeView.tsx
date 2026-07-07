@@ -11,7 +11,7 @@ import { RevealAmount } from "../../design/RevealAmount";
 import { CheckGlyph, ChevronLeftGlyph, PadlockGlyph, ReceiptCheckGlyph } from "../../design/icons";
 import { GhostButton, GlassCard } from "../../design/kit2";
 import { tokens } from "../../design/tokens";
-import { fmtAmount, shortWallet } from "../../lib/seed";
+import { fmtAmountFull, shortWallet } from "../../lib/seed";
 import type { EmployeeViewProps } from "../contracts";
 
 const GRADIENT = "linear-gradient(135deg,#41b091 0%,#2e9478 50%,#26826a 100%)";
@@ -117,7 +117,7 @@ export function EmployeeView({
           className="relative z-[1] flex items-baseline"
           style={{ gap: 9, fontWeight: 700, fontSize: 25, color: "#fff", marginTop: 13 }}
         >
-          <RevealAmount value={fmtAmount(person.salary)} revealed={salaryShown} keepLock label="salary" />
+          <RevealAmount value={fmtAmountFull(person.salary)} revealed={salaryShown} keepLock label="salary" />
           <span>cUSDd / month</span>
         </div>
         <div className="relative z-[1]" style={{ fontSize: 11, color: "rgba(240,250,245,0.75)", marginTop: 4 }}>
@@ -204,7 +204,7 @@ export function EmployeeView({
                   style={{ gap: 4, fontSize: 13.5, fontWeight: 700, color: "#eef4f1" }}
                 >
                   <RevealAmount
-                    value={row.amount !== undefined ? fmtAmount(row.amount) : undefined}
+                    value={row.amount !== undefined ? fmtAmountFull(row.amount) : undefined}
                     revealed={showAll || rowRevealed(row)}
                     pending={row.decrypting}
                     onToggle={() => onToggleRow(row)}
