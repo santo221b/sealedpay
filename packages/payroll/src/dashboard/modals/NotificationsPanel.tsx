@@ -91,8 +91,8 @@ export function NotificationsPanel({ open, onClose, notifs, onRead, onMarkAllRea
                   onClick={() => {
                     if (!n.read) onRead(n.id);
                   }}
-                  className="flex cursor-pointer items-start gap-[9px] rounded-2xl text-left transition-colors hover:bg-[rgba(95,230,175,0.1)]"
-                  style={{ padding: "7px 9px" }}
+                  className="flex cursor-pointer items-start gap-[9px] text-left transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+                  style={{ padding: "7px 9px", borderRadius: 10 }}
                 >
                   <span
                     className="mt-1 shrink-0 rounded-full"

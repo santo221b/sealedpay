@@ -69,6 +69,9 @@ import { Onboarding } from "./onboarding/Onboarding";
 import { sealedTheme } from "./theme";
 
 const TOKEN = DEMO_TOKEN_ADDRESS;
+// Real deposits persist across reloads (cleared by Reset demo, which wipes the
+// dispersekit.payroll.* keys). They are just display metadata — no secrets.
+const FUNDINGS_KEY = "dispersekit.payroll.fundings.v1";
 
 /** Card-style compact amount per the design ("4.5K"). */
 function compactAmount(v: number): string {
@@ -120,7 +123,17 @@ function Dashboard() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [fundOpen, setFundOpen] = useState(false);
-  const [fundings, setFundings] = useState<FundingEvent[]>([]); // real deposits made this session
+  // Real deposits, persisted so the Recent-activity row survives a reload.
+  const [fundings, setFundings] = useState<FundingEvent[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(FUNDINGS_KEY) ?? "[]") as FundingEvent[];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    localStorage.setItem(FUNDINGS_KEY, JSON.stringify(fundings));
+  }, [fundings]);
   const [remindOpen, setRemindOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ] = useState("");
