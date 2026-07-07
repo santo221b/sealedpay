@@ -100,7 +100,7 @@ function Dashboard() {
 
   /* ── data hooks ────────────────────────────────────────────────────────── */
   const { address: employer } = useAccount();
-  const { employees, add, replaceAll } = useEmployees();
+  const { employees, add, update, replaceAll } = useEmployees();
   const { runs: liveRuns, addRun, markVerified } = useHistory();
   const { settings, set: setSetting } = useSettings();
   const { notifs, unread, add: addNotif, markRead, markAllRead } = useNotifications();
@@ -123,6 +123,7 @@ function Dashboard() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ] = useState("");
   const [payrollOpen, setPayrollOpen] = useState(false);
+  const [payrollOnlyId, setPayrollOnlyId] = useState<string | null>(null); // pay a single employee
   const [revealMonthly, setRevealMonthly] = useState(false);
   const [empReveal, setEmpReveal] = useState(false);
   const [empRows, setEmpRows] = useState<Record<string, boolean>>({});
@@ -282,9 +283,28 @@ function Dashboard() {
 
   const closePayroll = useCallback(() => {
     setPayrollOpen(false);
+    setPayrollOnlyId(null);
     flow.reset();
     void balance.refresh();
   }, [flow, balance]);
+
+  // Employee page: edit a recipient wallet (validate + persist) and pay just one.
+  const onUpdateEmployeeAddress = useCallback(
+    (address: string): string | null => {
+      const emp = employees.find((e) => e.id === empId);
+      if (!emp) return "Employee not found.";
+      const input = { name: emp.name, role: emp.role ?? "", dept: emp.dept ?? "", address, salary: emp.salary };
+      const problem = validateEmployee(input, decimals);
+      if (problem) return problem;
+      update(emp.id, input);
+      return null;
+    },
+    [employees, empId, update, decimals],
+  );
+  const onPayEmployee = useCallback(() => {
+    setPayrollOnlyId(empId ?? null);
+    setPayrollOpen(true);
+  }, [empId]);
 
   /* ── derived views ─────────────────────────────────────────────────────── */
   const people = useMemo(() => employees.map(toPerson), [employees]);
@@ -473,7 +493,7 @@ function Dashboard() {
                 <motion.div key={nav === 3 ? `emp-${empId}` : nav} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}>
                   {nav === 0 && <Home data={data} tab={tab} setTab={setTab} />}
                   {nav === 1 && (
-                    <Team data={data} onRunPayroll={() => setPayrollOpen(true)} onAddEmployee={() => setAddOpen(true)} onOpenEmployee={openEmployee} />
+                    <Team data={data} onRunPayroll={() => { setPayrollOnlyId(null); setPayrollOpen(true); }} onAddEmployee={() => setAddOpen(true)} onOpenEmployee={openEmployee} />
                   )}
                   {nav === 2 && <Insights data={data} />}
                   {nav === 3 && person && (
@@ -488,6 +508,8 @@ function Dashboard() {
                       paymentsCount={String(personRows.length).padStart(2, "0")}
                       onBack={() => setNav(1)}
                       employerAddress={employer}
+                      onUpdateAddress={onUpdateEmployeeAddress}
+                      onPay={onPayEmployee}
                     />
                   )}
                 </motion.div>
@@ -573,7 +595,7 @@ function Dashboard() {
           setPermPrompt(false);
         }}
       />
-      <RunPayrollModal open={payrollOpen} people={people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} />
+      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} />
       <Toast toast={toast} />
     </div>
   );

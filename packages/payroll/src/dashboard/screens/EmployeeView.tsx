@@ -6,6 +6,7 @@
  * links). Presentation only.
  */
 import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 import { RevealAmount } from "../../design/RevealAmount";
 import { CheckGlyph, ChevronLeftGlyph, PadlockGlyph, ReceiptCheckGlyph } from "../../design/icons";
@@ -26,9 +27,20 @@ export function EmployeeView({
   showAll,
   onBack,
   employerAddress,
+  onUpdateAddress,
+  onPay,
 }: EmployeeViewProps) {
   const reduced = useReducedMotion();
   const salaryShown = showAll || salaryRevealed;
+
+  // Editable recipient wallet — lets a judge point this employee at their own
+  // address and pay just this one person (persists on every valid edit).
+  const [addr, setAddr] = useState(person.wallet);
+  const [addrErr, setAddrErr] = useState<string | null>(null);
+  useEffect(() => {
+    setAddr(person.wallet);
+    setAddrErr(null);
+  }, [person.id, person.wallet]);
 
   return (
     <div className="flex flex-col" style={{ gap: 20 }}>
@@ -130,6 +142,51 @@ export function EmployeeView({
         </div>
       </div>
 
+      {/* Pay this employee — editable recipient + one-off confidential payout */}
+      <GlassCard style={{ padding: "16px 20px" }}>
+        <div className="flex items-center justify-between">
+          <div style={{ fontWeight: 400, fontSize: 15 }}>Pay {person.name}</div>
+          <span style={{ fontSize: 10.5, color: tokens.text.muted }}>a one-off confidential payout</span>
+        </div>
+        <label htmlFor="pay-recipient" style={{ display: "block", fontSize: 10, color: tokens.text.muted, margin: "12px 0 5px" }}>
+          Recipient wallet (edit to pay a different address)
+        </label>
+        <input
+          id="pay-recipient"
+          value={addr}
+          spellCheck={false}
+          onChange={(e) => {
+            const v = e.target.value.trim();
+            setAddr(v);
+            setAddrErr(onUpdateAddress(v));
+          }}
+          style={{
+            width: "100%",
+            background: "rgba(255,255,255,0.05)",
+            border: `1px solid ${addrErr ? "rgba(224,110,98,0.5)" : "rgba(255,255,255,0.09)"}`,
+            borderRadius: 11,
+            padding: "10px 13px",
+            color: "#e8f0ec",
+            fontSize: 12,
+            outline: "none",
+          }}
+        />
+        {addrErr && (
+          <p role="alert" style={{ fontSize: 11, color: "#eb8f85", marginTop: 6 }}>
+            {addrErr}
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={onPay}
+          disabled={Boolean(addrErr)}
+          className="mt-3 w-full cursor-pointer rounded-full disabled:cursor-not-allowed disabled:opacity-45"
+          style={{ background: tokens.accent.primary, color: tokens.text.onAccentDark, fontWeight: 700, fontSize: 13, padding: "11px 0" }}
+        >
+          Pay {person.name}
+        </button>
+      </GlassCard>
+
       {/* Payment history */}
       <GlassCard style={{ padding: "20px 23px" }}>
         <div className="flex items-center justify-between">
@@ -145,7 +202,16 @@ export function EmployeeView({
           {rows.map((row) => (
             <div
               key={row.key}
-              className="flex items-center transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+              role="button"
+              tabIndex={0}
+              onClick={() => onToggleRow(row)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onToggleRow(row);
+                }
+              }}
+              className="flex cursor-pointer items-center transition-colors hover:bg-[rgba(95,230,175,0.1)]"
               style={{ gap: 12, padding: "7px 13px", borderRadius: 999 }}
             >
               <span
@@ -172,6 +238,7 @@ export function EmployeeView({
                     href={row.url}
                     target="_blank"
                     rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
                     className="cursor-pointer hover:underline"
                     style={{ color: "#4ecba0", textDecoration: "none" }}
                   >
@@ -188,7 +255,6 @@ export function EmployeeView({
                     value={row.amount !== undefined ? fmtAmountFull(row.amount) : undefined}
                     revealed={showAll || rowRevealed(row)}
                     pending={row.decrypting}
-                    onToggle={() => onToggleRow(row)}
                     label="payment amount"
                   />
                   <span>cUSDd</span>
