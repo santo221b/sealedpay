@@ -270,7 +270,7 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
           {/* address strip — show more of the address here, there is room */}
           <div className="tnum" style={{ fontSize: 13, letterSpacing: 0.9, color: "#ffffff", paddingLeft: 21 }}>
             {data.employerAddress
-              ? `${data.employerAddress.slice(0, 14)}…${data.employerAddress.slice(-12)}`
+              ? `${data.employerAddress.slice(0, 7)}…${data.employerAddress.slice(-6)}`
               : "Not connected"}
           </div>
           <div style={{ fontSize: 10, color: "rgba(240,250,245,0.85)", marginTop: 3, paddingLeft: 21 }}>Sepolia</div>
