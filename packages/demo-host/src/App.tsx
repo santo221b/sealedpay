@@ -153,9 +153,7 @@ export function App() {
       >
         <div className="mx-auto flex max-w-5xl items-center px-6 py-4">
           <div className="flex items-center gap-2.5">
-            <span className="flex items-center justify-center rounded-[11px]" style={{ width: 32, height: 32, background: T.accentGrad, boxShadow: "0 4px 16px rgba(46,205,221,0.4)" }}>
-              <BrandMark size={22} />
-            </span>
+            <BrandMark size={26} fill={T.accent} />
             <span style={{ fontWeight: 700, fontSize: 15, color: T.heading }}>DisperseKit</span>
             <span className="rounded-full" style={{ marginLeft: 4, background: T.puck, color: T.accentText, border: `1px solid ${T.pillBorder}`, fontSize: 10, fontWeight: 600, padding: "3px 10px", letterSpacing: 0.3 }}>
               SDK
