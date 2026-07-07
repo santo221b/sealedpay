@@ -16,7 +16,7 @@ import type { Employee } from "./employees";
 
 // Bump this when the seed roster changes — the dashboard replaces any prior
 // roster with the current SEED_EMPLOYEES once per version (see App seed effect).
-export const SEEDED_KEY = "sealedpay_seeded.v2";
+export const SEEDED_KEY = "sealedpay_seeded.v3";
 
 /**
  * Shared recipient for the test roster — the project wallet that holds the
@@ -26,19 +26,20 @@ export const SEEDED_KEY = "sealedpay_seeded.v2";
 const TEST_WALLET = "0x3F9eEc56BC421da1decF8D03C50798882F943Fc3";
 
 /**
- * Test roster: 5 named employees sharing TEST_WALLET; the current roster's
- * salaries sum to 90 (fits a 100 cUSDd balance). `historyStart` is the seeded
- * month index (0 = Feb … 5 = Jul) each member first appears in — staggered so
- * the team grows over time and the Payout Activity graph RAMPS instead of being
- * flat. With these joins the derived monthly totals are:
- *   Feb 40 (2 paid) → Mar 60 (3) → Apr 78 (4) → May 78 (4) → Jun 90 (5) → Jul 90 (5).
+ * Test roster: 5 named employees sharing TEST_WALLET, with realistic monthly
+ * salaries (~2,000-2,400 cUSDd). The current roster totals 11,000 / month, so
+ * the connected wallet needs ≥ ~11,000 cUSDd to run a real payout (mint more
+ * via the faucet). `historyStart` is the seeded month index (0 = Feb … 5 = Jul)
+ * each member first appears in — staggered so the team grows over time and the
+ * Payout Activity graph RAMPS instead of being flat. Derived monthly totals:
+ *   Feb 4,600 (2 paid) → Mar 6,600 (3) → Apr 8,700 (4) → May 8,700 (4) → Jun/Jul 11,000 (5).
  */
 export const SEED_EMPLOYEES: (Omit<Employee, "id"> & { seedIndex: number; joined: string; historyStart: number })[] = [
-  { name: "Satoshi Nakamoto", role: "Protocol Architect", dept: "Engineering", address: TEST_WALLET, salary: "16", seedIndex: 0, joined: "Feb 2026", historyStart: 0 },
-  { name: "Lewis Hamilton", role: "Engineer", dept: "Engineering", address: TEST_WALLET, salary: "24", seedIndex: 1, joined: "Feb 2026", historyStart: 0 },
-  { name: "Max Verstappen", role: "Backend Engineer", dept: "Engineering", address: TEST_WALLET, salary: "20", seedIndex: 2, joined: "Mar 2026", historyStart: 1 },
-  { name: "Charles Leclerc", role: "Product Designer", dept: "Design", address: TEST_WALLET, salary: "18", seedIndex: 3, joined: "Apr 2026", historyStart: 2 },
-  { name: "Lionel Messi", role: "Community Manager", dept: "Operations", address: TEST_WALLET, salary: "12", seedIndex: 4, joined: "Jun 2026", historyStart: 4 },
+  { name: "Satoshi Nakamoto", role: "Protocol Architect", dept: "Engineering", address: TEST_WALLET, salary: "2400", seedIndex: 0, joined: "Feb 2026", historyStart: 0 },
+  { name: "Lewis Hamilton", role: "Engineer", dept: "Engineering", address: TEST_WALLET, salary: "2200", seedIndex: 1, joined: "Feb 2026", historyStart: 0 },
+  { name: "Max Verstappen", role: "Backend Engineer", dept: "Engineering", address: TEST_WALLET, salary: "2000", seedIndex: 2, joined: "Mar 2026", historyStart: 1 },
+  { name: "Charles Leclerc", role: "Product Designer", dept: "Design", address: TEST_WALLET, salary: "2100", seedIndex: 3, joined: "Apr 2026", historyStart: 2 },
+  { name: "Lionel Messi", role: "Community Manager", dept: "Operations", address: TEST_WALLET, salary: "2300", seedIndex: 4, joined: "Jun 2026", historyStart: 4 },
 ];
 
 export interface SeedRun {
