@@ -731,6 +731,7 @@ function FundWalletModalWired({
       open={open}
       onClose={onClose}
       employerShort={employer ? midWallet(employer) : "connect a wallet"}
+      employerFull={employer}
       busy={fund.busy}
       phase={fund.phase}
       error={fund.error}

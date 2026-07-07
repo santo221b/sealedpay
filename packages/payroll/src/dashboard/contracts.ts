@@ -161,6 +161,7 @@ export interface FundWalletModalProps {
   open: boolean;
   onClose: () => void;
   employerShort: string; // destination display
+  employerFull?: string; // full address, for the copy button
   busy: boolean;
   /** idle → confirming (awaiting wallet signature) → minting (tx on-chain). */
   phase: "idle" | "confirming" | "minting";
