@@ -16,14 +16,14 @@ import type { Employee } from "./employees";
 
 // Bump this when the seed roster changes — the dashboard replaces any prior
 // roster with the current SEED_EMPLOYEES once per version (see App seed effect).
-export const SEEDED_KEY = "sealedpay_seeded.v3";
+export const SEEDED_KEY = "sealedpay_seeded.v4";
 
 /**
- * Shared recipient for the test roster — the project wallet that holds the
- * demo cUSDd. Connect THIS wallet as the employer so a run pays it back to
- * itself and every amount decrypts for you.
+ * Shared recipient for the test roster. Payroll disperses every salary to THIS
+ * address, so a run from the employer wallet is a REAL transfer out to it (not
+ * a self-payment). Only the holder of this address can decrypt what it received.
  */
-const TEST_WALLET = "0x3F9eEc56BC421da1decF8D03C50798882F943Fc3";
+const TEST_WALLET = "0x42D0446C1215BDc2f2a39D91Cdf481165B8b720F";
 
 /**
  * Test roster: 5 named employees sharing TEST_WALLET, with realistic monthly
