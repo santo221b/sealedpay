@@ -151,15 +151,8 @@ export function RevealAmount({
   const lockShown = keepLock;
   const revealedNow = showChars && value !== undefined;
 
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      disabled={!onToggle}
-      aria-label={revealedNow ? `Hide ${label}` : `Reveal ${label}`}
-      title={onToggle ? (revealedNow ? `Hide ${label}` : `Reveal ${label}`) : undefined}
-      className={`inline-flex items-center gap-2 ${onToggle ? "cursor-pointer" : "cursor-default"} ${className}`}
-    >
+  const inner = (
+    <>
       {content}
       {lockShown && (
         <motion.span
@@ -178,6 +171,24 @@ export function RevealAmount({
           <LockGlyph />
         </motion.span>
       )}
+    </>
+  );
+
+  // Display-only (no toggle): render a span so it can safely nest inside a
+  // clickable row/card without producing a <button> inside a <button>.
+  if (!onToggle) {
+    return <span className={`inline-flex items-center gap-2 ${className}`}>{inner}</span>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={revealedNow ? `Hide ${label}` : `Reveal ${label}`}
+      title={revealedNow ? `Hide ${label}` : `Reveal ${label}`}
+      className={`inline-flex cursor-pointer items-center gap-2 ${className}`}
+    >
+      {inner}
     </button>
   );
 }

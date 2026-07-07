@@ -14,12 +14,14 @@ export interface Employee {
   name: string;
   /** Optional job title, display only. */
   role?: string;
+  /** Team, e.g. Engineering / Design / Operations. */
+  dept?: string;
   address: `0x${string}`;
   /** Human units, e.g. "2500.5" (cUSDd). */
   salary: string;
 }
 
-export type EmployeeInput = { name: string; role?: string; address: string; salary: string };
+export type EmployeeInput = { name: string; role?: string; dept?: string; address: string; salary: string };
 
 const STORAGE_KEY = "dispersekit.payroll.employees.v1";
 
@@ -74,6 +76,7 @@ export function useEmployees() {
         id: crypto.randomUUID(),
         name: input.name.trim(),
         role: input.role?.trim() || undefined,
+        dept: input.dept?.trim() || undefined,
         address: getAddress(input.address), // normalize to checksummed form
         salary: input.salary.trim(),
       },
@@ -88,6 +91,7 @@ export function useEmployees() {
               ...e,
               name: input.name.trim(),
               role: input.role?.trim() || undefined,
+        dept: input.dept?.trim() || undefined,
               address: getAddress(input.address),
               salary: input.salary.trim(),
             }

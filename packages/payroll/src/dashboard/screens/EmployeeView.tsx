@@ -1,0 +1,243 @@
+/**
+ * EMPLOYEE VIEW screen (dashboard-screens.md §5 + §7.2 stat cards).
+ * Title, Connected chip + Back ghost button, Salary hero gradient card
+ * (Reveal toggle + keepLock RevealAmount), 3 stat cards, Payment history
+ * (6 visible then internal scroll, per-row reveal with real Etherscan
+ * links). Presentation only.
+ */
+import { motion, useReducedMotion } from "framer-motion";
+
+import { RevealAmount } from "../../design/RevealAmount";
+import { CheckGlyph, ChevronLeftGlyph, PadlockGlyph, ReceiptCheckGlyph } from "../../design/icons";
+import { GhostButton, GlassCard } from "../../design/kit2";
+import { tokens } from "../../design/tokens";
+import { fmtAmount, shortWallet } from "../../lib/seed";
+import type { EmployeeViewProps } from "../contracts";
+
+const GRADIENT = "linear-gradient(135deg,#41b091 0%,#2e9478 50%,#26826a 100%)";
+
+export function EmployeeView({
+  person,
+  rows,
+  salaryRevealed,
+  onToggleSalary,
+  onToggleRow,
+  rowRevealed,
+  showAll,
+  paymentsCount,
+  onBack,
+  employerAddress,
+}: EmployeeViewProps) {
+  const reduced = useReducedMotion();
+  const salaryShown = showAll || salaryRevealed;
+
+  return (
+    <div className="flex flex-col" style={{ gap: 20 }}>
+      {/* Title */}
+      <h1 style={{ fontWeight: 500, fontSize: 38, color: tokens.text.heading, letterSpacing: 0.45, margin: 0 }}>
+        {person.name}
+      </h1>
+
+      {/* Connected chip + Back */}
+      <div className="flex items-center justify-between" style={{ gap: 13 }}>
+        <span
+          className="tnum flex select-none items-center"
+          style={{
+            gap: 7,
+            background: tokens.glass.card,
+            boxShadow: tokens.glass.cardShadow,
+            color: tokens.text.muted,
+            fontWeight: 400,
+            fontSize: 13,
+            borderRadius: tokens.radius.pill,
+            padding: "10px 22px",
+          }}
+        >
+          <span
+            className="rounded-full"
+            style={{ width: 6, height: 6, background: employerAddress ? tokens.accent.liveDot : tokens.text.dimmest }}
+          />
+          {employerAddress ? `Connected · ${shortWallet(employerAddress)}` : "Not connected"}
+        </span>
+        <GhostButton
+          onClick={onBack}
+          className="hover:bg-[rgba(255,255,255,0.06)] hover:text-[#e8f0ec]"
+          style={{
+            borderRadius: tokens.radius.pill,
+            border: "1px solid rgba(255,255,255,0.14)",
+            color: "#b8c6bf",
+            fontWeight: 500,
+            fontSize: 13,
+            padding: "9px 18px",
+          }}
+        >
+          <ChevronLeftGlyph size={13} />
+          Back
+        </GhostButton>
+      </div>
+
+      {/* Salary hero card */}
+      <div
+        className="relative overflow-hidden"
+        style={{ borderRadius: 18, background: GRADIENT, padding: 20, minHeight: 171 }}
+      >
+        <div
+          aria-hidden
+          className="absolute rounded-full"
+          style={{ width: 153, height: 153, top: -45, right: -36, background: "rgba(255,255,255,0.10)" }}
+        />
+        <div
+          aria-hidden
+          className="absolute rounded-full"
+          style={{ width: 99, height: 99, top: -14, right: 50, background: "rgba(255,255,255,0.07)" }}
+        />
+        <div className="relative z-[1] flex items-center justify-between">
+          <span style={{ fontSize: 25, color: "rgba(240,250,245,0.85)" }}>Salary</span>
+          <motion.button
+            type="button"
+            onClick={onToggleSalary}
+            whileHover={reduced ? undefined : { scale: 1.05 }}
+            whileTap={reduced ? undefined : { scale: 0.95 }}
+            className="flex shrink-0 cursor-pointer items-center whitespace-nowrap"
+            style={{
+              gap: 5,
+              background: "#f5f8f6",
+              color: tokens.text.onAccentDark,
+              fontWeight: 700,
+              fontSize: 12,
+              borderRadius: tokens.radius.pill,
+              padding: "9px 18px",
+            }}
+          >
+            <PadlockGlyph size={12} color={tokens.text.onAccentDark} />
+            {salaryShown ? "Hide" : "Reveal"}
+          </motion.button>
+        </div>
+        <div
+          className="relative z-[1] flex items-baseline"
+          style={{ gap: 9, fontWeight: 700, fontSize: 25, color: "#fff", marginTop: 13 }}
+        >
+          <RevealAmount value={fmtAmount(person.salary)} revealed={salaryShown} keepLock label="salary" />
+          <span>cUSDd / month</span>
+        </div>
+        <div className="relative z-[1]" style={{ fontSize: 11, color: "rgba(240,250,245,0.75)", marginTop: 4 }}>
+          Decrypted locally with your wallet signature. Only you and your employer can see this.
+        </div>
+        <div className="relative z-[1] flex items-end justify-between" style={{ marginTop: 16 }}>
+          <span className="tnum" style={{ fontSize: 13, letterSpacing: 0.9, color: "rgba(240,250,245,0.95)" }}>
+            {shortWallet(person.wallet)}
+          </span>
+          <span style={{ fontSize: 10, color: "rgba(240,250,245,0.7)" }}>cUSDd · Sepolia</span>
+        </div>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        <GlassCard style={{ padding: "18px 22px" }}>
+          <div style={{ fontSize: 11, color: tokens.text.muted }}>Payments received</div>
+          <div className="tnum" style={{ fontSize: 18, fontWeight: 500, marginTop: 5 }}>
+            {paymentsCount}
+          </div>
+        </GlassCard>
+        <GlassCard style={{ padding: "18px 22px" }}>
+          <div style={{ fontSize: 11, color: tokens.text.muted }}>Team</div>
+          <div style={{ fontSize: 18, fontWeight: 500, marginTop: 5 }}>{person.dept}</div>
+        </GlassCard>
+        <GlassCard style={{ padding: "18px 22px", gridColumn: "1 / -1" }}>
+          <div style={{ fontSize: 11, color: tokens.text.muted }}>Role</div>
+          <div style={{ fontSize: 18, fontWeight: 500, marginTop: 5 }}>{person.role}</div>
+        </GlassCard>
+      </div>
+
+      {/* Payment history */}
+      <GlassCard style={{ padding: "20px 23px" }}>
+        <div className="flex items-center justify-between">
+          <div style={{ fontWeight: 400, fontSize: 17 }}>Payment history</div>
+          <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
+            {rows.length} payments
+          </div>
+        </div>
+        <div
+          className="slim-scroll flex flex-col overflow-y-auto overflow-x-hidden"
+          style={{ gap: 5, margin: "11px -13px 0 -13px", padding: "0 13px", maxHeight: 271 }}
+        >
+          {rows.map((row) => (
+            <div
+              key={row.key}
+              className="flex items-center transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+              style={{ gap: 12, padding: "7px 13px", borderRadius: 999 }}
+            >
+              <span
+                className="flex shrink-0 items-center justify-center rounded-full"
+                style={{
+                  width: 36,
+                  height: 36,
+                  background: tokens.accent.puckBg,
+                  border: "1px solid rgba(255,255,255,0.06)",
+                }}
+              >
+                <ReceiptCheckGlyph size={17} />
+              </span>
+              <span className="min-w-0">
+                <span className="tnum block" style={{ fontSize: 13.5, fontWeight: 600, color: "#eef4f1" }}>
+                  {row.date}
+                </span>
+                <span
+                  className="tnum block whitespace-nowrap"
+                  style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}
+                >
+                  {row.tx} ·{" "}
+                  <a
+                    href={row.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="cursor-pointer hover:underline"
+                    style={{ color: "#4ecba0", textDecoration: "none" }}
+                  >
+                    Etherscan
+                  </a>
+                </span>
+              </span>
+              <span className="ml-auto flex items-center" style={{ gap: 9 }}>
+                <span
+                  className="flex cursor-pointer items-center"
+                  style={{ gap: 4, fontSize: 13.5, fontWeight: 700, color: "#eef4f1" }}
+                >
+                  <RevealAmount
+                    value={row.amount !== undefined ? fmtAmount(row.amount) : undefined}
+                    revealed={showAll || rowRevealed(row)}
+                    pending={row.decrypting}
+                    onToggle={() => onToggleRow(row)}
+                    label="payment amount"
+                  />
+                  <span>cUSDd</span>
+                </span>
+                <span
+                  className="inline-flex items-center"
+                  style={{
+                    gap: 3.5,
+                    fontSize: 9,
+                    fontWeight: 400,
+                    padding: "3px 9px",
+                    borderRadius: tokens.radius.pill,
+                    border: `1px solid ${tokens.accent.pillBorder}`,
+                    color: tokens.accent.pillText,
+                    background: "transparent",
+                  }}
+                >
+                  <CheckGlyph size={10} />
+                  Verified
+                </span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </GlassCard>
+
+      {/* Footnote */}
+      <div style={{ fontSize: 11, color: tokens.text.muted, lineHeight: 1.6 }}>
+        Amounts are encrypted on-chain. Etherscan proves each payment happened; the amount itself stays private.
+      </div>
+    </div>
+  );
+}

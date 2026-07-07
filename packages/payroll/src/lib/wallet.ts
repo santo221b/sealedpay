@@ -15,7 +15,7 @@ import {
   getFhevmInstance,
   userDecryptHandles,
 } from "@dispersekit/widget";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { parseUnits, zeroHash } from "viem";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 
@@ -34,20 +34,25 @@ export function useWalletBalance(decimals: number | undefined) {
   const [revealed, setRevealed] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
+  // Compare-against without adding `handle` to refresh's deps (avoids setState
+  // inside a setState updater, which trips React's "update while rendering").
+  const handleRef = useRef<`0x${string}`>(undefined);
 
   const refresh = useCallback(async () => {
     if (!publicClient || !employer || !TOKEN) return;
     try {
-      const h = await publicClient.readContract({
+      const h = (await publicClient.readContract({
         address: TOKEN,
         abi: erc7984Abi,
         functionName: "confidentialBalanceOf",
         args: [employer],
-      });
-      setHandle((prev) => {
-        if (prev !== h) setClear(h === zeroHash ? 0n : undefined); // balance changed: old plaintext is stale
-        return h;
-      });
+      })) as `0x${string}`;
+      if (handleRef.current !== h) {
+        handleRef.current = h;
+        setHandle(h);
+        setClear(h === zeroHash ? 0n : undefined); // handle changed: old plaintext is stale
+        setRevealed(false);
+      }
     } catch {
       /* transient RPC issue; next refresh wins */
     }
@@ -57,20 +62,32 @@ export function useWalletBalance(decimals: number | undefined) {
     void refresh();
   }, [refresh]);
 
+  // A disconnect (or account switch) must clear every trace of the prior balance.
+  useEffect(() => {
+    if (!employer) {
+      handleRef.current = undefined;
+      setHandle(undefined);
+      setClear(undefined);
+      setRevealed(false);
+      setError(undefined);
+    }
+  }, [employer]);
+
   /** Real decryption (one wallet signature). Cached in memory until the handle changes. */
   const reveal = useCallback(async () => {
     setError(undefined);
+    // A wallet is required before anything is revealed — never fabricate a 0.
+    if (!employer || !walletClient || !TOKEN) {
+      setError("Connect your wallet first");
+      return;
+    }
     if (clear !== undefined) {
       setRevealed(true);
       return;
     }
     if (!handle || handle === zeroHash) {
-      setClear(0n);
+      setClear(0n); // genuinely holds nothing yet
       setRevealed(true);
-      return;
-    }
-    if (!employer || !walletClient || !TOKEN) {
-      setError("Connect your wallet first");
       return;
     }
     setPending(true);

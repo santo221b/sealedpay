@@ -1,0 +1,96 @@
+/**
+ * Settings panel — the gear popover (modals.md §5).
+ *
+ * Anchored popover: render inside a `position:relative` wrapper around the
+ * gear puck; unfolds from its top-left corner, scrim behind (same shell as
+ * the Notifications popover, width 252).
+ */
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useEffect } from "react";
+
+import { SettingToggle } from "../../design/kit2";
+import { tokens } from "../../design/tokens";
+import type { SettingsPanelProps } from "../contracts";
+
+const TOGGLES: { key: "maskDefault" | "reminders" | "autoverify"; label: string }[] = [
+  { key: "maskDefault", label: "Mask amounts by default" },
+  { key: "reminders", label: "Payout reminders" },
+  { key: "autoverify", label: "Auto-verify after payout" },
+];
+
+export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverify, onToggle }: SettingsPanelProps) {
+  const reduced = useReducedMotion();
+  const values = { maskDefault, reminders, autoverify };
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            key="scrim"
+            className="fixed inset-0 z-[3]"
+            style={{ background: tokens.bg.scrim }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.15, ease: "easeIn" } }}
+            transition={{ duration: reduced ? 0.14 : 0.2, ease: "easeOut" }}
+            onMouseDown={onClose}
+          />
+          <motion.div
+            key="panel"
+            role="dialog"
+            aria-label="Settings"
+            className="absolute z-10 cursor-auto overflow-hidden text-left"
+            style={{
+              left: 50,
+              top: -7,
+              width: 252,
+              borderRadius: 27,
+              border: "1px solid rgba(255,255,255,0.11)",
+              background: "rgba(52,92,72,0.21)",
+              padding: 20,
+              transformOrigin: "0 0",
+            }}
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={
+              reduced
+                ? { opacity: 0, transition: { duration: 0.17 } }
+                : { opacity: 0, y: -6, scale: 0.97, transition: { duration: 0.17, ease: [0.4, 0, 1, 1] } }
+            }
+            transition={{ duration: reduced ? 0.14 : 0.34, ease: [0.2, 1.06, 0.3, 1] }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: 13.5, fontWeight: 700, color: "#f2f7f4" }}>Settings</h3>
+
+            <div className="mt-[5px] flex flex-col">
+              {TOGGLES.map((t) => (
+                <SettingToggle key={t.key} label={t.label} on={values[t.key]} onChange={(on) => onToggle(t.key, on)} />
+              ))}
+            </div>
+
+            <div style={{ height: 1, background: "rgba(255,255,255,0.09)", margin: "5px 0" }} />
+
+            <div className="flex items-center justify-between" style={{ padding: "9px 0" }}>
+              <span style={{ fontSize: 12, color: "#e8f0ec" }}>Token</span>
+              <span style={{ fontSize: 11, color: "#9db3aa" }}>cUSDd</span>
+            </div>
+            <div className="flex items-center justify-between" style={{ padding: "9px 0" }}>
+              <span style={{ fontSize: 12, color: "#e8f0ec" }}>Network</span>
+              <span style={{ fontSize: 11, color: "#9db3aa" }}>Sepolia Testnet</span>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}

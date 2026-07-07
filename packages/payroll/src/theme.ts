@@ -1,19 +1,16 @@
 /**
- * Payroll brand: clean fintech white with a warm coral accent. The embedded
- * engine parts (StatusTimeline, DeliveredPanel, ConnectGate…) are themed via
- * DisperseKit CSS variables so they match without forking.
+ * Engine-facing theme: DisperseKit CSS variables + the RainbowKit accent,
+ * matched to the SealedPay design tokens (wallet modals pick up the green).
  */
 import type { DisperseTheme } from "@dispersekit/widget";
 
-export const payrollTheme: DisperseTheme = {
-  accent: "#ea580c",
-  accentText: "#ffffff",
-  background: "#ffffff",
-  surface: "#f7f5f2",
-  text: "#1c1917",
-  muted: "#8a8178",
-  border: "#e9e5df",
+export const sealedTheme: DisperseTheme = {
+  accent: "#3bbf8e",
+  accentText: "#0b1512",
+  background: "#121d1a",
+  surface: "#0f1815",
+  text: "#f2f7f4",
+  muted: "#9db3aa",
+  border: "rgba(255,255,255,0.11)",
   radius: "16px",
 };
-
-export const EXPLORER = "https://sepolia.etherscan.io";

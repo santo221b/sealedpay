@@ -3,6 +3,39 @@
 > What works, what's stubbed, what's blocked, and the exact next step.
 > Newest entries first.
 
+## 2026-07-07 — SealedPay design handoff implementation (in progress)
+
+**Done — verified**
+- Design package vendored (`docs/design/handoff/`) + four exhaustive extraction specs (`docs/design/extracted/`) produced by a parallel fleet (copy, styles, timings, seed data, every SVG, verbatim).
+- Foundations: design tokens, `RevealAmount`/`SealAmount` (exact scramble parameters), glass kit primitives + ModalShell, Manrope self-hosted, chart.js.
+- **Onboarding (6 steps) complete + browser-verified** (welcome scramble, progress sheen, ghost numeral flip, acknowledgment gate, avatar picker). Step 4 wallet connect is REAL (RainbowKit + wagmi, real address chip) replacing the prototype's 1250ms simulation.
+- Real-wire hooks ready: balance = the employer's actual encrypted cUSDd balance handle with one-signature decryption; Fund Wallet = a real faucet mint transaction.
+- Run Payroll modal (THE SEAM) built: design's 4 steps driven by real `useDisperseFlow` phases; encrypting cascade plays during the real FHE proof; Paid cascade fed by the real verify-decrypt; real Etherscan link + real total.
+
+**Design-ambiguity resolutions (prototype bug vs README — decision + why)**
+- Select-all label rendered a boolean in the prototype → "Select all"/"Deselect all".
+- Monthly payroll was hard-coded always-revealed → README behavior (masked, tap to reveal).
+- keepLock (drifting lock) never passed in prototype → applied to balance + salary hero per README.
+- "Already authorized" skip missing in prototype → implemented from real `operatorAlreadySet`.
+- Runway "04" / scorecard "48" hard-coded → derived live (balance ÷ monthly; Σ recipients across history).
+- Last run card static "Jul 5 Sun" → derived from the latest real run.
+- Signed-out screen hard-coded "Santo" → real stored name.
+- No in-modal "Authorize"/"Confirm & pay" buttons: the wallet's own prompts are the real confirmations. "Simulate failure (demo)" omitted; real failures drive the designed failure path.
+- Copy rule: no ellipses/em-dashes anywhere (design already omitted most; the rest stripped).
+- Seed team uses REAL dev-account addresses and seed history rows link to REAL past Sepolia txs from this repo, so sample data is fully clickable and a real run against the seed roster settles on-chain.
+
+**Dashboard complete + integrated + verified**
+- New dark-glass App shell owns all state and every real-wiring seam; the four screens (Home / Team / Insights / Employee View), the icon rail, floating top bar, Payroll Wallet sidebar, and all 12 modals/panels (incl. the engine-wired Run Payroll 4-step) are built from the extraction specs and wired in. Superseded prior UI (old Sidebar/kit/screens) deleted.
+- Browser-verified: onboarding, Home (bar chart + donut + cards), Team (hero cards + roster + wallet sidebar), Insights (line chart + runway + scorecard), Employee View (salary hero + stat cards + history). Masking correct everywhere ("***" by default; reveals scramble-settle).
+- **Real wiring confirmed live**: wallet balance = real encrypted-balance handle with one-signature decryption; runway derives from it; Fund Wallet = real faucet mint; per-employee live history rows decrypt real handles; notifications/activity/chart reflect real runs; every Etherscan link is real. Seed team uses real dev addresses; seed history links real past txs.
+- **Guardrail GREEN after integration**: all four packages build; contracts 7/7; **live Sepolia E2E passing** (tx `0x6e799580…465f`).
+
+**Two console warnings fixed (mine), one noted (library)**
+- Fixed: `useWalletBalance` called setState inside a setState updater (removed the ConnectModal setState warning) and reordered `reveal()` so a disconnected reveal errors instead of fabricating a "0". Fixed: `RevealAmount` now renders a `<span>` when display-only, ending a `<button>`-in-`<button>` nesting.
+- Noted (not mine): a dev-only "button cannot contain a nested button" warning fires once at mount from RainbowKit's `[data-rk]` connect-modal DOM (16 buttons / 42 KB, browser-hoisted so the final DOM is clean, `rkNested: 0`). It never re-fires from any SealedPay component and is stripped in production builds. Shared with the widget/demo apps (same DisperseProviders).
+
+**Design-ambiguity resolutions (prototype bug vs README — decision + why)**
+
 ## 2026-07-05 — Payroll UI polish pass (design brief implementation)
 
 **Works — verified in-browser**
