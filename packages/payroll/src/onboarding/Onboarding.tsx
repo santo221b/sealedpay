@@ -239,6 +239,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                   address={address}
                   onConnect={() => openConnectModal?.()}
                   onSwitch={() => openChainModal?.()}
+                  onSkip={finish}
                 />
               )}
               {step === 5 && <StepAllSet nameComma={nameComma} avatar={avatar || AVATARS[0]} />}
@@ -379,7 +380,7 @@ function StepRole({ nameComma, understood, setUnderstood }: { nameComma: string;
       </Item>
       <Item i={2}>
         <p className="mt-4" style={{ fontSize: 14.5, color: "#9db3aa", lineHeight: 1.6 }}>
-          You run confidential payroll for a team of 8. Salaries are encrypted on-chain with Zama FHE. You approve{" "}
+          You run confidential payroll for a team of 5. Salaries are encrypted on-chain with Zama FHE. You approve{" "}
           <span style={{ color: "#cfe0d8" }}>one transaction</span>, and everyone gets paid without exposing a single
           amount.
         </p>
@@ -477,6 +478,7 @@ function StepWallet({
   address,
   onConnect,
   onSwitch,
+  onSkip,
 }: {
   isConnected: boolean;
   onSepolia: boolean;
@@ -484,8 +486,10 @@ function StepWallet({
   address?: `0x${string}`;
   onConnect: () => void;
   onSwitch: () => void;
+  onSkip: () => void;
 }) {
   const reduced = useReducedMotion();
+  const walletReady = isConnected && onSepolia;
   const short = address ? `${address.slice(0, 10)}${address.slice(-8)}` : "";
   const shortDisplay = address ? `${address.slice(0, 10)}…${address.slice(-8)}` : "";
   void short;
@@ -501,7 +505,8 @@ function StepWallet({
       </Item>
       <Item i={2}>
         <p className="mt-3" style={{ fontSize: 14, color: "#9db3aa", lineHeight: 1.5 }}>
-          Payroll settles from your wallet on the Sepolia testnet. No real funds, it’s a demo.
+          Payroll settles from your wallet on the Sepolia testnet. It is all free test money; you just need a little
+          Sepolia ETH for gas, from any faucet.
         </p>
       </Item>
       <Item i={3}>
@@ -564,6 +569,16 @@ function StepWallet({
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#34d399" }} />
             </motion.div>
           )}
+          {!walletReady && (
+            <button
+              type="button"
+              onClick={onSkip}
+              className="mt-3.5 w-full cursor-pointer text-center"
+              style={{ fontSize: 12.5, color: "#9db3aa", background: "none", textDecoration: "underline", textUnderlineOffset: 3 }}
+            >
+              Skip for now, explore with demo data
+            </button>
+          )}
         </div>
       </Item>
     </>
@@ -601,7 +616,7 @@ function StepAllSet({ nameComma, avatar }: { nameComma: string; avatar: string }
       </Item>
       <Item i={4}>
         <div className="mt-[22px] flex flex-wrap justify-center gap-2.5">
-          {(["Wallet connected", "Team of 8 loaded", "6 months history"] as const).map((label, i) => (
+          {(["Wallet connected", "Team of 5 loaded", "6 months history"] as const).map((label, i) => (
             <span key={label} className="flex items-center gap-1.5" style={{ border: "1px solid rgba(95,230,175,0.5)", color: "#78e9c0", fontSize: 12, borderRadius: 999, padding: "6px 13px" }}>
               {i === 0 && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399" }} />}
               {label}

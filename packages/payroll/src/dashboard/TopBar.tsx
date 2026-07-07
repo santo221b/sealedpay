@@ -18,10 +18,13 @@ import { SearchPalette } from "./modals/SearchPalette";
 export function TopBar({
   profile,
   onProfile,
+  walletControl,
   search,
 }: {
   profile: { name: string; avatar: string };
   onProfile: () => void;
+  /** Connect / reconnect / switch-network control (owns the wallet state). */
+  walletControl?: React.ReactNode;
   search: {
     open: boolean;
     query: string;
@@ -84,16 +87,19 @@ export function TopBar({
         />
       </div>
 
-      {/* Right: profile avatar only */}
-      <motion.img
-        src={profile.avatar}
-        alt={`${profile.name} profile`}
-        onClick={onProfile}
-        whileHover={reduced ? undefined : { scale: 1.06, rotate: -2.5, filter: "drop-shadow(0 6px 14px rgba(59,191,142,0.45))" }}
-        transition={{ duration: 0.3 }}
-        className="ml-auto cursor-pointer rounded-full object-cover"
-        style={{ width: 40, height: 40, border: "2px solid rgba(255,255,255,0.15)", background: "linear-gradient(135deg,#34d399,#0e9f6e)" }}
-      />
+      {/* Right cluster: wallet control (connect / switch network) + profile avatar */}
+      <div className="ml-auto flex items-center" style={{ gap: 14 }}>
+        {walletControl}
+        <motion.img
+          src={profile.avatar}
+          alt={`${profile.name} profile`}
+          onClick={onProfile}
+          whileHover={reduced ? undefined : { scale: 1.06, rotate: -2.5, filter: "drop-shadow(0 6px 14px rgba(59,191,142,0.45))" }}
+          transition={{ duration: 0.3 }}
+          className="cursor-pointer rounded-full object-cover"
+          style={{ width: 40, height: 40, border: "2px solid rgba(255,255,255,0.15)", background: "linear-gradient(135deg,#34d399,#0e9f6e)" }}
+        />
+      </div>
     </div>
   );
 }

@@ -35,6 +35,7 @@ import type { DashboardData, NavIndex, PopupKind, Person, ToastState } from "./d
 import { Rail } from "./dashboard/Rail";
 import { RunPayrollModal } from "./dashboard/RunPayrollModal";
 import { TopBar } from "./dashboard/TopBar";
+import { WalletControl } from "./dashboard/WalletControl";
 import { EmployeeSidebar } from "./dashboard/EmployeeSidebar";
 import { WalletSidebar } from "./dashboard/WalletSidebar";
 import { AddEmployeeModal } from "./dashboard/modals/AddEmployeeModal";
@@ -111,7 +112,7 @@ function Dashboard() {
   const [nav, setNav] = useState<NavIndex>(0);
   const [empId, setEmpId] = useState<string>();
   const [tab, setTab] = useState("All");
-  const [activeBar, setActiveBar] = useState("May");
+  const [activeBar, setActiveBar] = useState(() => new Date().toLocaleString("en-US", { month: "short" }));
   const [popup, setPopup] = useState<PopupKind>(null);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [loggedOut, setLoggedOut] = useState(false);
@@ -175,8 +176,11 @@ function Dashboard() {
       // Clear this run's pending record from persistence AND in-memory state so
       // the orphan banner can never re-surface it after a confirmed delivery.
       orphan.dismiss(result.txHash);
-      addNotif({ title: "Payroll delivered", sub: `${result.recipients.length} paid · verified · just now`, color: "#5fe3ab", tone: "ok" });
-      showToast("ok", `Payroll delivered · ${result.recipients.length} paid · verified`);
+      // "confirmed" (delivered on-chain), NOT "verified" — verification is a
+      // separate decrypt step whose own toast fires from the effect below.
+      addNotif({ title: "Payroll delivered", sub: `${result.recipients.length} paid · confirmed · just now`, color: "#5fe3ab", tone: "ok" });
+      showToast("ok", `Payroll delivered · ${result.recipients.length} paid · confirmed`);
+      setActiveBar(new Date().toLocaleString("en-US", { month: "short" })); // surface the fresh bar
       void balance.refresh();
     },
     [addRun, orphan, addNotif, showToast, balance],
@@ -185,12 +189,29 @@ function Dashboard() {
     (error: Error) => {
       // Post-broadcast confirmation retries are handled inside the modal.
       if (/transaction was sent/i.test(error.message)) return;
+      // Rejections do not reach onError from the engine; handled by the effect
+      // below. This path is genuine on-chain / setup failure.
+      if (/reject|denied|cancel/i.test(error.message)) return;
       addNotif({ title: "Payroll failed", sub: "no funds moved · retry", color: "#e07a6a", tone: "err" });
       showToast("err", "Payroll failed · no funds moved · retry");
     },
     [addNotif, showToast],
   );
   const flow = useDisperseFlow({ token: TOKEN, chainId: SEPOLIA_CHAIN_ID, onDispersed, onError: onFlowError });
+
+  // A wallet rejection sets flow.error but is NOT routed through onError — give
+  // it the same toast + bell the success path gets (deduped by message).
+  const toastedFlowErr = useRef<string>(undefined);
+  useEffect(() => {
+    const e = flow.error;
+    if (!e || toastedFlowErr.current === e || /transaction was sent/i.test(e)) return;
+    if (/reject|denied|cancel/i.test(e)) {
+      toastedFlowErr.current = e;
+      addNotif({ title: "Payroll cancelled", sub: "you declined the request · nothing was sent", color: "#e3b25f", tone: "warn" });
+      showToast("err", "Payroll cancelled · nothing was sent");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flow.error]);
 
   // Persist a recovery record the moment a tx hash exists (orphan safety).
   useEffect(() => {
@@ -199,14 +220,24 @@ function Dashboard() {
     }
   }, [flow.pendingTxHash]);
 
-  // Immediate post-run verification → history ✓ badge.
+  // Immediate post-run verification → history ✓ badge + its OWN toast (only now
+  // is a run truly "verified" — the delivery toast said "confirmed").
   const reportedFor = useRef<string>(undefined);
   useEffect(() => {
     if (flow.verification && flow.delivery && reportedFor.current !== flow.delivery.txHash) {
       reportedFor.current = flow.delivery.txHash;
-      markVerified(flow.delivery.txHash, flow.verification.every((v) => v.ok));
+      const n = flow.verification.length;
+      const ok = flow.verification.filter((v) => v.ok).length;
+      markVerified(flow.delivery.txHash, ok === n);
+      if (ok === n) {
+        addNotif({ title: "Payroll verified", sub: `${n} salaries decrypted and matched`, color: "#5fe3ab", tone: "ok" });
+        showToast("ok", `Verified · ${n} salaries match on-chain`);
+      } else {
+        addNotif({ title: "Verification mismatch", sub: `${ok} of ${n} amounts matched`, color: "#e07a6a", tone: "err" });
+        showToast("err", `Verify mismatch · only ${ok}/${n} matched`);
+      }
     }
-  }, [flow.verification, flow.delivery, markVerified]);
+  }, [flow.verification, flow.delivery, markVerified, addNotif, showToast]);
 
   // startRun: selection → validated rows → goToReview, then execute once the
   // engine state reflects the rows (the frozen hook commits state per render).
@@ -218,12 +249,17 @@ function Dashboard() {
       const parsed = rosterToRows(pseudo, decimals);
       if (parsed.issues.length > 0) return parsed.namedProblems.join(" · ");
       if (parsed.rows.length === 0) return "Nobody selected.";
+      // Preflight against a KNOWN (revealed) balance: an underfunded run would
+      // silently disperse encrypted zero (ERC-7984), so block it before gas.
+      if (balance.raw !== undefined && parsed.total > balance.raw) {
+        return `Your wallet holds ${formatAmount(balance.raw, decimals)} cUSDd but this run needs ${formatAmount(parsed.total, decimals)}. Fund the wallet first.`;
+      }
       pendingRun.current = { totalText: formatAmount(parsed.total, decimals), names: selected.map((p) => p.name) };
       executeWhenReady.current = parsed.rows.length;
       await flow.goToReview(parsed.rows);
       return null;
     },
-    [decimals, flow],
+    [decimals, flow, balance],
   );
   useEffect(() => {
     if (executeWhenReady.current > 0 && flow.phase === "review" && flow.rows.length === executeWhenReady.current) {
@@ -359,6 +395,7 @@ function Dashboard() {
       <TopBar
         profile={data.profile}
         onProfile={() => setProfileOpen(true)}
+        walletControl={<WalletControl />}
         search={{
           open: searchOpen,
           query: searchQ,
