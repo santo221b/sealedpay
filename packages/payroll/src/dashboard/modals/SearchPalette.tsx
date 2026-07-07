@@ -115,7 +115,7 @@ export function SearchPalette({ open, onClose, query, people, runs, onPickPerson
                     <SectionLabel text="Payouts" reduced={reduced} />
                     {payouts.map((r) => (
                       <PayoutRow key={r.id} run={r} delay={rowDelay(rowIndex++)} reduced={reduced} onPick={() => {
-                        onPickRun(r.month);
+                        onPickRun(r);
                         onClose();
                       }} />
                     ))}

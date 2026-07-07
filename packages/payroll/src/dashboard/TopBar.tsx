@@ -18,11 +18,14 @@ import { SearchPalette } from "./modals/SearchPalette";
 export function TopBar({
   profile,
   onProfile,
+  onHome,
   walletControl,
   search,
 }: {
   profile: { name: string; avatar: string };
   onProfile: () => void;
+  /** Click the logo to return to the home dashboard. */
+  onHome: () => void;
   /** Connect / reconnect / switch-network control (owns the wallet state). */
   walletControl?: React.ReactNode;
   search: {
@@ -34,18 +37,24 @@ export function TopBar({
     people: Person[];
     runs: RunView[];
     onPickPerson: (id: string) => void;
-    onPickRun: (month: string) => void;
+    onPickRun: (run: RunView) => void;
   };
 }) {
   const reduced = useReducedMotion();
 
   return (
     <div className="absolute inset-x-0 top-0 z-40 flex items-center" style={{ gap: 22, padding: "16px 32px 9px 45px" }}>
-      {/* Logo block */}
-      <div className="flex items-center" style={{ gap: 9 }}>
+      {/* Logo block — click to return home */}
+      <button
+        type="button"
+        onClick={onHome}
+        aria-label="Home"
+        className="flex cursor-pointer items-center transition-opacity hover:opacity-80"
+        style={{ gap: 9 }}
+      >
         <SealLogo size={31} />
         <span style={{ fontWeight: 700, fontSize: 14, color: tokens.text.heading }}>SealedPay</span>
-      </div>
+      </button>
 
       {/* Search field + its dropdown, lifted above the dimming overlay via z-60 */}
       <div className="relative" style={{ zIndex: 60, marginLeft: 32 }}>

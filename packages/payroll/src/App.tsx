@@ -507,6 +507,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
       <TopBar
         profile={data.profile}
         onProfile={() => setProfileOpen(true)}
+        onHome={() => { setNav(0); setPopup(null); }}
         walletControl={<WalletControl />}
         search={{
           open: searchOpen,
@@ -524,9 +525,11 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
             setSearchOpen(false);
             setSearchQ("");
           },
-          onPickRun: (month) => {
-            setNav(0);
-            setActiveBar(month);
+          onPickRun: (run) => {
+            // A payout's one verifiable artifact is its on-chain transaction —
+            // open it on Etherscan (also highlights its month on the chart).
+            setActiveBar(run.month);
+            if (run.url) window.open(run.url, "_blank", "noopener,noreferrer");
             setSearchOpen(false);
             setSearchQ("");
           },

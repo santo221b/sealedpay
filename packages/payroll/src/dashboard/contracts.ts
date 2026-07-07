@@ -179,7 +179,7 @@ export interface SearchPaletteProps {
   people: Person[];
   runs: RunView[];
   onPickPerson: (id: string) => void;
-  onPickRun: (month: string) => void;
+  onPickRun: (run: RunView) => void;
 }
 
 export interface LogoutModalProps {
