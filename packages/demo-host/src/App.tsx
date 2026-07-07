@@ -16,7 +16,7 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 
 const T = {
   app: "linear-gradient(180deg, #05090e 0%, #06111a 40%, #081722 70%, #06121b 100%)",
-  bloom: "radial-gradient(130% 96% at 50% 119%, rgba(52,216,222,0.5), rgba(22,148,178,0.13) 44%, rgba(0,0,0,0) 70%)",
+  bloom: "radial-gradient(115% 78% at 50% 125%, rgba(48,206,214,0.32), rgba(20,140,170,0.08) 44%, rgba(0,0,0,0) 66%)",
   heading: "#eef6f8",
   secondary: "#c7dbe0",
   muted: "#95b2ba",
@@ -25,11 +25,16 @@ const T = {
   accentText: "#7ce8ec",
   onAccent: "#04323a",
   accentGrad: "linear-gradient(135deg,#5fe6e6,#28c6dc)",
-  glassBg: "linear-gradient(180deg, rgba(120,204,214,0.10), rgba(120,204,214,0.045))",
-  glassBgSoft: "linear-gradient(180deg, rgba(120,204,214,0.065), rgba(120,204,214,0.03))",
+  glassBg: "linear-gradient(180deg, rgba(150,220,228,0.09), rgba(150,220,228,0.035))",
+  glassBgSoft: "linear-gradient(180deg, rgba(150,220,228,0.055), rgba(150,220,228,0.022))",
   cardBorder: "rgba(225,244,248,0.10)",
   glassShadow:
     "inset 0 1px 0 rgba(255,255,255,0.09), inset 0 8px 14px -9px rgba(255,255,255,0.06), 0 20px 54px -28px rgba(0,0,0,0.85)",
+  // The reading surface: dark frosted glass that dims the glow behind it,
+  // instead of letting it bleed up through the content.
+  panelBg: "linear-gradient(180deg, rgba(11,24,29,0.62), rgba(8,17,22,0.46))",
+  panelBorder: "rgba(190,232,240,0.10)",
+  panelShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 30px 80px -44px rgba(0,0,0,0.9)",
   buttonGlow: "0 0 0 1px rgba(120,228,232,0.4), 0 6px 22px -6px rgba(46,205,221,0.6)",
   codeBg: "rgba(4,11,15,0.66)",
   mono: "'JetBrains Mono', ui-monospace, monospace",
@@ -386,8 +391,8 @@ export function App() {
           </nav>
         </aside>
 
-        {/* Content */}
-        <main style={{ minWidth: 0, paddingTop: 26, paddingBottom: 72 }}>
+        {/* Content — on a frosted dark-glass panel so the glow stays behind it */}
+        <main style={{ minWidth: 0, marginTop: 12, marginBottom: 28, padding: "30px 32px 60px", background: T.panelBg, border: `1px solid ${T.panelBorder}`, borderRadius: 24, boxShadow: T.panelShadow, backdropFilter: "blur(22px)", WebkitBackdropFilter: "blur(22px)" }}>
           {/* Overview */}
           <motion.section id="overview" style={{ scrollMarginTop: 20 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: EASE, delay: 0.05 }}>
             <div style={{ fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4, color: T.accentText }}>Confidential disperse SDK</div>
