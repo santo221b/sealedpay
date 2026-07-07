@@ -45,7 +45,7 @@ export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverif
               background: "rgba(52,92,72,0.21)",
               backdropFilter: "blur(12px)",
               WebkitBackdropFilter: "blur(12px)",
-              padding: 20,
+              padding: "16px 18px",
               transformOrigin: "0 0",
             }}
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.96 }}
@@ -65,16 +65,23 @@ export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverif
               ))}
             </div>
             <p style={{ fontSize: 10, color: "#8ba297", lineHeight: 1.4, marginTop: 2 }}>
-              Auto-verify decrypts and confirms each salary right after paying (one extra wallet signature).
+              Decrypts and confirms each salary (one signature).
             </p>
 
-            <div style={{ height: 1, background: "rgba(255,255,255,0.09)", margin: "5px 0" }} />
+            {/* Tapered divider — fades to transparent at both ends. */}
+            <div
+              style={{
+                height: 1,
+                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.16) 22%, rgba(255,255,255,0.16) 78%, transparent)",
+                margin: "6px 0",
+              }}
+            />
 
-            <div className="flex items-center justify-between" style={{ padding: "9px 0" }}>
+            <div className="flex items-center justify-between" style={{ padding: "6px 0" }}>
               <span style={{ fontSize: 12, color: "#e8f0ec" }}>Token</span>
               <span style={{ fontSize: 11, color: "#9db3aa" }}>cUSDd</span>
             </div>
-            <div className="flex items-center justify-between" style={{ padding: "9px 0" }}>
+            <div className="flex items-center justify-between" style={{ padding: "6px 0" }}>
               <span style={{ fontSize: 12, color: "#e8f0ec" }}>Network</span>
               <span style={{ fontSize: 11, color: "#9db3aa" }}>Sepolia Testnet</span>
             </div>
@@ -82,8 +89,8 @@ export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverif
             <button
               type="button"
               onClick={resetDemo}
-              className="mt-1 w-full cursor-pointer rounded-full"
-              style={{ fontSize: 11, fontWeight: 600, color: "#f0a99d", border: "1px solid rgba(224,122,106,0.4)", background: "rgba(224,122,106,0.08)", padding: "8px 0" }}
+              className="mt-2 w-full cursor-pointer rounded-full"
+              style={{ fontSize: 11, fontWeight: 400, color: "#f0a99d", border: "1px solid rgba(224,122,106,0.4)", background: "rgba(224,122,106,0.08)", padding: "8px 0" }}
             >
               Reset demo
             </button>

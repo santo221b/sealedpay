@@ -81,13 +81,13 @@ export function Rail({
 
       {/* Bell + gear cluster (popovers anchor to the right of each icon) */}
       <div className="mt-5 flex flex-col items-center" style={{ ...clusterStyle, gap: 6 }}>
-        <div className="relative">
+        <div className="group relative">
           <button
             type="button"
             aria-label="Notifications"
             aria-expanded={bellOpen}
             onClick={onBell}
-            className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+            className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors group-hover:bg-[rgba(95,230,175,0.1)]"
           >
             <BellGlyph size={15} />
             {bellUnread && (
@@ -100,13 +100,13 @@ export function Rail({
             </div>
           )}
         </div>
-        <div className="relative">
+        <div className="group relative">
           <button
             type="button"
             aria-label="Settings"
             aria-expanded={gearOpen}
             onClick={onGear}
-            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors group-hover:bg-[rgba(95,230,175,0.1)]"
           >
             <GearGlyph size={15} />
           </button>
