@@ -184,7 +184,7 @@ export function Insights({ data }: InsightsScreenProps) {
             <div style={{ fontWeight: 700 }}>runs left</div>
           </div>
           <div className="flex items-center justify-between" style={{ marginTop: 5 }}>
-            <span className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
+            <span style={{ fontSize: 11, color: tokens.text.muted }}>
               at {data.monthly.value} / run · {data.runway.hint}
             </span>
             <span
