@@ -99,7 +99,7 @@ function Dashboard() {
 
   /* ── data hooks ────────────────────────────────────────────────────────── */
   const { address: employer } = useAccount();
-  const { employees, add } = useEmployees();
+  const { employees, add, replaceAll } = useEmployees();
   const { runs: liveRuns, addRun, markVerified } = useHistory();
   const { settings, set: setSetting } = useSettings();
   const { notifs, unread, add: addNotif, markRead, markAllRead } = useNotifications();
@@ -130,13 +130,18 @@ function Dashboard() {
 
   const identity = loadIdentity();
 
-  /* ── seed the design's demo team once, on first dashboard visit ────────── */
+  /* ── seed / migrate the demo roster once per seed version ──────────────── */
+  // On a new SEEDED_KEY version this REPLACES any prior roster (e.g. the older
+  // 8-person seed) with the current SEED_EMPLOYEES — so a roster change lands
+  // without the user having to clear localStorage by hand.
   const seededRef = useRef(false);
   useEffect(() => {
     if (seededRef.current) return;
     seededRef.current = true;
-    if (!localStorage.getItem(SEEDED_KEY) && employees.length === 0) {
-      for (const s of SEED_EMPLOYEES) add({ name: s.name, role: s.role, dept: s.dept, address: s.address, salary: s.salary });
+    if (!localStorage.getItem(SEEDED_KEY)) {
+      replaceAll(
+        SEED_EMPLOYEES.map((s) => ({ name: s.name, role: s.role, dept: s.dept, address: s.address, salary: s.salary })),
+      );
       localStorage.setItem(SEEDED_KEY, "1");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

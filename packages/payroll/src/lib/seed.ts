@@ -14,7 +14,9 @@
  */
 import type { Employee } from "./employees";
 
-export const SEEDED_KEY = "sealedpay_seeded.v1";
+// Bump this when the seed roster changes — the dashboard replaces any prior
+// roster with the current SEED_EMPLOYEES once per version (see App seed effect).
+export const SEEDED_KEY = "sealedpay_seeded.v2";
 
 /**
  * Shared recipient for the test roster — the project wallet that holds the

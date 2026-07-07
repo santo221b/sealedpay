@@ -104,5 +104,19 @@ export function useEmployees() {
     setEmployees((list) => list.filter((e) => e.id !== id));
   }, []);
 
-  return { employees, add, update, remove };
+  /** Replace the whole roster (used by the versioned seed migration). */
+  const replaceAll = useCallback((inputs: EmployeeInput[]) => {
+    setEmployees(
+      inputs.map((input) => ({
+        id: crypto.randomUUID(),
+        name: input.name.trim(),
+        role: input.role?.trim() || undefined,
+        dept: input.dept?.trim() || undefined,
+        address: getAddress(input.address),
+        salary: input.salary.trim(),
+      })),
+    );
+  }, []);
+
+  return { employees, add, update, remove, replaceAll };
 }
