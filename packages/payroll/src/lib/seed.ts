@@ -102,6 +102,11 @@ export function shortHash(hash: string): string {
   return hash.length <= 20 ? hash : `${hash.slice(0, 10)}…${hash.slice(-8)}`;
 }
 
+/** Roomier wallet display (0x + 6 + ellipsis + last 6) for the balance card / Fund "To". */
+export function midWallet(address: string): string {
+  return `${address.slice(0, 8)}…${address.slice(-6)}`;
+}
+
 export function initials(name: string): string {
   return name
     .split(/\s+/)

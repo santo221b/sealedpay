@@ -18,6 +18,7 @@ import {
   CheckGlyph,
 } from "../design/icons";
 import { tokens } from "../design/tokens";
+import { midWallet } from "../lib/seed";
 import type { ActivityRow, WalletSidebarProps } from "./contracts";
 
 const GRADIENT = "linear-gradient(135deg,#41b091 0%,#2e9478 50%,#26826a 100%)";
@@ -269,9 +270,7 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
         <div className="relative">
           {/* address strip — show more of the address here, there is room */}
           <div className="tnum" style={{ fontSize: 13, letterSpacing: 0.9, color: "#ffffff", paddingLeft: 21 }}>
-            {data.employerAddress
-              ? `${data.employerAddress.slice(0, 7)}…${data.employerAddress.slice(-6)}`
-              : "Not connected"}
+            {data.employerAddress ? midWallet(data.employerAddress) : "Not connected"}
           </div>
           <div style={{ fontSize: 10, color: "rgba(240,250,245,0.85)", marginTop: 3, paddingLeft: 21 }}>Sepolia</div>
           {/* divider (full-bleed) */}

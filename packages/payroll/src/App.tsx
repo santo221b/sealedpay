@@ -60,7 +60,7 @@ import { savePendingRun, useOrphanRun } from "./lib/orphan";
 import { loadIdentity } from "./lib/prefs";
 import { useSettings } from "./lib/prefs";
 import { rosterToRows } from "./lib/roster";
-import { SEEDED_KEY, SEED_EMPLOYEES, fmtAmount, shortWallet } from "./lib/seed";
+import { SEEDED_KEY, SEED_EMPLOYEES, fmtAmount, midWallet, shortWallet } from "./lib/seed";
 import { useVerifyRun } from "./lib/verifyRun";
 import { activityRows, employeeRows, encryptedAmountsCount, toPerson, toRunViews } from "./lib/views";
 import { useFundWallet, useWalletBalance } from "./lib/wallet";
@@ -586,7 +586,7 @@ function FundWalletModalWired({ open, onClose, employer, decimals, onFunded, onF
     <FundWalletModal
       open={open}
       onClose={onClose}
-      employerShort={employer ? shortWallet(employer) : "connect a wallet"}
+      employerShort={employer ? midWallet(employer) : "connect a wallet"}
       busy={fund.busy}
       error={fund.error}
       onFund={async (amount) => {
