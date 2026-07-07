@@ -59,7 +59,7 @@ export function TopBar({
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
             boxShadow: tokens.glass.cardShadow,
-            borderRadius: tokens.radius.pill,
+            borderRadius: 13,
             padding: "11px 18px",
           }}
         >

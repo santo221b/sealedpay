@@ -220,6 +220,11 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
           border: "1px solid rgba(255,255,255,0.05)",
           borderRadius: 42,
           backdropFilter: "blur(5px)",
+          // Clip the backdrop-filter to the rounded shape — Safari honours
+          // clip-path here where it ignores border-radius + overflow, killing
+          // the rectangular blur halo behind the panel.
+          clipPath: "inset(0 0 0 0 round 40px)",
+          WebkitClipPath: "inset(0 0 0 0 round 40px)",
           padding: "14px 20px 22px 20px",
           backgroundColor: "#21212145",
         }}

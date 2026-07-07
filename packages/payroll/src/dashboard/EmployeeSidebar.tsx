@@ -73,7 +73,7 @@ export function EmployeeSidebar({
         {/* Wallet details glass panel (overlaps the card) */}
         <div
           className="relative z-[1] overflow-hidden"
-          style={{ margin: "-22px -20px -18px -20px", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 42, background: "rgba(13,22,18,0.21)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", padding: "14px 20px 18px 20px" }}
+          style={{ margin: "-22px -20px -18px -20px", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 42, background: "rgba(13,22,18,0.21)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", clipPath: "inset(0 0 0 0 round 40px)", WebkitClipPath: "inset(0 0 0 0 round 40px)", padding: "14px 20px 18px 20px" }}
         >
           <div aria-hidden className="pointer-events-none absolute" style={{ top: -54, left: 11, right: 11, height: 171, borderRadius: 20, background: GRADIENT, filter: "blur(27px)", opacity: 0.55 }} />
           <div aria-hidden className="pointer-events-none absolute" style={{ top: 0, left: 54, right: 9, height: 1.5, borderRadius: 2, background: "linear-gradient(90deg, rgba(235,255,246,0) 0%, rgba(235,255,246,0.10) 40%, rgba(235,255,246,0.45) 78%, rgba(235,255,246,0.22) 100%)" }} />

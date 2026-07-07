@@ -397,7 +397,7 @@ function StepSelect(props: {
           </p>
         </div>
         {!single && (
-          <button type="button" onClick={props.onSelectAll} className="cursor-pointer select-none hover:underline" style={{ fontSize: 12, color: "#78e9c0" }}>
+          <button type="button" onClick={props.onSelectAll} className="cursor-pointer select-none hover:underline" style={{ fontSize: 12, color: "#78e9c0", marginRight: 34 }}>
             {props.allChecked ? "Deselect all" : "Select all"}
           </button>
         )}
