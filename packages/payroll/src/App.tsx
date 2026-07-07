@@ -673,7 +673,7 @@ function Dashboard({ onViewMyPay }: { onViewMyPay: () => void }) {
           setPermPrompt(false);
         }}
       />
-      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} onValidatePayOne={payrollOnlyId ? validatePayOne : undefined} balance={payrollOnlyId ? data.balance : undefined} />
+      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} onValidatePayOne={payrollOnlyId ? validatePayOne : undefined} balance={payrollOnlyId ? data.balance : undefined} myAddress={employer} onViewMyPay={onViewMyPay} />
       <Toast toast={toast} />
     </div>
   );

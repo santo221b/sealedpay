@@ -56,11 +56,15 @@ export interface RunPayrollModalProps {
    * as the sidebar's Available balance: hidden by default, tapping decrypts.
    */
   balance?: { value: string | undefined; revealed: boolean; pending: boolean; toggle: () => void };
+  /** Connected employer wallet, for the one-off "Pay myself" shortcut. */
+  myAddress?: `0x${string}`;
+  /** Jump to the recipient "My pay" view (offered on the delivered finale). */
+  onViewMyPay?: () => void;
 }
 
 type DesignStep = 0 | 1 | 2 | 3;
 
-export function RunPayrollModal({ open, people, flow, decimals, autoverify, onStart, onClose, onValidatePayOne, balance }: RunPayrollModalProps) {
+export function RunPayrollModal({ open, people, flow, decimals, autoverify, onStart, onClose, onValidatePayOne, balance, myAddress, onViewMyPay }: RunPayrollModalProps) {
   const reduced = useReducedMotion();
   const [sel, setSel] = useState<Record<string, boolean>>({});
   const [payReveal, setPayReveal] = useState(false);
@@ -310,6 +314,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
                     amountError={payErrors.amount}
                     blocked={payBlocked}
                     balance={balance}
+                    myAddress={myAddress}
                   />
                 )}
                 {step === 1 && <StepEncrypting people={running} encIdx={encIdx} single={Boolean(single)} />}
@@ -349,6 +354,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
                     verifyError={humanizeError(flow.error)}
                     verifying={flow.verifying}
                     onDone={onClose}
+                    onViewMyPay={onViewMyPay}
                   />
                 )}
               </motion.div>
@@ -385,6 +391,7 @@ function StepSelect(props: {
   amountError: string | null;
   blocked: boolean;
   balance?: { value: string | undefined; revealed: boolean; pending: boolean; toggle: () => void };
+  myAddress?: `0x${string}`;
 }) {
   const { people, sel, selectedCount, single } = props;
   return (
@@ -407,9 +414,21 @@ function StepSelect(props: {
         <div className="mt-4 flex flex-col gap-3">
           {/* Recipient wallet — prefilled with the employee's address, editable. */}
           <div>
-            <label htmlFor="pay-one-recipient" className="block" style={{ fontSize: 11, color: "#9db3aa", marginBottom: 6, paddingLeft: 5 }}>
-              Recipient wallet
-            </label>
+            <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
+              <label htmlFor="pay-one-recipient" style={{ fontSize: 11, color: "#9db3aa", paddingLeft: 5 }}>
+                Recipient wallet
+              </label>
+              {props.myAddress && props.myAddress !== props.payRecipient.trim() && (
+                <button
+                  type="button"
+                  onClick={() => props.onRecipientChange(props.myAddress ?? "")}
+                  className="cursor-pointer hover:underline"
+                  style={{ fontSize: 10.5, color: "#78e9c0", paddingRight: 5 }}
+                >
+                  Pay myself
+                </button>
+              )}
+            </div>
             <input
               id="pay-one-recipient"
               value={props.payRecipient}
@@ -768,8 +787,19 @@ function Finale(props: {
   verifyError?: string;
   verifying: boolean;
   onDone: () => void;
+  onViewMyPay?: () => void;
 }) {
   void formatAmount;
+  const [copied, setCopied] = useState(false);
+  const copyLink = () => {
+    try {
+      void navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?view=mypay`);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
   return (
     <div className="text-center" style={{ padding: "12px 6px 4px 6px" }}>
       <div className="relative mx-auto flex items-center justify-center" style={{ width: 96, height: 96 }}>
@@ -814,7 +844,25 @@ function Finale(props: {
         View on Etherscan
       </a>
 
-      <motion.button type="button" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={props.onDone} className="mt-[18px] w-full rounded-full font-medium" style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 13.5, padding: "12.6px 0" }}>
+      {/* Recipient handoff — see it as the recipient (if you paid yourself), or
+          copy a link to send whoever you paid so they decrypt it themselves. */}
+      {props.single && props.onViewMyPay && (
+        <div className="mt-3.5 flex flex-col items-center gap-2.5">
+          <button
+            type="button"
+            onClick={props.onViewMyPay}
+            className="w-full cursor-pointer rounded-full transition-colors hover:bg-[rgba(95,230,175,0.14)]"
+            style={{ background: "rgba(95,230,175,0.08)", border: "1px solid rgba(95,230,175,0.4)", color: "#78e9c0", fontSize: 13, fontWeight: 500, padding: "11px 0" }}
+          >
+            View this as the recipient
+          </button>
+          <button type="button" onClick={copyLink} className="cursor-pointer hover:underline" style={{ fontSize: 11, color: "#9db3aa" }}>
+            {copied ? "Recipient link copied" : "Copy a recipient link to share"}
+          </button>
+        </div>
+      )}
+
+      <motion.button type="button" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={props.onDone} className="mt-3.5 w-full rounded-full font-medium" style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 13.5, padding: "12.6px 0" }}>
         Done
       </motion.button>
     </div>
