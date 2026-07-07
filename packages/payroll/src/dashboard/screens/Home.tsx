@@ -9,8 +9,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Doughnut } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
 
-import { RevealAmount } from "../../design/RevealAmount";
-import { CheckGlyph, ChevronRightGlyph, PadlockGlyph } from "../../design/icons";
+import { CheckGlyph, ChevronRightGlyph } from "../../design/icons";
 import { GlassCard } from "../../design/kit2";
 import { tokens } from "../../design/tokens";
 import { fmtAmount } from "../../lib/seed";
@@ -392,22 +391,16 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
         <div className="flex flex-col" style={{ gap: 20 }}>
           <GlassCard className="flex-1" style={{ padding: "13.5px 22px" }}>
             <div style={{ fontWeight: 400, fontSize: 17 }}>Monthly payroll</div>
-            <span className="whitespace-nowrap" style={{ display: "inline-flex", gap: 6, fontWeight: 700, fontSize: 27, marginTop: 7 }}>
-              <RevealAmount
-                value={data.monthly.value}
-                revealed={data.showAll || data.monthly.revealed}
-                onToggle={data.monthly.toggle}
-                label="monthly payroll"
-              />
+            {/* The aggregate total is already public in the Payout Activity bars,
+                so it is shown plainly here — no lock. Only per-person salaries stay masked. */}
+            <span className="tnum whitespace-nowrap" style={{ display: "inline-flex", gap: 6, fontWeight: 700, fontSize: 27, marginTop: 7 }}>
+              <span>{data.monthly.value}</span>
               <span>cUSDd</span>
             </span>
-            <div className="flex items-center justify-between" style={{ marginTop: 9 }}>
+            <div style={{ marginTop: 9 }}>
               <span className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
                 {data.people.length} salaries
               </span>
-              <TipPuck tip="Encrypted">
-                <PadlockGlyph size={11} />
-              </TipPuck>
             </div>
           </GlassCard>
 
