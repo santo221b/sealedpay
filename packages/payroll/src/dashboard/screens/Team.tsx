@@ -6,7 +6,6 @@
  */
 import { useMemo } from "react";
 
-import { RevealAmount } from "../../design/RevealAmount";
 import { PlayGlyph } from "../../design/icons";
 import { GlassCard, PrimaryButton, SecondaryButton } from "../../design/kit2";
 import { tokens } from "../../design/tokens";
@@ -88,7 +87,7 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
             </span>
           </div>
           <div className="tnum relative z-[1]" style={{ fontSize: 25, fontWeight: 700, color: "#fff", marginTop: 18 }}>
-            {data.people.length} employees
+            {String(data.people.length).padStart(2, "0")} employees
           </div>
           <div className="tnum relative z-[1]" style={{ fontSize: 11, color: "rgba(240,250,245,0.75)", marginTop: 2 }}>
             {deptCount} departments
@@ -123,17 +122,14 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
               ENCRYPTED
             </span>
           </div>
+          {/* Aggregate total is public (also in the Payout Activity chart), so
+              shown plainly — matches the Home card; per-person salaries stay masked. */}
           <div
-            className="relative z-[1] flex cursor-pointer items-baseline"
+            className="relative z-[1] flex items-baseline"
             style={{ gap: 8, fontWeight: 700, fontSize: 25, color: tokens.text.heading, marginTop: 18 }}
           >
-            <RevealAmount
-              value={data.monthly.value}
-              revealed={data.showAll || data.monthly.revealed}
-              onToggle={data.monthly.toggle}
-              label="monthly payroll"
-            />
-            <span onClick={data.monthly.toggle}>cUSDd</span>
+            <span>{data.monthly.value}</span>
+            <span>cUSDd</span>
           </div>
           <div className="tnum relative z-[1]" style={{ fontSize: 11, color: tokens.text.muted, marginTop: 2 }}>
             {data.people.length} salaries · encrypted on-chain
