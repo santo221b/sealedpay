@@ -14,7 +14,6 @@ import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer
 import { useEffect, useState, type ReactNode } from "react";
 import { useAccount } from "wagmi";
 
-import { DepositBoxGlyph } from "../design/icons";
 import { SealLogo } from "../design/SealLogo";
 import { saveIdentity } from "../lib/prefs";
 import { THEME_COLORS, setThemeColor } from "../lib/themeColor";
@@ -22,7 +21,7 @@ import { useFundWallet, useUnfundedWallet } from "../lib/wallet";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const EXIT_EASE = [0.4, 0, 1, 1] as const;
-const TOTAL = 6;
+const TOTAL = 7;
 export const AVATARS = ["/avatars/avatar-1.svg", "/avatars/avatar-2.svg", "/avatars/avatar-3.svg", "/avatars/avatar-profile.svg"];
 
 /**
@@ -147,8 +146,9 @@ export function Onboarding({ onDone, initialName = "", initialAvatar = "" }: { o
   const nameComma = first ? `, ${first}.` : ".";
   const welcome = useDecryptScramble("Welcome to SealedPay", 280);
 
-  const canContinue = [true, first.length > 0, understood, Boolean(avatar), walletReady, true][step];
-  const continueLabel = step === 0 ? "Let's get started" : step === 5 ? "Let's go" : "Continue";
+  // Steps: 0 welcome · 1 name · 2 privacy · 3 avatar · 4 connect · 5 fund · 6 all set.
+  const canContinue = [true, first.length > 0, understood, Boolean(avatar), walletReady, true, true][step];
+  const continueLabel = step === 0 ? "Let's get started" : step === 6 ? "Let's go" : "Continue";
 
   function go(next: number) {
     if (next < 0 || next >= TOTAL) return;
@@ -271,10 +271,10 @@ export function Onboarding({ onDone, initialName = "", initialAvatar = "" }: { o
                   onSwitch={() => openChainModal?.()}
                   onSkip={finish}
                   allowSkip={ALLOW_DEMO_DATA}
-                  onError={showToast}
                 />
               )}
-              {step === 5 && <StepAllSet nameComma={nameComma} avatar={avatar || AVATARS[0]} />}
+              {step === 5 && <StepFund onError={showToast} />}
+              {step === 6 && <StepAllSet nameComma={nameComma} avatar={avatar || AVATARS[0]} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -530,7 +530,6 @@ function StepWallet({
   onSwitch,
   onSkip,
   allowSkip,
-  onError,
 }: {
   isConnected: boolean;
   onSepolia: boolean;
@@ -540,10 +539,10 @@ function StepWallet({
   onSwitch: () => void;
   onSkip: () => void;
   allowSkip: boolean;
-  onError: (msg: string) => void;
 }) {
   const reduced = useReducedMotion();
   const walletReady = isConnected && onSepolia;
+  const shortDisplay = address ? `${address.slice(0, 10)}…${address.slice(-8)}` : "";
   return (
     <>
       <Item i={0}>
@@ -595,7 +594,25 @@ function StepWallet({
               Switch to Sepolia
             </motion.button>
           )}
-          {walletReady && <WalletReady address={address} onError={onError} />}
+          {walletReady && (
+            <motion.div
+              initial={reduced ? false : { opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.45, ease: EASE }}
+              className="flex items-center gap-[13px]"
+              style={{ background: "rgba(110,196,186,0.14)", border: "1px solid rgba(95,230,175,0.35)", borderRadius: 86, padding: "16px 18px" }}
+            >
+              <span className="flex shrink-0 items-center justify-center" style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(95,230,175,0.18)" }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold" style={{ fontSize: 14, color: "#eef4f1" }}>Wallet connected</span>
+                <span className="tnum mt-0.5 block" style={{ fontSize: 12, color: "#9db3aa" }}>{shortDisplay} · Sepolia</span>
+              </span>
+            </motion.div>
+          )}
           {allowSkip && !walletReady && (
             <button
               type="button"
@@ -613,16 +630,15 @@ function StepWallet({
 }
 
 /**
- * The connected + funding area of the wallet step. When the wallet has never
- * been funded (zero confidential-balance handle, no signature) the "Wallet
- * connected" pill shrinks to the left and an "Add payroll funds" panel fills
- * the freed space on the right, keeping the step compact vertically. Funding
- * is optional (Continue stays enabled) and mint errors surface as a toast via
- * onError, never inside the panel.
+ * Dedicated funding step (step 5), shown on its own so a fresh employer starts
+ * with a payroll balance. Content adapts to the wallet: the fund form when it
+ * is empty, a receipt after a mint, an "already funded" note for a returning
+ * employer, or a brief balance check. Funding is optional — Continue proceeds
+ * regardless — and mint errors surface as a toast, never inline.
  */
 const FUND_PRESETS = ["10000", "25000", "100000"] as const;
 
-function WalletReady({ address, onError }: { address?: `0x${string}`; onError: (msg: string) => void }) {
+function StepFund({ onError }: { onError: (msg: string) => void }) {
   const reduced = useReducedMotion();
   const { empty, refresh } = useUnfundedWallet();
   const { decimals } = useTokenMeta(DEMO_TOKEN_ADDRESS);
@@ -637,56 +653,50 @@ function WalletReady({ address, onError }: { address?: `0x${string}`; onError: (
     onError,
   );
 
-  const shortDisplay = address ? `${address.slice(0, 10)}…${address.slice(-8)}` : "";
-  // The fund column appears when the wallet is empty (form) or just funded
-  // (receipt); when funded already, the pill spans the row on its own.
-  const side = funded ? "funded" : empty === true ? "form" : null;
-
-  const chip = (
-    <motion.div
-      initial={reduced ? false : { opacity: 0, scale: 0.94 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.45, ease: EASE }}
-      className="flex items-center gap-[13px]"
-      style={{ alignSelf: "start", background: "rgba(110,196,186,0.14)", border: "1px solid rgba(95,230,175,0.35)", borderRadius: 24, padding: "15px 18px" }}
-    >
-      <span className="flex shrink-0 items-center justify-center" style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(95,230,175,0.18)" }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block font-semibold" style={{ fontSize: 14, color: "#eef4f1" }}>Wallet connected</span>
-        <span className="tnum mt-0.5 block" style={{ fontSize: 12, color: "#9db3aa" }}>{shortDisplay} · Sepolia</span>
-      </span>
-    </motion.div>
-  );
+  const pretty = Number(amount).toLocaleString("en-US");
+  const label = phase === "minting" ? "Minting on-chain" : phase === "confirming" ? "Confirm in your wallet" : `Add ${pretty} cUSDd`;
+  // funded (just minted) → receipt; empty false → already has funds; undefined
+  // → still reading the balance; true → the fund form.
+  const view = funded ? "funded" : empty === false ? "already" : empty === undefined ? "checking" : "form";
 
   return (
-    <div className="mt-[26px]" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(286px, 1fr))", gap: 13, alignItems: "start", width: "min(612px, 84vw)" }}>
-      {chip}
-      {side === "funded" ? (
-        <FundedCard amount={funded as string} reduced={Boolean(reduced)} />
-      ) : side === "form" ? (
-        <FundForm
-          amount={amount}
-          setAmount={setAmount}
-          onFund={() => void fund(amount)}
-          phase={phase}
-          busy={busy}
-          decimals={decimals}
-          reduced={Boolean(reduced)}
-        />
-      ) : null}
-    </div>
+    <>
+      <Item i={0}>
+        <p style={eyebrow()}>Fund</p>
+      </Item>
+      <Item i={1}>
+        <h1 className="mt-3" style={{ fontWeight: 700, fontSize: 29 }}>Add payroll funds</h1>
+      </Item>
+      <Item i={2}>
+        <p className="mt-3" style={{ fontSize: 14, color: "#9db3aa", lineHeight: 1.5 }}>
+          Mint free test cUSDd so your first payroll has something to send. You can top up anytime from the dashboard.
+        </p>
+      </Item>
+      <Item i={3}>
+        <div className="mt-[26px]">
+          {view === "funded" ? (
+            <FundReceipt title="Payroll funded" sub={`${Number(funded).toLocaleString("en-US")} cUSDd is ready to disperse.`} reduced={Boolean(reduced)} />
+          ) : view === "already" ? (
+            <FundReceipt title="Wallet already funded" sub="You have cUSDd ready to disperse. Top up anytime from the dashboard." reduced={Boolean(reduced)} />
+          ) : view === "checking" ? (
+            <div className="flex items-center gap-2.5" style={{ color: "#9db3aa", fontSize: 13 }}>
+              <span aria-hidden style={{ width: 16, height: 16, borderRadius: "50%", border: "2.2px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }} />
+              Checking your balance
+            </div>
+          ) : (
+            <FundControls amount={amount} setAmount={setAmount} onFund={() => void fund(amount)} label={label} busy={busy} decimals={decimals} reduced={Boolean(reduced)} />
+          )}
+        </div>
+      </Item>
+    </>
   );
 }
 
-function FundForm({
+function FundControls({
   amount,
   setAmount,
   onFund,
-  phase,
+  label,
   busy,
   decimals,
   reduced,
@@ -694,29 +704,18 @@ function FundForm({
   amount: string;
   setAmount: (v: string) => void;
   onFund: () => void;
-  phase: "idle" | "confirming" | "minting";
+  label: string;
   busy: boolean;
   decimals: number | undefined;
   reduced: boolean;
 }) {
-  const pretty = Number(amount).toLocaleString("en-US");
-  const label = phase === "minting" ? "Minting on-chain" : phase === "confirming" ? "Confirm in your wallet" : `Add ${pretty} cUSDd`;
   return (
     <motion.div
-      initial={reduced ? false : { opacity: 0, scale: 0.96, y: 6 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
+      initial={reduced ? false : { opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={reduced ? { duration: 0 } : { duration: 0.42, ease: EASE }}
-      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "14px 15px" }}
     >
-      <div className="flex items-center gap-2.5">
-        <DepositBoxGlyph size={17} color="#78e9c0" />
-        <span style={{ fontSize: 13.5, fontWeight: 600, color: "#eef4f1" }}>Add payroll funds</span>
-      </div>
-      <p style={{ fontSize: 11.5, color: "#9db3aa", marginTop: 6, lineHeight: 1.5 }}>
-        Your wallet holds no cUSDd yet. Mint test funds so you can run your first payroll right away.
-      </p>
-
-      <div className="flex gap-[7px]" style={{ marginTop: 11 }}>
+      <div className="flex gap-[9px]">
         {FUND_PRESETS.map((v) => {
           const on = amount === v;
           return (
@@ -726,7 +725,7 @@ function FundForm({
               disabled={busy}
               onClick={() => setAmount(v)}
               className="flex-1 cursor-pointer rounded-full disabled:cursor-not-allowed"
-              style={{ fontSize: 11.5, padding: "7px 0", background: on ? "rgba(95,230,175,0.16)" : "rgba(255,255,255,0.05)", border: `1px solid ${on ? "rgba(95,230,175,0.5)" : "rgba(255,255,255,0.08)"}`, color: on ? "#78e9c0" : "#cfdcd6" }}
+              style={{ fontSize: 13, padding: "11px 0", background: on ? "rgba(95,230,175,0.16)" : "rgba(255,255,255,0.05)", border: `1px solid ${on ? "rgba(95,230,175,0.5)" : "rgba(255,255,255,0.1)"}`, color: on ? "#78e9c0" : "#cfdcd6" }}
             >
               {Number(v).toLocaleString("en-US")}
             </button>
@@ -741,13 +740,13 @@ function FundForm({
         whileTap={reduced || busy ? undefined : { scale: 0.98 }}
         onClick={onFund}
         className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 font-medium disabled:cursor-not-allowed"
-        style={{ background: "#5fe3ab", color: "#08331f", fontSize: 13.5, borderRadius: 85, padding: "12px 0", opacity: busy || decimals === undefined ? 0.7 : 1 }}
+        style={{ background: "#5fe3ab", color: "#08331f", fontSize: 15, borderRadius: 85, padding: "15px 0", opacity: busy || decimals === undefined ? 0.7 : 1 }}
       >
-        {busy && <span aria-hidden style={{ width: 15, height: 15, borderRadius: "50%", border: "2.2px solid rgba(8,51,31,0.25)", borderTopColor: "#08331f", animation: "dc-spin .7s linear infinite" }} />}
+        {busy && <span aria-hidden style={{ width: 16, height: 16, borderRadius: "50%", border: "2.2px solid rgba(8,51,31,0.25)", borderTopColor: "#08331f", animation: "dc-spin .7s linear infinite" }} />}
         {label}
       </motion.button>
 
-      <p style={{ fontSize: 10.5, color: "#7f9a8f", marginTop: 9, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 11.5, color: "#7f9a8f", marginTop: 11, lineHeight: 1.5 }}>
         Needs a little Sepolia ETH for gas.{" "}
         <a href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia" target="_blank" rel="noreferrer" style={{ color: "#5fe3ab", textDecoration: "none" }}>
           Get some free
@@ -758,25 +757,23 @@ function FundForm({
   );
 }
 
-function FundedCard({ amount, reduced }: { amount: string; reduced: boolean }) {
+function FundReceipt({ title, sub, reduced }: { title: string; sub: string; reduced: boolean }) {
   return (
     <motion.div
       initial={reduced ? false : { opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, ease: EASE }}
-      className="flex items-center gap-[13px]"
-      style={{ alignSelf: "start", background: "rgba(95,230,175,0.10)", border: "1px solid rgba(95,230,175,0.3)", borderRadius: 16, padding: "14px 16px" }}
+      className="flex items-center gap-[14px]"
+      style={{ background: "rgba(95,230,175,0.10)", border: "1px solid rgba(95,230,175,0.3)", borderRadius: 18, padding: "18px 20px" }}
     >
-      <span className="flex shrink-0 items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(95,230,175,0.18)" }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <span className="flex shrink-0 items-center justify-center" style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(95,230,175,0.18)" }}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <polyline points="20 6 9 17 4 12" />
         </svg>
       </span>
       <span className="min-w-0">
-        <span className="block font-semibold" style={{ fontSize: 13.5, color: "#eef4f1" }}>Payroll funded</span>
-        <span className="block" style={{ fontSize: 11.5, color: "#9db3aa", marginTop: 1 }}>
-          {Number(amount).toLocaleString("en-US")} cUSDd is ready to disperse.
-        </span>
+        <span className="block font-semibold" style={{ fontSize: 15, color: "#eef4f1" }}>{title}</span>
+        <span className="block" style={{ fontSize: 12.5, color: "#9db3aa", marginTop: 2 }}>{sub}</span>
       </span>
     </motion.div>
   );
