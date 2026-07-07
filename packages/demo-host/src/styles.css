@@ -4,3 +4,13 @@
    utility classes are generated in this app's stylesheet. (A published build
    of the widget would ship its own compiled CSS instead.) */
 @source "../../widget/src";
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Manrope", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
