@@ -12,8 +12,8 @@ import type { ChartData, ChartOptions } from "chart.js";
 import { CheckGlyph, ChevronRightGlyph, PadlockGlyph, PersonPlusGlyph } from "../../design/icons";
 import { GlassCard } from "../../design/kit2";
 import { tokens } from "../../design/tokens";
-import { fmtAmount } from "../../lib/seed";
-import type { HomeScreenProps, RunView } from "../contracts";
+import { fmtAmount, initials, shortHash } from "../../lib/seed";
+import type { DashboardData, HomeScreenProps, RunView } from "../contracts";
 
 ChartJS.register(ArcElement, Tooltip);
 
@@ -25,6 +25,10 @@ const BAR_COLOR = "#8fd7c0";
 const BAR_DIM = "rgba(143,215,192,0.34)";
 const TABS = ["All", "Payouts", "Verifications", "Team"];
 const DONUT_DEPTS = ["Engineering", "Design", "Operations"];
+// The chart always spans these months so it reads as a full timeline even with
+// one real run; empty months render a small placeholder bar of this height.
+const SCAFFOLD_MONTHS = ["Feb", "Mar", "Apr", "May", "Jun", "Jul"];
+const PLACEHOLDER_H = 26;
 const DONUT_COLORS = ["#8b7cf6", "#d7ee59", "#5fe3ab"];
 
 /* ── Payout Activity scale (data-assets §8) ─────────────────────────────── */
@@ -133,18 +137,22 @@ export function Home({ data, tab, setTab, onAddEmployee }: HomeScreenProps) {
   useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
 
   // Chart buckets: seed runs are the month bases, live runs stack as caps.
+  // The full Feb–Jul timeline always renders so the chart never collapses to a
+  // lone bar; a month with no run shows a small placeholder (see PLACEHOLDER_H).
   const chart = useMemo(() => {
     const seedOldest = data.runs.filter((r) => !r.live).slice().reverse();
     const liveOldest = data.runs.filter((r) => r.live).slice().reverse();
-    const months = seedOldest.map((r) => r.month);
-    for (const r of liveOldest) if (!months.includes(r.month)) months.push(r.month);
+    const months = [...SCAFFOLD_MONTHS];
+    for (const r of [...seedOldest, ...liveOldest]) if (!months.includes(r.month)) months.push(r.month);
     const base = new Map(seedOldest.map((r) => [r.month, r]));
     const caps = new Map<string, RunView[]>();
     for (const r of liveOldest) caps.set(r.month, [...(caps.get(r.month) ?? []), r]);
     const totals = months.map(
       (m) => (base.get(m)?.total ?? 0) + (caps.get(m) ?? []).reduce((s, r) => s + r.total, 0),
     );
-    const { niceMax, labels } = yScale(Math.max(...totals, 0));
+    const maxTotal = Math.max(...totals, 0);
+    // Fall back to a sensible axis when there is no real data yet.
+    const { niceMax, labels } = yScale(maxTotal > 0 ? maxTotal : 15000);
     return { months, base, caps, niceMax, labels };
   }, [data.runs]);
 
@@ -229,7 +237,8 @@ export function Home({ data, tab, setTab, onAddEmployee }: HomeScreenProps) {
         })}
       </div>
 
-      {/* Payout Activity card */}
+      {/* Payout Activity card — shown on the overview and the Payouts tab */}
+      {(tab === "All" || tab === "Payouts") && (
       <GlassCard style={{ padding: "20px 23px 16px 23px" }}>
         <div className="flex items-center justify-between">
           <div style={{ fontWeight: 400, fontSize: 17 }}>Payout Activity</div>
@@ -277,6 +286,8 @@ export function Home({ data, tab, setTab, onAddEmployee }: HomeScreenProps) {
               const total = (base?.total ?? 0) + caps.reduce((s, r) => s + r.total, 0);
               const paid = (base?.paid ?? 0) + caps.reduce((s, r) => s + r.paid, 0);
               const active = data.activeBar === m;
+              // A month with no run renders a small hatched placeholder bar.
+              const hasData = (base?.total ?? 0) > 0 || caps.length > 0;
               // A stacked column has more than one block (a run cap on top of the
               // base). When one is hovered, the tooltip + highlight track THAT
               // block; otherwise the column shows its month aggregate.
@@ -309,15 +320,15 @@ export function Home({ data, tab, setTab, onAddEmployee }: HomeScreenProps) {
                   <div className="relative flex flex-col-reverse" style={{ width: 54, gap: 3 }}>
                     {/* base segment */}
                     <div
-                      className={active ? "" : "hatch"}
+                      className={active && hasData ? "" : "hatch"}
                       onMouseEnter={enterSeg("base", base?.total ?? 0, base?.paid ?? 0)}
                       style={{
                         width: 54,
-                        height: Math.max(((base?.total ?? 0) / chart.niceMax) * CH, 3),
+                        height: hasData ? Math.max(((base?.total ?? 0) / chart.niceMax) * CH, base ? 3 : 0) : PLACEHOLDER_H,
                         borderRadius: 14,
                         transformOrigin: "bottom",
                         transition: "background .25s",
-                        background: segBg("base"),
+                        background: hasData ? segBg("base") : undefined,
                       }}
                     />
                     {/* run caps (grow in from the bottom) */}
@@ -361,7 +372,7 @@ export function Home({ data, tab, setTab, onAddEmployee }: HomeScreenProps) {
                             padding: "6px 11px",
                           }}
                         >
-                          {fmtAmount(tipTotal)} cUSDd · {tipPaid} paid
+                          {hasData ? `${fmtAmount(tipTotal)} cUSDd · ${tipPaid} paid` : "No transactions"}
                         </div>
                         {/* halo ring marker */}
                         <div
@@ -402,8 +413,16 @@ export function Home({ data, tab, setTab, onAddEmployee }: HomeScreenProps) {
           </>
         )}
       </GlassCard>
+      )}
 
-      {/* Bottom row */}
+      {tab === "Payouts" && <PayoutsTab data={data} />}
+      {tab === "Verifications" && <VerificationsTab data={data} />}
+      {tab === "Team" && (
+        <TeamTab data={data} donutData={donutData} donutOptions={donutOptions} counts={counts} onAddEmployee={onAddEmployee} />
+      )}
+
+      {/* Bottom row — overview only */}
+      {tab === "All" && (
       <div className="grid" style={{ gridTemplateColumns: "1.35fr 1fr", gap: 20 }}>
         {/* Team donut card */}
         <GlassCard className="flex flex-col" style={{ padding: "16px 23px" }}>
@@ -511,6 +530,214 @@ export function Home({ data, tab, setTab, onAddEmployee }: HomeScreenProps) {
           </GlassCard>
         </div>
       </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Shared bits for the focused tabs ────────────────────────────────────── */
+
+function TabEmpty({ title, sub, action }: { title: string; sub: string; action?: { label: string; onClick: () => void } }) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center text-center" style={{ padding: "30px 8px 22px", gap: 4 }}>
+      <div style={{ fontSize: 13.5, fontWeight: 500, color: tokens.text.secondary }}>{title}</div>
+      <div style={{ fontSize: 11.5, color: tokens.text.muted, maxWidth: 250, lineHeight: 1.5 }}>{sub}</div>
+      {action && (
+        <button
+          type="button"
+          onClick={action.onClick}
+          className="cursor-pointer rounded-full transition-transform hover:scale-[1.04] active:scale-[0.97]"
+          style={{ marginTop: 10, background: "#5fe3ab", color: "#0b1512", fontSize: 12, fontWeight: 500, padding: "8px 20px" }}
+        >
+          {action.label}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function RunStatus({ verified }: { verified?: boolean }) {
+  return verified ? (
+    <span className="inline-flex shrink-0 items-center" style={{ gap: 3.5, fontSize: 9, padding: "3px 9px", borderRadius: 999, border: `1px solid ${tokens.accent.pillBorder}`, color: tokens.accent.pillText }}>
+      <CheckGlyph size={10} />
+      Verified
+    </span>
+  ) : (
+    <span className="inline-flex shrink-0 items-center" style={{ fontSize: 9, padding: "3px 9px", borderRadius: 999, border: "1px solid rgba(224,178,95,0.45)", color: "#e3b25f" }}>
+      Delivered
+    </span>
+  );
+}
+
+/* ── Payouts tab: a ledger of every run ─────────────────────────────────── */
+function PayoutsTab({ data }: { data: DashboardData }) {
+  return (
+    <GlassCard style={{ padding: "20px 23px" }}>
+      <div className="flex items-center justify-between">
+        <div style={{ fontWeight: 400, fontSize: 17 }}>Payout ledger</div>
+        <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>{data.runs.length} runs</div>
+      </div>
+      {data.runs.length === 0 ? (
+        <TabEmpty title="No payouts yet" sub="Run your first payroll to build the ledger." />
+      ) : (
+        <div className="slim-scroll flex flex-col overflow-y-auto overflow-x-hidden" style={{ gap: 4, maxHeight: 360, margin: "12px -13px 0", padding: "0 13px" }}>
+          {data.runs.map((r) => (
+            <a
+              key={r.id}
+              href={r.url}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center transition-colors hover:bg-[rgba(95,230,175,0.08)]"
+              style={{ gap: 12, padding: "9px 13px", borderRadius: 999, textDecoration: "none", color: "inherit" }}
+            >
+              <span className="flex shrink-0 items-center justify-center rounded-full" style={{ width: 36, height: 36, background: tokens.accent.puckBg, border: "1px solid rgba(255,255,255,0.06)" }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M22 2 11 13" />
+                  <path d="M22 2 15 22l-4-9-9-4z" />
+                </svg>
+              </span>
+              <span className="min-w-0">
+                <span className="block" style={{ fontSize: 13.5, fontWeight: 600, color: "#eef4f1" }}>{r.dateFull}</span>
+                <span className="block whitespace-nowrap" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
+                  {r.paid} paid · {shortHash(r.tx)}
+                </span>
+              </span>
+              <span className="ml-auto flex shrink-0 items-center" style={{ gap: 11 }}>
+                <span style={{ fontSize: 13.5, fontWeight: 600, color: "#eef4f1" }}>{fmtAmount(r.total)} cUSDd</span>
+                <RunStatus verified={r.verified} />
+              </span>
+            </a>
+          ))}
+        </div>
+      )}
+    </GlassCard>
+  );
+}
+
+/* ── Verifications tab: privacy scorecard + per-run verify status ────────── */
+function StatCard({ value, label, sub, accent = false }: { value: string; label: string; sub: string; accent?: boolean }) {
+  return (
+    <GlassCard style={{ padding: "16px 20px" }}>
+      <div style={{ fontSize: 10.5, color: tokens.text.muted }}>{label}</div>
+      <div className="tnum" style={{ fontSize: 26, fontWeight: 700, color: accent ? "#78e9c0" : "#f2f7f4", marginTop: 5 }}>{value}</div>
+      <div style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 3 }}>{sub}</div>
+    </GlassCard>
+  );
+}
+
+function VerificationsTab({ data }: { data: DashboardData }) {
+  const verified = data.runs.filter((r) => r.verified).length;
+  return (
+    <div className="flex flex-col" style={{ gap: 20 }}>
+      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
+        <StatCard value={String(data.encryptedCount)} label="Amounts encrypted" sub="on-chain, never public" />
+        <StatCard value={`${verified}/${data.runs.length}`} label="Runs verified" sub="decrypted and matched" />
+        <StatCard value="0" label="Amounts ever public" sub="fully confidential" accent />
+      </div>
+      <GlassCard style={{ padding: "20px 23px" }}>
+        <div style={{ fontWeight: 400, fontSize: 17 }}>Verifications</div>
+        <p style={{ fontSize: 11.5, color: tokens.text.muted, lineHeight: 1.5, marginTop: 5 }}>
+          Amounts stay encrypted on-chain. A verified run was decrypted with your signature and matched what was requested.
+        </p>
+        {data.runs.length === 0 ? (
+          <TabEmpty title="Nothing to verify yet" sub="Run a payroll and it will appear here, ready to verify." />
+        ) : (
+          <div className="slim-scroll flex flex-col overflow-y-auto overflow-x-hidden" style={{ gap: 4, maxHeight: 320, margin: "12px -13px 0", padding: "0 13px" }}>
+            {data.runs.map((r) => (
+              <a
+                key={r.id}
+                href={r.url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center transition-colors hover:bg-[rgba(95,230,175,0.08)]"
+                style={{ gap: 12, padding: "9px 13px", borderRadius: 999, textDecoration: "none", color: "inherit" }}
+              >
+                <span className="flex shrink-0 items-center justify-center rounded-full" style={{ width: 36, height: 36, background: r.verified ? "rgba(95,230,175,0.14)" : "rgba(224,178,95,0.12)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  {r.verified ? <CheckGlyph size={15} /> : <PadlockGlyph size={14} color="#e3b25f" />}
+                </span>
+                <span className="min-w-0">
+                  <span className="block" style={{ fontSize: 13.5, fontWeight: 600, color: "#eef4f1" }}>{r.dateFull}</span>
+                  <span className="block whitespace-nowrap" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>{r.paid} amounts · encrypted on-chain</span>
+                </span>
+                <span className="ml-auto shrink-0">
+                  <RunStatus verified={r.verified} />
+                </span>
+              </a>
+            ))}
+          </div>
+        )}
+      </GlassCard>
+    </div>
+  );
+}
+
+/* ── Team tab: department donut + roster ────────────────────────────────── */
+function TeamTab({
+  data,
+  donutData,
+  donutOptions,
+  counts,
+  onAddEmployee,
+}: {
+  data: DashboardData;
+  donutData: ChartData<"doughnut", number[], string>;
+  donutOptions: ChartOptions<"doughnut">;
+  counts: number[];
+  onAddEmployee: () => void;
+}) {
+  return (
+    <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      <GlassCard className="flex flex-col" style={{ padding: "16px 23px" }}>
+        <div style={{ fontWeight: 400, fontSize: 17 }}>By department</div>
+        {data.people.length === 0 ? (
+          <TabEmpty title="No team yet" sub="Add your first employee to run a confidential payroll." action={{ label: "Add employee", onClick: onAddEmployee }} />
+        ) : (
+          <div className="flex flex-1 items-center justify-center" style={{ gap: 23, marginTop: 7 }}>
+            <div className="relative" style={{ width: 144, height: 144 }}>
+              <Doughnut data={donutData} options={donutOptions} />
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                <div className="tnum" style={{ fontWeight: 700, fontSize: 20 }}>{String(data.people.length).padStart(2, "0")}</div>
+                <div style={{ fontSize: 10, color: tokens.text.muted }}>Employees</div>
+              </div>
+            </div>
+            <div className="flex flex-col" style={{ gap: 16 }}>
+              {DONUT_DEPTS.map((d, i) => (
+                <div key={d} className="flex items-start" style={{ gap: 8 }}>
+                  <span className="shrink-0 rounded-full" style={{ width: 8, height: 8, marginTop: 3.5, background: DONUT_COLORS[i] }} />
+                  <span>
+                    <span className="block" style={{ fontSize: 12, fontWeight: 600, color: "#e8f0ec" }}>{d}</span>
+                    <span className="tnum block" style={{ fontSize: 11, color: tokens.text.muted }}>{counts[i]} people</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </GlassCard>
+
+      <GlassCard style={{ padding: "16px 23px" }}>
+        <div className="flex items-center justify-between">
+          <div style={{ fontWeight: 400, fontSize: 17 }}>Employees</div>
+          <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>{data.people.length} people</div>
+        </div>
+        {data.people.length === 0 ? (
+          <TabEmpty title="No employees" sub="They will appear here once added." />
+        ) : (
+          <div className="slim-scroll flex flex-col overflow-y-auto overflow-x-hidden" style={{ gap: 3, maxHeight: 300, margin: "10px -13px 0", padding: "0 13px" }}>
+            {data.people.map((p) => (
+              <div key={p.id} className="flex items-center" style={{ gap: 11, padding: "7px 13px", borderRadius: 999 }}>
+                <span className="flex shrink-0 items-center justify-center rounded-full" style={{ width: 32, height: 32, background: tokens.accent.puckBg, border: "1px solid rgba(255,255,255,0.06)", fontWeight: 800, fontSize: 11, color: "#d3ecdd" }}>
+                  {initials(p.name)}
+                </span>
+                <span className="min-w-0">
+                  <span className="block" style={{ fontSize: 12.5, fontWeight: 600, color: "#eef4f1" }}>{p.name}</span>
+                  <span className="block" style={{ fontSize: 10, color: tokens.text.muted, marginTop: 1 }}>{p.role} · {p.dept}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </GlassCard>
     </div>
   );
 }
