@@ -31,13 +31,10 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Diagonal hatch for inactive Payout Activity bars. */
+/* Diagonal hatch for inactive Payout Activity bars — derived from the bar
+   color #8fd7c0 per the handoff's hatchMap (135deg, #87a69a / #28382f). */
 .hatch {
-  background-image: repeating-linear-gradient(
-    -45deg,
-    rgba(196, 181, 253, 0.55) 0 3px,
-    rgba(196, 181, 253, 0.12) 3px 7px
-  );
+  background-image: repeating-linear-gradient(135deg, #87a69a 0 1.35px, #28382f 1.35px 5.85px);
 }
 
 /* Onboarding ambient animations (verbatim from the design prototype). */
