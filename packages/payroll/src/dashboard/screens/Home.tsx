@@ -393,7 +393,7 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
             <div style={{ fontWeight: 400, fontSize: 17 }}>Monthly payroll</div>
             {/* The aggregate total is already public in the Payout Activity bars,
                 so it is shown plainly here — no lock. Only per-person salaries stay masked. */}
-            <span className="tnum whitespace-nowrap" style={{ display: "inline-flex", gap: 6, fontWeight: 700, fontSize: 27, marginTop: 7 }}>
+            <span className="whitespace-nowrap" style={{ display: "inline-flex", gap: 6, fontWeight: 700, fontSize: 27, marginTop: 7 }}>
               <span>{data.monthly.value}</span>
               <span>cUSDd</span>
             </span>
