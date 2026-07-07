@@ -9,7 +9,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Doughnut } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
 
-import { CheckGlyph, ChevronRightGlyph } from "../../design/icons";
+import { CheckGlyph, ChevronRightGlyph, PadlockGlyph } from "../../design/icons";
 import { GlassCard } from "../../design/kit2";
 import { tokens } from "../../design/tokens";
 import { fmtAmount } from "../../lib/seed";
@@ -397,10 +397,13 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
               <span>{data.monthly.value}</span>
               <span>cUSDd</span>
             </span>
-            <div style={{ marginTop: 9 }}>
+            <div className="flex items-center justify-between" style={{ marginTop: 9 }}>
               <span className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
                 {data.people.length} salaries
               </span>
+              <TipPuck tip="Encrypted">
+                <PadlockGlyph size={11} />
+              </TipPuck>
             </div>
           </GlassCard>
 
