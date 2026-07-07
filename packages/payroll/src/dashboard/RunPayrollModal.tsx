@@ -819,18 +819,47 @@ function Finale(props: {
         {props.verifiedOk !== undefined ? `${props.verifiedOk}/${props.n} verified` : `${props.n} paid`}
       </p>
 
-      <button type="button" onClick={props.onToggleResult} className="mx-auto mt-[18px] flex cursor-pointer items-baseline gap-1.5" style={{ background: "rgba(0,0,0,0.2)", borderRadius: 14, padding: "11px 18px" }}>
-        <span className="tnum" style={{ fontSize: 15, fontWeight: 700, color: "#f2f7f4" }}>
-          <RevealAmount value={fmtAmount(props.total)} revealed={props.resultReveal} label="total" />
-        </span>
-        <span style={{ fontSize: 12, color: "#9db3aa" }}>cUSDd</span>
-      </button>
-      <button type="button" onClick={props.onToggleResult} className="mt-2 cursor-pointer hover:underline" style={{ fontSize: 10.5, color: "#78e9c0" }}>
-        {props.resultReveal ? "Hide total" : "Reveal total · Employer only"}
-      </button>
+      {/* Proof card: the amount (tap to reveal) and the on-chain proof grouped
+          into one surface, so the finale reads as confirm + one primary. */}
+      <div
+        className="mx-auto mt-[18px]"
+        style={{ borderRadius: 16, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.18)", padding: "15px 16px 6px" }}
+      >
+        <button
+          type="button"
+          onClick={props.onToggleResult}
+          title={props.resultReveal ? "Hide total" : "Reveal total"}
+          aria-label={props.resultReveal ? "Hide total" : "Reveal total"}
+          className="mx-auto flex cursor-pointer items-baseline justify-center gap-1.5"
+        >
+          <span className="tnum" style={{ fontSize: 17, fontWeight: 700, color: "#f2f7f4" }}>
+            <RevealAmount value={fmtAmount(props.total)} revealed={props.resultReveal} label="total" />
+          </span>
+          <span style={{ fontSize: 12, color: "#9db3aa" }}>cUSDd</span>
+        </button>
+        <div className="text-center" style={{ fontSize: 10.5, color: "#6f857c", marginTop: 6 }}>
+          Employer only
+        </div>
+
+        <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "12px -16px 0" }} />
+
+        <a
+          href={props.url}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center justify-between transition-colors hover:text-[#e8f0ec]"
+          style={{ fontSize: 12, color: "#9db3aa", textDecoration: "none", padding: "11px 0 3px" }}
+        >
+          View on Etherscan
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M7 17 17 7" />
+            <path d="M8 7h9v9" />
+          </svg>
+        </a>
+      </div>
 
       {props.onVerify && props.verifiedOk === undefined && (
-        <button type="button" onClick={props.onVerify} disabled={props.verifying} className="mx-auto mt-3 block w-full rounded-full font-medium disabled:opacity-50" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
+        <button type="button" onClick={props.onVerify} disabled={props.verifying} className="mx-auto mt-3.5 block w-full rounded-full font-medium disabled:opacity-50" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
           {props.verifying ? "Decrypting" : props.single ? "Verify the payment was delivered" : "Verify salaries were delivered"}
         </button>
       )}
@@ -840,24 +869,16 @@ function Finale(props: {
         </p>
       )}
 
-      <a href={props.url} target="_blank" rel="noreferrer" className="mt-3.5 block transition-colors hover:text-[#e8f0ec]" style={{ fontSize: 12, color: "#9db3aa", textDecoration: "none" }}>
-        View on Etherscan
-      </a>
-
-      {/* Recipient handoff — see it as the recipient (if you paid yourself), or
-          copy a link to send whoever you paid so they decrypt it themselves. */}
+      {/* Recipient handoff (a demo affordance) — demoted to a quiet middot pair
+          so it never twins the primary Done button. */}
       {props.single && props.onViewMyPay && (
-        <div className="mt-3.5 flex flex-col items-center gap-2.5">
-          <button
-            type="button"
-            onClick={props.onViewMyPay}
-            className="w-full cursor-pointer rounded-full transition-colors hover:bg-[rgba(95,230,175,0.14)]"
-            style={{ background: "rgba(95,230,175,0.08)", border: "1px solid rgba(95,230,175,0.4)", color: "#78e9c0", fontSize: 13, fontWeight: 500, padding: "11px 0" }}
-          >
+        <div className="flex items-center justify-center" style={{ marginTop: 16, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 12 }}>
+          <button type="button" onClick={props.onViewMyPay} className="cursor-pointer hover:underline" style={{ fontSize: 11.5, fontWeight: 500, color: "#78e9c0" }}>
             View this as the recipient
           </button>
-          <button type="button" onClick={copyLink} className="cursor-pointer hover:underline" style={{ fontSize: 11, color: "#9db3aa" }}>
-            {copied ? "Recipient link copied" : "Copy a recipient link to share"}
+          <span aria-hidden style={{ color: "rgba(255,255,255,0.18)", padding: "0 8px" }}>·</span>
+          <button type="button" onClick={copyLink} className="cursor-pointer hover:underline" style={{ fontSize: 11.5, color: "#9db3aa" }}>
+            {copied ? "Recipient link copied" : "Copy recipient link"}
           </button>
         </div>
       )}
