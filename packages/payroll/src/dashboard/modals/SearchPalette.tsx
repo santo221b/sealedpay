@@ -72,7 +72,7 @@ export function SearchPalette({ open, onClose, query, people, runs, onPickPerson
               left: 0,
               width: 468,
               maxWidth: "calc(100vw - 32px)",
-              borderRadius: 28,
+              borderRadius: 13,
               border: "1px solid rgba(255,255,255,0.11)",
               background: "#121D1ABF",
               backdropFilter: "blur(6px)",
