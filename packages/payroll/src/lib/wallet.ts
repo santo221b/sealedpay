@@ -138,6 +138,42 @@ export function useWalletBalance(decimals: number | undefined, onError?: (msg: s
   };
 }
 
+/**
+ * Cheap "has this wallet ever been funded?" probe for onboarding. A
+ * never-funded account returns the zero handle from confidentialBalanceOf, so
+ * emptiness is detectable with a plain read — no decryption, no signature.
+ * `empty` is undefined until the first read resolves (or when disconnected).
+ */
+export function useUnfundedWallet() {
+  const { address: employer } = useAccount();
+  const publicClient = usePublicClient();
+  const [empty, setEmpty] = useState<boolean | undefined>(undefined);
+
+  const refresh = useCallback(async () => {
+    if (!publicClient || !employer || !TOKEN) {
+      setEmpty(undefined);
+      return;
+    }
+    try {
+      const h = (await publicClient.readContract({
+        address: TOKEN,
+        abi: erc7984Abi,
+        functionName: "confidentialBalanceOf",
+        args: [employer],
+      })) as `0x${string}`;
+      setEmpty(h === zeroHash);
+    } catch {
+      /* transient RPC issue; keep the prior value */
+    }
+  }, [publicClient, employer]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  return { empty, refresh };
+}
+
 /** idle → confirming (awaiting the wallet signature) → minting (tx on-chain). */
 export type FundPhase = "idle" | "confirming" | "minting";
 

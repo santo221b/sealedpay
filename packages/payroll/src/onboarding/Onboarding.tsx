@@ -9,14 +9,16 @@
  * to the dashboard.
  */
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
-import { SEPOLIA_CHAIN_ID } from "@dispersekit/widget";
+import { DEMO_TOKEN_ADDRESS, SEPOLIA_CHAIN_ID, useTokenMeta } from "@dispersekit/widget";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAccount } from "wagmi";
 
+import { DepositBoxGlyph } from "../design/icons";
 import { SealLogo } from "../design/SealLogo";
 import { saveIdentity } from "../lib/prefs";
 import { THEME_COLORS, setThemeColor } from "../lib/themeColor";
+import { useFundWallet, useUnfundedWallet } from "../lib/wallet";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const EXIT_EASE = [0.4, 0, 1, 1] as const;
@@ -590,6 +592,7 @@ function StepWallet({
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#34d399" }} />
             </motion.div>
           )}
+          {walletReady && <FundStep />}
           {allowSkip && !walletReady && (
             <button
               type="button"
@@ -603,6 +606,117 @@ function StepWallet({
         </div>
       </Item>
     </>
+  );
+}
+
+/**
+ * Inline funding on the connect step, shown only when the connected wallet has
+ * never been funded (zero confidential-balance handle — no signature needed).
+ * Optional: the Continue button stays enabled, so it never blocks onboarding.
+ */
+const FUND_PRESETS = ["10000", "25000", "100000"] as const;
+
+function FundStep() {
+  const reduced = useReducedMotion();
+  const { empty, refresh } = useUnfundedWallet();
+  const { decimals } = useTokenMeta(DEMO_TOKEN_ADDRESS);
+  const [amount, setAmount] = useState<string>("25000");
+  const [funded, setFunded] = useState<string | null>(null);
+  const { fund, phase, busy, error } = useFundWallet(decimals, ({ amountText }) => {
+    setFunded(amountText);
+    void refresh();
+  });
+
+  if (funded) {
+    return (
+      <motion.div
+        initial={reduced ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mt-3.5 flex items-center gap-[13px]"
+        style={{ background: "rgba(95,230,175,0.10)", border: "1px solid rgba(95,230,175,0.3)", borderRadius: 16, padding: "14px 16px" }}
+      >
+        <span className="flex shrink-0 items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(95,230,175,0.18)" }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </span>
+        <span className="min-w-0">
+          <span className="block font-semibold" style={{ fontSize: 13.5, color: "#eef4f1" }}>Payroll funded</span>
+          <span className="block" style={{ fontSize: 11.5, color: "#9db3aa", marginTop: 1 }}>
+            {Number(funded).toLocaleString("en-US")} cUSDd is ready to disperse.
+          </span>
+        </span>
+      </motion.div>
+    );
+  }
+
+  // Only prompt a genuinely empty wallet; a returning employer keeps their balance.
+  if (empty !== true) return null;
+
+  const pretty = Number(amount).toLocaleString("en-US");
+  const label = phase === "minting" ? "Minting on-chain" : phase === "confirming" ? "Confirm in your wallet" : `Add ${pretty} cUSDd`;
+
+  return (
+    <motion.div
+      initial={reduced ? false : { opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: EASE }}
+      className="mt-3.5"
+      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "14px 15px" }}
+    >
+      <div className="flex items-center gap-2.5">
+        <DepositBoxGlyph size={17} color="#78e9c0" />
+        <span style={{ fontSize: 13.5, fontWeight: 600, color: "#eef4f1" }}>Add payroll funds</span>
+      </div>
+      <p style={{ fontSize: 11.5, color: "#9db3aa", marginTop: 6, lineHeight: 1.5 }}>
+        Your wallet holds no cUSDd yet. Mint test funds so you can run your first payroll right away.
+      </p>
+
+      <div className="flex gap-[7px]" style={{ marginTop: 11 }}>
+        {FUND_PRESETS.map((v) => {
+          const on = amount === v;
+          return (
+            <button
+              key={v}
+              type="button"
+              disabled={busy}
+              onClick={() => setAmount(v)}
+              className="flex-1 cursor-pointer rounded-full disabled:cursor-not-allowed"
+              style={{ fontSize: 11.5, padding: "7px 0", background: on ? "rgba(95,230,175,0.16)" : "rgba(255,255,255,0.05)", border: `1px solid ${on ? "rgba(95,230,175,0.5)" : "rgba(255,255,255,0.08)"}`, color: on ? "#78e9c0" : "#cfdcd6" }}
+            >
+              {Number(v).toLocaleString("en-US")}
+            </button>
+          );
+        })}
+      </div>
+
+      {error && (
+        <p role="alert" className="mt-2.5 rounded-xl p-2.5" style={{ background: "rgba(224,110,98,0.1)", border: "1px solid rgba(224,110,98,0.4)", color: "#eb8f85", fontSize: 11 }}>
+          {error}
+        </p>
+      )}
+
+      <motion.button
+        type="button"
+        disabled={busy || decimals === undefined}
+        whileHover={reduced || busy ? undefined : { scale: 1.02 }}
+        whileTap={reduced || busy ? undefined : { scale: 0.98 }}
+        onClick={() => void fund(amount)}
+        className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 font-medium disabled:cursor-not-allowed"
+        style={{ background: "#5fe3ab", color: "#08331f", fontSize: 13.5, borderRadius: 85, padding: "12px 0", opacity: busy || decimals === undefined ? 0.7 : 1 }}
+      >
+        {busy && <span aria-hidden style={{ width: 15, height: 15, borderRadius: "50%", border: "2.2px solid rgba(8,51,31,0.25)", borderTopColor: "#08331f", animation: "dc-spin .7s linear infinite" }} />}
+        {label}
+      </motion.button>
+
+      <p style={{ fontSize: 10.5, color: "#7f9a8f", marginTop: 8, lineHeight: 1.45 }}>
+        A real Sepolia mint, so it needs a little test ETH for gas.{" "}
+        <a href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia" target="_blank" rel="noreferrer" style={{ color: "#5fe3ab", textDecoration: "none", whiteSpace: "nowrap" }}>
+          Get Sepolia ETH
+        </a>
+        . You can also fund later from the dashboard.
+      </p>
+    </motion.div>
   );
 }
 
