@@ -80,7 +80,10 @@ export function NotificationsPanel({ open, onClose, notifs, onRead, onMarkAllRea
               )}
             </div>
 
-            <div className="mt-[9px] flex flex-col gap-1">
+            <div
+              className="mt-[9px] flex flex-col gap-1 overflow-y-auto overflow-x-hidden"
+              style={{ maxHeight: "min(56vh, 400px)" }}
+            >
               {notifs.map((n) => (
                 <button
                   key={n.id}

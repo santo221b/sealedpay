@@ -8,6 +8,7 @@
  * presentation-only; when either is open a transparent full-screen catcher
  * closes it on an outside click (no dimming, per the design).
  */
+import { AnimatePresence, motion } from "framer-motion";
 import type { CSSProperties, ReactNode } from "react";
 
 import { BellGlyph, GearGlyph, HomeNav, InsightsNav, LogoutGlyph, TeamNav } from "../design/icons";
@@ -56,11 +57,24 @@ export function Rail({
 
   return (
     <div className="z-[5] flex w-[58px] shrink-0 flex-col items-center" style={{ padding: "97px 0 22px 0" }}>
-      {/* Outside-click catcher (no dim) while a popover is open */}
-      {(bellOpen || gearOpen) && <div className="fixed inset-0 z-[9]" onMouseDown={onClosePopover} />}
+      {/* Dim overlay + outside-click catcher while a popover is open. The dim
+          focuses the popover; the trigger cluster is lifted above it (z-11). */}
+      <AnimatePresence>
+        {(bellOpen || gearOpen) && (
+          <motion.div
+            className="fixed inset-0 z-[9]"
+            style={{ background: "rgba(6,12,10,0.55)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onMouseDown={onClosePopover}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Nav pucks */}
-      <nav aria-label="Primary" className="flex flex-col items-center" style={{ ...clusterStyle, gap: 7 }}>
+      <nav aria-label="Primary" className="relative z-[11] flex flex-col items-center" style={{ ...clusterStyle, gap: 7 }}>
         {navItems.map(({ label, Icon }, i) => {
           const selected = navSel === i;
           return (
@@ -79,8 +93,9 @@ export function Rail({
         })}
       </nav>
 
-      {/* Bell + gear cluster (popovers anchor to the right of each icon) */}
-      <div className="mt-5 flex flex-col items-center" style={{ ...clusterStyle, gap: 6 }}>
+      {/* Bell + gear cluster (popovers anchor to the right of each icon).
+          Lifted above the dim so the triggers + their hover glow stay lit. */}
+      <div className="relative z-[11] mt-5 flex flex-col items-center" style={{ ...clusterStyle, gap: 6 }}>
         <div className="group relative">
           <button
             type="button"
@@ -123,7 +138,7 @@ export function Rail({
         type="button"
         aria-label="Log out"
         onClick={onLogout}
-        className="mt-auto flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-[rgba(110,196,186,0.06)] transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+        className="relative z-[11] mt-auto flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-[rgba(110,196,186,0.06)] transition-colors hover:bg-[rgba(95,230,175,0.1)]"
         style={{ border: `1px solid ${tokens.glass.railBorder}`, boxShadow: tokens.glass.cardShadow }}
       >
         <LogoutGlyph size={15} />
