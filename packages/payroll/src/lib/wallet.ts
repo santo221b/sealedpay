@@ -138,7 +138,7 @@ export function useWalletBalance(decimals: number | undefined, onError?: (msg: s
   };
 }
 
-export function useFundWallet(decimals: number | undefined, onFunded: () => void) {
+export function useFundWallet(decimals: number | undefined, onFunded: () => void, onError?: (msg: string) => void) {
   const { address: employer } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
@@ -179,7 +179,13 @@ export function useFundWallet(decimals: number | undefined, onFunded: () => void
         return true;
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
-        setError(/user rejected|denied/i.test(message) ? "Request cancelled in the wallet." : message);
+        const friendly = /user rejected|denied/i.test(message)
+          ? "Request cancelled in the wallet."
+          : /insufficient funds/i.test(message)
+            ? "Not enough Sepolia ETH for gas — grab some from a faucet."
+            : message;
+        setError(friendly);
+        onError?.(friendly);
         return false;
       } finally {
         setBusy(false);

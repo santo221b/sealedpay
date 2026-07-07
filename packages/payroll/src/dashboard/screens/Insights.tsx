@@ -31,15 +31,22 @@ const SEED_GAS = [0.0013, 0.0013, 0.0014, 0.0014, 0.0015, 0.0015];
 export function Insights({ data }: InsightsScreenProps) {
   const reduced = useReducedMotion();
 
-  const { labels, paidData, gasData } = useMemo(() => {
+  const { labels, paidData, gasData, paidMax, gasMax } = useMemo(() => {
     const ordered = data.runs.slice().reverse(); // oldest first
     let seedIdx = 0;
+    const paid = ordered.map((r) => r.paid);
+    // A confidential disperse is roughly flat in gas (base + a little per
+    // recipient) — keep it in the believable ~0.0013-0.0016 ETH band, not the
+    // old 0.001*paid which shot a 5-person run off the chart.
+    const gas = ordered.map((r) =>
+      r.live ? Number((0.0013 + 0.00004 * r.paid).toFixed(4)) : (SEED_GAS[seedIdx++] ?? 0.0015),
+    );
     return {
       labels: ordered.map((r) => r.month),
-      paidData: ordered.map((r) => r.paid),
-      gasData: ordered.map((r) =>
-        r.live ? Number((0.001 * r.paid).toFixed(4)) : (SEED_GAS[seedIdx++] ?? 0.0015),
-      ),
+      paidData: paid,
+      gasData: gas,
+      paidMax: Math.max(6, Math.ceil(Math.max(0, ...paid) / 2) * 2), // auto-scale, even step
+      gasMax: Math.max(0.002, Math.ceil((Math.max(0, ...gas) * 1.2) / 0.0005) * 0.0005),
     };
   }, [data.runs]);
 
@@ -108,14 +115,14 @@ export function Insights({ data }: InsightsScreenProps) {
         },
         y: {
           min: 0,
-          max: 10,
+          max: paidMax,
           grid: { color: "rgba(255,255,255,0.05)" },
-          ticks: { stepSize: 2, color: "#8ba297", font: { family: "Manrope", size: 11 } },
+          ticks: { stepSize: Math.max(1, Math.round(paidMax / 5)), color: "#8ba297", font: { family: "Manrope", size: 11 } },
         },
         y1: {
           position: "right",
           min: 0,
-          max: 0.002,
+          max: gasMax,
           grid: { drawOnChartArea: false },
           ticks: {
             color: "#8ba297",
@@ -125,7 +132,7 @@ export function Insights({ data }: InsightsScreenProps) {
         },
       },
     }),
-    [reduced],
+    [reduced, paidMax, gasMax],
   );
 
   return (

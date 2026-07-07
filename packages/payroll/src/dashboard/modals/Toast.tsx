@@ -15,7 +15,8 @@ export function Toast({ toast }: { toast: ToastState | null }) {
         {toast && (
           <motion.div
             key={toast.id}
-            role="status"
+            role={toast.kind === "err" ? "alert" : "status"}
+            aria-live={toast.kind === "err" ? "assertive" : "polite"}
             className="pointer-events-auto flex items-center gap-2.5"
             style={{
               borderRadius: 999,

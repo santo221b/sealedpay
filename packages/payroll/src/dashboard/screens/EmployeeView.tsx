@@ -193,22 +193,39 @@ export function EmployeeView({
                   />
                   <span>cUSDd</span>
                 </span>
-                <span
-                  className="inline-flex items-center"
-                  style={{
-                    gap: 3.5,
-                    fontSize: 9,
-                    fontWeight: 400,
-                    padding: "3px 9px",
-                    borderRadius: tokens.radius.pill,
-                    border: `1px solid ${tokens.accent.pillBorder}`,
-                    color: tokens.accent.pillText,
-                    background: "transparent",
-                  }}
-                >
-                  <CheckGlyph size={10} />
-                  Verified
-                </span>
+                {row.verified ? (
+                  <span
+                    className="inline-flex items-center"
+                    style={{
+                      gap: 3.5,
+                      fontSize: 9,
+                      fontWeight: 400,
+                      padding: "3px 9px",
+                      borderRadius: tokens.radius.pill,
+                      border: `1px solid ${tokens.accent.pillBorder}`,
+                      color: tokens.accent.pillText,
+                      background: "transparent",
+                    }}
+                  >
+                    <CheckGlyph size={10} />
+                    Verified
+                  </span>
+                ) : (
+                  <span
+                    className="inline-flex items-center"
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 400,
+                      padding: "3px 9px",
+                      borderRadius: tokens.radius.pill,
+                      border: "1px solid rgba(224,178,95,0.45)",
+                      color: "#e3b25f",
+                      background: "transparent",
+                    }}
+                  >
+                    Delivered
+                  </span>
+                )}
               </span>
             </div>
           ))}

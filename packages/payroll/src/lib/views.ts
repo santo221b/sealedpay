@@ -93,10 +93,12 @@ export function employeeRows(
 ): PayRow[] {
   const liveRows: PayRow[] = [];
   for (const r of live) {
-    const entry = r.entries?.find((e) => e.address.toLowerCase() === person.wallet.toLowerCase());
-    if (!entry) continue;
+    // Match by NAME and key by POSITION — the roster may share one wallet, so an
+    // address match/key would collide every recipient onto the same entry.
+    const idx = r.entries?.findIndex((e) => e.name === person.name) ?? -1;
+    if (idx < 0) continue;
     const d = new Date(r.date);
-    const key = `${r.id}:${person.wallet.toLowerCase()}`;
+    const key = `${r.id}:${idx}`;
     liveRows.push({
       key,
       date: `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`,
@@ -104,6 +106,7 @@ export function employeeRows(
       url: `https://sepolia.etherscan.io/tx/${r.txHash}`,
       amount: decrypted[key],
       live: true,
+      verified: r.verified === true,
       decrypting: decrypting[r.id] === true,
     });
   }
@@ -119,6 +122,7 @@ export function employeeRows(
           url: `https://sepolia.etherscan.io/tx/${h.tx}`,
           amount: person.salary,
           live: false,
+          verified: true,
         }))
     : [];
   return [...liveRows, ...seedRows];
@@ -135,7 +139,8 @@ export function activityRows(runs: RunView[], people: Person[]): ActivityRow[] {
     key: r.id,
     title: "Payroll run",
     sub: `${r.date} · ${r.paid} paid · ${fmtAmount(r.total)} cUSDd`,
-    pill: "Verified",
+    // Only "Verified" once the decrypt-verify step confirmed it; else "Pending".
+    pill: r.verified ? "Verified" : "Pending",
     url: r.url,
     icon: "run",
   }));

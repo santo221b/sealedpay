@@ -9,7 +9,6 @@ import type { CSSProperties, ReactElement } from "react";
 
 import { RevealAmount } from "../design/RevealAmount";
 import {
-  ChevronRightGlyph,
   DepositBoxGlyph,
   EyeGlyph,
   KeyGlyph,
@@ -194,18 +193,21 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
                 </div>
               </div>
             </div>
-            <motion.button
-              type="button"
-              title="Fund"
-              aria-label="Fund wallet"
-              onClick={onFund}
-              whileHover={reduced ? undefined : { scale: 1.08 }}
-              whileTap={reduced ? undefined : { scale: 0.94 }}
-              className="z-[1] flex shrink-0 cursor-pointer items-center justify-center rounded-full"
-              style={{ width: 40, height: 40, background: "#f5f8f6" }}
-            >
-              <PlusGlyph size={16} />
-            </motion.button>
+            <div className="z-[1] flex shrink-0 flex-col items-center" style={{ gap: 3 }}>
+              <motion.button
+                type="button"
+                title="Fund wallet"
+                aria-label="Fund wallet"
+                onClick={onFund}
+                whileHover={reduced ? undefined : { scale: 1.08 }}
+                whileTap={reduced ? undefined : { scale: 0.94 }}
+                className="flex cursor-pointer items-center justify-center rounded-full"
+                style={{ width: 40, height: 40, background: "#f5f8f6" }}
+              >
+                <PlusGlyph size={16} />
+              </motion.button>
+              <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: 0.2, color: "rgba(240,250,245,0.9)" }}>Fund</span>
+            </div>
           </div>
         </div>
       </div>
@@ -276,13 +278,6 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
 
           <div className="flex items-center justify-between" style={{ marginTop: 20 }}>
             <div style={{ fontSize: 17, fontWeight: 400 }}>Recent activity</div>
-            <div
-              className="flex cursor-pointer items-center transition-colors hover:text-[#e8f0ec]"
-              style={{ gap: 4, fontSize: 11, color: tokens.text.muted }}
-            >
-              View All
-              <ChevronRightGlyph size={11} />
-            </div>
           </div>
 
           <div className="flex flex-col" style={{ gap: 22, marginTop: 20 }}>

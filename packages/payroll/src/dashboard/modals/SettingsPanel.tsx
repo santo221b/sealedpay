@@ -8,6 +8,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect } from "react";
 
 import { SettingToggle } from "../../design/kit2";
+import { resetDemo } from "../../lib/prefs";
 import type { SettingsPanelProps } from "../contracts";
 
 const TOGGLES: { key: "maskDefault" | "reminders" | "autoverify"; label: string }[] = [
@@ -63,6 +64,9 @@ export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverif
                 <SettingToggle key={t.key} label={t.label} on={values[t.key]} onChange={(on) => onToggle(t.key, on)} />
               ))}
             </div>
+            <p style={{ fontSize: 10, color: "#8ba297", lineHeight: 1.4, marginTop: 2 }}>
+              Auto-verify decrypts and confirms each salary right after paying (one extra wallet signature).
+            </p>
 
             <div style={{ height: 1, background: "rgba(255,255,255,0.09)", margin: "5px 0" }} />
 
@@ -74,6 +78,15 @@ export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverif
               <span style={{ fontSize: 12, color: "#e8f0ec" }}>Network</span>
               <span style={{ fontSize: 11, color: "#9db3aa" }}>Sepolia Testnet</span>
             </div>
+
+            <button
+              type="button"
+              onClick={resetDemo}
+              className="mt-1 w-full cursor-pointer rounded-full"
+              style={{ fontSize: 11, fontWeight: 600, color: "#f0a99d", border: "1px solid rgba(224,122,106,0.4)", background: "rgba(224,122,106,0.08)", padding: "8px 0" }}
+            >
+              Reset demo
+            </button>
           </motion.div>
       )}
     </AnimatePresence>

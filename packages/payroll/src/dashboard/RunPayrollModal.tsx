@@ -145,6 +145,15 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
     if (inTx) return;
     onClose();
   };
+  // Escape closes when it is safe to (not mid-transaction).
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !inTx) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, inTx, onClose]);
 
   const verifiedOk = verification ? verification.filter((v) => v.ok).length : 0;
   const n = running.length || selected.length;
@@ -201,6 +210,21 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
                 style={{ height: "100%", width: `${((step + 1) / 4) * 100}%`, background: "linear-gradient(90deg,#5fe3ab,#78e9c0)", transition: "width .45s cubic-bezier(.22,1,.36,1)" }}
               />
             </div>
+
+            {/* Close — hidden mid-transaction so a broadcast is never abandoned. */}
+            {!inTx && (
+              <button
+                type="button"
+                onClick={requestClose}
+                aria-label="Close"
+                className="absolute z-[2] flex cursor-pointer items-center justify-center rounded-full"
+                style={{ top: 16, right: 16, width: 28, height: 28, background: "rgba(255,255,255,0.06)", color: "#9db3aa" }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden>
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            )}
 
             <AnimatePresence mode="wait" initial={false}>
               <motion.div

@@ -47,6 +47,8 @@ export interface PayRow {
   /** Known plaintext (seed rows / already-decrypted live rows); undefined until a live row is decrypted. */
   amount?: number;
   live: boolean;
+  /** Seed rows are historical/verified; a live row is verified only after its decrypt-verify step. */
+  verified?: boolean;
   /** True while this row's real decryption is in flight. */
   decrypting?: boolean;
 }

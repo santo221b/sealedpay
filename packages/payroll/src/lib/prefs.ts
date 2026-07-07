@@ -32,6 +32,18 @@ export function saveIdentity(name: string, avatar: string) {
   localStorage.setItem(IDENTITY_KEYS.onboarded, "1");
 }
 
+/**
+ * Wipe all local demo state (identity, settings, employees, history, seed
+ * markers) and reload — so a shared URL starts clean for the next visitor and
+ * one judge's edits don't leak into the next.
+ */
+export function resetDemo() {
+  for (const k of Object.keys(localStorage)) {
+    if (k.startsWith("sealedpay_") || k.startsWith("dispersekit.payroll.")) localStorage.removeItem(k);
+  }
+  location.reload();
+}
+
 const SETTINGS_KEY = "sealedpay_settings.v1";
 
 export interface Settings {

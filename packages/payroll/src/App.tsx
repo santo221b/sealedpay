@@ -213,6 +213,18 @@ function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flow.error]);
 
+  // Re-verifying a past payment (tapping a row in EmployeeView) can be rejected;
+  // surface it instead of leaving the row silently masked.
+  const toastedRetroErr = useRef<string>(undefined);
+  useEffect(() => {
+    const e = retro.error;
+    const key = e ? `${e.runId}:${e.message}` : undefined;
+    if (!e || !key || toastedRetroErr.current === key) return;
+    toastedRetroErr.current = key;
+    showToast("err", /reject|denied|cancel/i.test(e.message) ? "Reveal cancelled in the wallet" : e.message);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [retro.error]);
+
   // Persist a recovery record the moment a tx hash exists (orphan safety).
   useEffect(() => {
     if (flow.pendingTxHash && pendingRun.current) {
@@ -328,8 +340,12 @@ function Dashboard() {
   const decryptedRows = useMemo(() => {
     const out: Record<string, number | undefined> = {};
     if (decimals === undefined) return out;
+    // Key by POSITION, not address: a test roster can share one wallet, so an
+    // address key would collapse every recipient onto one entry (last wins).
     for (const [runId, entries] of Object.entries(retro.results)) {
-      for (const e of entries) out[`${runId}:${e.address.toLowerCase()}`] = Number(formatUnits(e.transferredAmount, decimals));
+      entries.forEach((e, i) => {
+        out[`${runId}:${i}`] = Number(formatUnits(e.transferredAmount, decimals));
+      });
     }
     return out;
   }, [retro.results, decimals]);
@@ -533,7 +549,7 @@ function Dashboard() {
           return null;
         }}
       />
-      <FundWalletModalWired open={fundOpen} onClose={() => setFundOpen(false)} employer={employer} decimals={decimals} onFunded={() => { void balance.refresh(); showToast("ok", "Wallet funded"); addNotif({ title: "Funds deposited", sub: "faucet mint confirmed on Sepolia", color: "#5fe3ab", tone: "ok" }); }} />
+      <FundWalletModalWired open={fundOpen} onClose={() => setFundOpen(false)} employer={employer} decimals={decimals} onFail={(m) => showToast("err", m)} onFunded={() => { void balance.refresh(); showToast("ok", "Wallet funded"); addNotif({ title: "Funds deposited", sub: "faucet mint confirmed on Sepolia", color: "#5fe3ab", tone: "ok" }); }} />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); setLoggedOut(true); }} />
       <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} />
       <ReminderModal
@@ -564,8 +580,8 @@ function Dashboard() {
 }
 
 /** Fund Wallet wired to the real faucet mint. */
-function FundWalletModalWired({ open, onClose, employer, decimals, onFunded }: { open: boolean; onClose: () => void; employer?: `0x${string}`; decimals?: number; onFunded: () => void }) {
-  const fund = useFundWallet(decimals, onFunded);
+function FundWalletModalWired({ open, onClose, employer, decimals, onFunded, onFail }: { open: boolean; onClose: () => void; employer?: `0x${string}`; decimals?: number; onFunded: () => void; onFail: (msg: string) => void }) {
+  const fund = useFundWallet(decimals, onFunded, onFail);
   return (
     <FundWalletModal
       open={open}
