@@ -198,14 +198,6 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
                 </span>
               </span>
               <span className="ml-auto flex items-center" style={{ gap: 9 }}>
-                {p.sample && (
-                  <span
-                    className="inline-flex items-center"
-                    style={{ fontSize: 9.5, fontWeight: 500, padding: "3px 9px", borderRadius: tokens.radius.pill, border: "1px solid rgba(255,255,255,0.14)", color: "#9db3aa", background: "rgba(255,255,255,0.04)" }}
-                  >
-                    Sample
-                  </span>
-                )}
                 <span
                   className="inline-flex items-center"
                   style={{
