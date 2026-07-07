@@ -28,11 +28,16 @@ const DONUT_COLORS = ["#8b7cf6", "#d7ee59", "#5fe3ab"];
 /* ── Payout Activity scale (data-assets §8) ─────────────────────────────── */
 
 function yScale(maxVal: number) {
-  const yStep = maxVal <= 5000 ? 1000 : Math.ceil(maxVal / 5 / 1000) * 1000;
+  // A "nice" step (1 / 2 / 5 × 10ⁿ) so five gridlines comfortably cover the
+  // largest bar — works whether a month totals 90 cUSDd or 4,500.
+  const rough = Math.max(maxVal, 1) / 5;
+  const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+  const norm = rough / mag;
+  const yStep = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag;
   const niceMax = yStep * 5;
-  const fmtK = (v: number) =>
-    v === 0 ? "0" : v % 1000 === 0 ? `${v / 1000}k` : `${(v / 1000).toFixed(1)}k`;
-  return { niceMax, labels: [5, 4, 3, 2, 1, 0].map((i) => fmtK(yStep * i)) };
+  const fmt = (v: number) =>
+    v === 0 ? "0" : v >= 1000 ? (v % 1000 === 0 ? `${v / 1000}k` : `${(v / 1000).toFixed(1)}k`) : `${v}`;
+  return { niceMax, labels: [5, 4, 3, 2, 1, 0].map((i) => fmt(yStep * i)) };
 }
 
 /* ── ENCRYPTED / Verified puck with the 110ms fade tooltip ──────────────── */

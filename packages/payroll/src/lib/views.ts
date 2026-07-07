@@ -9,8 +9,18 @@ import { SEED_EMPLOYEES, SEED_HISTORY, fmtAmount } from "./seed";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+/**
+ * Seed metadata for a roster member, matched by NAME. The roster may share a
+ * single wallet (test flow), so an address match would collapse everyone onto
+ * one seed row — the name is the stable identity. Returns undefined for
+ * user-added employees (they carry no seeded history).
+ */
+function seedByName(name: string) {
+  return SEED_EMPLOYEES.find((s) => s.name === name);
+}
+
 export function toPerson(e: Employee): Person {
-  const seed = SEED_EMPLOYEES.find((s) => s.address.toLowerCase() === e.address.toLowerCase());
+  const seed = seedByName(e.name);
   return {
     id: e.id,
     name: e.name,
@@ -22,8 +32,16 @@ export function toPerson(e: Employee): Person {
   };
 }
 
-/** Live runs (newest first) followed by seeded months (newest first). */
-export function toRunViews(live: PayoutRun[]): RunView[] {
+/**
+ * Live runs (newest first) followed by seeded months (newest first).
+ *
+ * Seed months are the design's real dates + tx hashes, but their paid-count
+ * and total are DERIVED from the current roster — not the old hardcoded
+ * numbers — so the Payout Activity / Insights charts always agree with the
+ * per-employee payment history. Each seeded month pays every roster member
+ * whose seed entry started on/before it; the total is the sum of their salaries.
+ */
+export function toRunViews(live: PayoutRun[], people: Person[]): RunView[] {
   const liveViews: RunView[] = live.map((r) => {
     const d = new Date(r.date);
     const month = MONTHS[d.getMonth()];
@@ -41,20 +59,24 @@ export function toRunViews(live: PayoutRun[]): RunView[] {
       verified: r.verified,
     };
   });
-  const seedViews: RunView[] = SEED_HISTORY.slice()
-    .reverse()
-    .map((h) => ({
+  const seedViews: RunView[] = SEED_HISTORY.map((h, i) => {
+    const roster = people.filter((p) => {
+      const meta = seedByName(p.name);
+      return meta !== undefined && meta.historyStart <= i;
+    });
+    return {
       id: `seed-${h.month}`,
       month: h.month,
       date: h.date,
       dateFull: h.dateFull,
-      paid: h.paid,
-      total: h.total,
+      paid: roster.length,
+      total: roster.reduce((sum, p) => sum + p.salary, 0),
       tx: h.tx,
       url: `https://sepolia.etherscan.io/tx/${h.tx}`,
       live: false,
       verified: true,
-    }));
+    };
+  }).reverse(); // newest first
   return [...liveViews, ...seedViews];
 }
 
@@ -85,7 +107,7 @@ export function employeeRows(
       decrypting: decrypting[r.id] === true,
     });
   }
-  const seed = SEED_EMPLOYEES.find((s) => s.address.toLowerCase() === person.wallet.toLowerCase());
+  const seed = seedByName(person.name);
   const seedRows: PayRow[] = seed
     ? SEED_HISTORY.slice(seed.historyStart)
         .slice()
@@ -102,8 +124,12 @@ export function employeeRows(
   return [...liveRows, ...seedRows];
 }
 
-/** Recent-activity panel: live runs prepend and push seeded base rows off. */
-export function activityRows(runs: RunView[]): ActivityRow[] {
+/**
+ * Recent-activity panel: live runs prepend and push seeded base rows off. The
+ * base rows are derived from the current roster / newest seeded run so they
+ * never contradict the charts or name an employee who no longer exists.
+ */
+export function activityRows(runs: RunView[], people: Person[]): ActivityRow[] {
   const liveRuns = runs.filter((r) => r.live).slice(0, 4);
   const rows: ActivityRow[] = liveRuns.map((r) => ({
     key: r.id,
@@ -114,10 +140,14 @@ export function activityRows(runs: RunView[]): ActivityRow[] {
     icon: "run",
   }));
   const n = liveRuns.length;
-  if (n < 4) rows.push({ key: "base0", title: "Payroll run", sub: "Jul 5 · 8 paid · 4,500.5 cUSDd", pill: "Verified", url: `https://sepolia.etherscan.io/tx/${SEED_HISTORY[5].tx}`, icon: "run" });
-  if (n < 3) rows.push({ key: "base1", title: "Employee added", sub: "Priya Sharma · Engineering", pill: "Active", icon: "person" });
+  const latestSeed = runs.find((r) => !r.live);
+  const newest = people[people.length - 1];
+  if (n < 4 && latestSeed)
+    rows.push({ key: "base0", title: "Payroll run", sub: `${latestSeed.date} · ${latestSeed.paid} paid · ${fmtAmount(latestSeed.total)} cUSDd`, pill: "Verified", url: latestSeed.url, icon: "run" });
+  if (n < 3 && newest)
+    rows.push({ key: "base1", title: "Employee added", sub: `${newest.name} · ${newest.dept}`, pill: "Active", icon: "person" });
   if (n < 2) rows.push({ key: "base2", title: "Operator authorized", sub: "expires in 1 h", pill: "Pending", icon: "key" });
-  if (n < 1) rows.push({ key: "base3", title: "Funds deposited", sub: "Jul 3 · 5,000 cUSDd", pill: "Verified", icon: "deposit" });
+  if (n < 1) rows.push({ key: "base3", title: "Funds deposited", sub: "demo faucet", pill: "Verified", icon: "deposit" });
   return rows;
 }
 

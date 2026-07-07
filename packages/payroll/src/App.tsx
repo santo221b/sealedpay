@@ -240,8 +240,8 @@ function Dashboard() {
 
   /* ── derived views ─────────────────────────────────────────────────────── */
   const people = useMemo(() => employees.map(toPerson), [employees]);
-  const runsView = useMemo(() => toRunViews(liveRuns), [liveRuns]);
-  const activity = useMemo(() => activityRows(runsView), [runsView]);
+  const runsView = useMemo(() => toRunViews(liveRuns, people), [liveRuns, people]);
+  const activity = useMemo(() => activityRows(runsView, people), [runsView, people]);
   const monthlyTotal = useMemo(() => people.reduce((a, p) => a + p.salary, 0), [people]);
 
   const runwayValue = useMemo(() => {

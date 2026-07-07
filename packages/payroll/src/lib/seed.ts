@@ -38,19 +38,22 @@ export interface SeedRun {
   month: string;
   date: string;
   dateFull: string;
-  paid: number;
-  total: number; // cUSDd, human units
   tx: `0x${string}`;
 }
 
-/** Six seeded months; tx hashes are REAL Sepolia transactions from this repo's live runs. */
+/**
+ * Six seeded months — the immutable facts only (dates + REAL Sepolia tx hashes
+ * from this repo's live runs). Paid-count and total are NOT stored here: they
+ * are derived from the roster in views.ts so the charts and the per-employee
+ * history can never disagree.
+ */
 export const SEED_HISTORY: SeedRun[] = [
-  { month: "Feb", date: "Feb 28", dateFull: "Feb 28, 2026", paid: 6, total: 3750.5, tx: "0xd0621b616329a6e7ce035bd0d08736a9e642755c12b39144e5a5d3da3e54b2e1" },
-  { month: "Mar", date: "Mar 31", dateFull: "Mar 31, 2026", paid: 6, total: 3750.5, tx: "0xc8d190a014015a8fe8aca9af82b49db44e61fd46a5ff2cece98033e81a6fe154" },
-  { month: "Apr", date: "Apr 30", dateFull: "Apr 30, 2026", paid: 7, total: 4400.5, tx: "0x2a6640127ef5c52f01e36dd35de8ece9d0e4f6497de25cee66304abcb110cd76" },
-  { month: "May", date: "May 31", dateFull: "May 31, 2026", paid: 7, total: 4400.5, tx: "0x782a7c9020eedb3c825e4ad10d94982e4561f553c09d90924dae4ce9534b6961" },
-  { month: "Jun", date: "Jun 30", dateFull: "Jun 30, 2026", paid: 8, total: 4500.5, tx: "0x33a473738c638a8d45b272f46c020e45f847c115f06f03979579a560c0e19908" },
-  { month: "Jul", date: "Jul 5", dateFull: "Jul 5, 2026", paid: 8, total: 4500.5, tx: "0xc3968e095187455c002e13f3a2e28c4cad132f3fd421ecf242bc3310f6e2e025" },
+  { month: "Feb", date: "Feb 28", dateFull: "Feb 28, 2026", tx: "0xd0621b616329a6e7ce035bd0d08736a9e642755c12b39144e5a5d3da3e54b2e1" },
+  { month: "Mar", date: "Mar 31", dateFull: "Mar 31, 2026", tx: "0xc8d190a014015a8fe8aca9af82b49db44e61fd46a5ff2cece98033e81a6fe154" },
+  { month: "Apr", date: "Apr 30", dateFull: "Apr 30, 2026", tx: "0x2a6640127ef5c52f01e36dd35de8ece9d0e4f6497de25cee66304abcb110cd76" },
+  { month: "May", date: "May 31", dateFull: "May 31, 2026", tx: "0x782a7c9020eedb3c825e4ad10d94982e4561f553c09d90924dae4ce9534b6961" },
+  { month: "Jun", date: "Jun 30", dateFull: "Jun 30, 2026", tx: "0x33a473738c638a8d45b272f46c020e45f847c115f06f03979579a560c0e19908" },
+  { month: "Jul", date: "Jul 5", dateFull: "Jul 5, 2026", tx: "0xc3968e095187455c002e13f3a2e28c4cad132f3fd421ecf242bc3310f6e2e025" },
 ];
 
 export interface SeedNotification {
