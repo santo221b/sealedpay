@@ -255,7 +255,7 @@ export function Onboarding({ onDone, initialName = "", initialAvatar = "" }: { o
               initial="initial"
               animate="enter"
               exit="exit"
-              className={`flex flex-1 flex-col justify-center ${step === 0 || step === 5 ? "items-center text-center" : ""}`}
+              className={`flex flex-1 flex-col justify-center ${step === 0 || step === 6 ? "items-center text-center" : ""}`}
             >
               {step === 0 && <StepWelcome welcome={welcome} />}
               {step === 1 && <StepName name={name} setName={setName} />}
