@@ -59,6 +59,7 @@ import { validateEmployee, useEmployees } from "./lib/employees";
 import { useHistory } from "./lib/history";
 import { useNotifications } from "./lib/notifications";
 import { savePendingRun, useOrphanRun } from "./lib/orphan";
+import { THEME_COLORS, setThemeColor } from "./lib/themeColor";
 import { loadIdentity } from "./lib/prefs";
 import { useSettings } from "./lib/prefs";
 import { rosterToRows } from "./lib/roster";
@@ -122,6 +123,11 @@ function Dashboard() {
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [loggedOut, setLoggedOut] = useState(false);
   const [recipientMode, setRecipientMode] = useState(false); // the recipient "My pay" view
+
+  // Keep the browser toolbar tinted to whichever screen is on top (Safari).
+  useEffect(() => {
+    setThemeColor(recipientMode ? THEME_COLORS.recipient : loggedOut ? THEME_COLORS.signedOut : THEME_COLORS.dashboard);
+  }, [recipientMode, loggedOut]);
   const [profileOpen, setProfileOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [fundOpen, setFundOpen] = useState(false);

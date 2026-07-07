@@ -16,6 +16,7 @@ import { useAccount } from "wagmi";
 
 import { SealLogo } from "../design/SealLogo";
 import { saveIdentity } from "../lib/prefs";
+import { THEME_COLORS, setThemeColor } from "../lib/themeColor";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const EXIT_EASE = [0.4, 0, 1, 1] as const;
@@ -100,6 +101,7 @@ const stageVariants = (reduced: boolean): Variants => ({
 
 export function Onboarding({ onDone }: { onDone: () => void }) {
   const reduced = useReducedMotion();
+  useEffect(() => setThemeColor(THEME_COLORS.onboarding), []);
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [name, setName] = useState("");
