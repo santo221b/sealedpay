@@ -35,6 +35,7 @@ import type { DashboardData, NavIndex, PopupKind, Person, ToastState } from "./d
 import { Rail } from "./dashboard/Rail";
 import { RunPayrollModal } from "./dashboard/RunPayrollModal";
 import { TopBar } from "./dashboard/TopBar";
+import { EmployeeSidebar } from "./dashboard/EmployeeSidebar";
 import { WalletSidebar } from "./dashboard/WalletSidebar";
 import { AddEmployeeModal } from "./dashboard/modals/AddEmployeeModal";
 import { FundWalletModal } from "./dashboard/modals/FundWalletModal";
@@ -43,7 +44,6 @@ import { NotificationsPanel } from "./dashboard/modals/NotificationsPanel";
 import { PermissionPrompt } from "./dashboard/modals/PermissionPrompt";
 import { ProfilePopup } from "./dashboard/modals/ProfilePopup";
 import { ReminderModal } from "./dashboard/modals/ReminderModal";
-import { SearchPalette } from "./dashboard/modals/SearchPalette";
 import { SettingsPanel } from "./dashboard/modals/SettingsPanel";
 import { SignedOutScreen } from "./dashboard/modals/SignedOutScreen";
 import { Toast } from "./dashboard/modals/Toast";
@@ -353,15 +353,44 @@ function Dashboard() {
         onGear={() => setPopup(popup === "gear" ? null : "gear")}
         onLogout={() => setLogoutOpen(true)}
         bellUnread={unread > 0}
+        bellOpen={popup === "bell"}
+        gearOpen={popup === "gear"}
+        onClosePopover={() => setPopup(null)}
+        bellPopover={
+          <NotificationsPanel open={popup === "bell"} onClose={() => setPopup(null)} notifs={notifs} onRead={markRead} onMarkAllRead={markAllRead} />
+        }
+        gearPopover={
+          <SettingsPanel open={popup === "gear"} onClose={() => setPopup(null)} maskDefault={settings.maskDefault} reminders={settings.reminders} autoverify={settings.autoverify} onToggle={(key, value) => setSetting(key, value)} />
+        }
       />
 
       <div className="relative min-w-0 flex-1">
         <TopBar
           profile={data.profile}
-          onSearchFocus={() => setSearchOpen(true)}
-          onBell={() => setPopup(popup === "bell" ? null : "bell")}
-          onGear={() => setPopup(popup === "gear" ? null : "gear")}
           onProfile={() => setProfileOpen(true)}
+          search={{
+            open: searchOpen,
+            query: searchQ,
+            setQuery: setSearchQ,
+            onOpen: () => setSearchOpen(true),
+            onClose: () => {
+              setSearchOpen(false);
+              setSearchQ("");
+            },
+            people,
+            runs: runsView,
+            onPickPerson: (id) => {
+              openEmployee(id);
+              setSearchOpen(false);
+              setSearchQ("");
+            },
+            onPickRun: (month) => {
+              setNav(0);
+              setActiveBar(month);
+              setSearchOpen(false);
+              setSearchQ("");
+            },
+          }}
         />
 
         {/* Top-edge fade, visible only once scrolled */}
@@ -376,8 +405,11 @@ function Dashboard() {
           onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 6)}
           style={{ paddingTop: 97 }}
         >
-          <div className="mx-auto flex max-w-[1060px] gap-5 px-7 pb-4">
-            <main className="min-w-0 flex-1">
+          <div
+            className="mx-auto grid px-7 pb-4"
+            style={{ maxWidth: 1088, gridTemplateColumns: "1fr 368px", gap: 25, alignItems: "start" }}
+          >
+            <main className="min-w-0">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div key={nav === 3 ? `emp-${empId}` : nav} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}>
                   {nav === 0 && <Home data={data} tab={tab} setTab={setTab} />}
@@ -428,14 +460,24 @@ function Dashboard() {
               </p>
             </main>
 
-            {nav !== 3 && <WalletSidebar data={data} onFund={() => setFundOpen(true)} activity={activity} />}
+            {/* Right column: Payroll Wallet (nav 0-2) or the employee's Next-payout panel */}
+            {nav === 3 && person ? (
+              <EmployeeSidebar
+                person={person}
+                paymentsCount={String(personRows.length).padStart(2, "0")}
+                reminderSet={settings.reminderSet}
+                onRemind={() => setRemindOpen(true)}
+              />
+            ) : (
+              <WalletSidebar data={data} onFund={() => setFundOpen(true)} activity={activity} />
+            )}
           </div>
         </div>
       </div>
 
       {/* ── modals & panels ──────────────────────────────────────────────── */}
-      <NotificationsPanel open={popup === "bell"} onClose={() => setPopup(null)} notifs={notifs} onRead={markRead} onMarkAllRead={markAllRead} />
-      <SettingsPanel open={popup === "gear"} onClose={() => setPopup(null)} maskDefault={settings.maskDefault} reminders={settings.reminders} autoverify={settings.autoverify} onToggle={(key, value) => setSetting(key, value)} />
+      {/* Notifications + Settings popovers render inside the Rail, anchored to
+          their icons; the search dropdown renders inside the TopBar. */}
       <AddEmployeeModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
@@ -449,28 +491,6 @@ function Dashboard() {
         }}
       />
       <FundWalletModalWired open={fundOpen} onClose={() => setFundOpen(false)} employer={employer} decimals={decimals} onFunded={() => { void balance.refresh(); showToast("ok", "Wallet funded"); addNotif({ title: "Funds deposited", sub: "faucet mint confirmed on Sepolia", color: "#3bbf8e", tone: "ok" }); }} />
-      <SearchPalette
-        open={searchOpen}
-        onClose={() => {
-          setSearchOpen(false);
-          setSearchQ("");
-        }}
-        query={searchQ}
-        setQuery={setSearchQ}
-        people={people}
-        runs={runsView}
-        onPickPerson={(id) => {
-          openEmployee(id);
-          setSearchOpen(false);
-          setSearchQ("");
-        }}
-        onPickRun={(month) => {
-          setNav(0);
-          setActiveBar(month);
-          setSearchOpen(false);
-          setSearchQ("");
-        }}
-      />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); setLoggedOut(true); }} />
       <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} />
       <ReminderModal

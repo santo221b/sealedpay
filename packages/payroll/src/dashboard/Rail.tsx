@@ -1,9 +1,14 @@
 /**
- * Left icon rail — fixed shell chrome (dashboard-screens.md §1.5).
- * Three nav pucks (Home / Team / Insights), a bell + gear cluster, and a
- * logout button pinned to the rail bottom. Presentation only.
+ * Left icon rail — fixed shell chrome (dashboard handoff §Side rail).
+ * Three nav pucks (Home / Team / Insights), then a bell + gear cluster whose
+ * Notifications / Settings popovers open ANCHORED beside their icon
+ * (left ~50px, top ~-7px), and a logout button pinned to the bottom.
+ *
+ * The popover content is passed in as ReactNodes so the rail stays
+ * presentation-only; when either is open a transparent full-screen catcher
+ * closes it on an outside click (no dimming, per the design).
  */
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { BellGlyph, GearGlyph, HomeNav, InsightsNav, LogoutGlyph, TeamNav } from "../design/icons";
 import { tokens } from "../design/tokens";
@@ -25,6 +30,11 @@ export function Rail({
   onGear,
   onLogout,
   bellUnread,
+  bellOpen,
+  gearOpen,
+  bellPopover,
+  gearPopover,
+  onClosePopover,
 }: {
   navSel: 0 | 1 | 2;
   onNav: (n: 0 | 1 | 2) => void;
@@ -32,6 +42,11 @@ export function Rail({
   onGear: () => void;
   onLogout: () => void;
   bellUnread: boolean;
+  bellOpen: boolean;
+  gearOpen: boolean;
+  bellPopover: ReactNode;
+  gearPopover: ReactNode;
+  onClosePopover: () => void;
 }) {
   const navItems = [
     { label: "Home", Icon: HomeNav },
@@ -41,6 +56,9 @@ export function Rail({
 
   return (
     <div className="z-[5] flex w-[58px] shrink-0 flex-col items-center" style={{ padding: "97px 0 22px 0" }}>
+      {/* Outside-click catcher (no dim) while a popover is open */}
+      {(bellOpen || gearOpen) && <div className="fixed inset-0 z-[9]" onMouseDown={onClosePopover} />}
+
       {/* Nav pucks */}
       <nav aria-label="Primary" className="flex flex-col items-center" style={{ ...clusterStyle, gap: 7 }}>
         {navItems.map(({ label, Icon }, i) => {
@@ -61,31 +79,43 @@ export function Rail({
         })}
       </nav>
 
-      {/* Bell + gear cluster */}
+      {/* Bell + gear cluster (popovers anchor to the right of each icon) */}
       <div className="mt-5 flex flex-col items-center" style={{ ...clusterStyle, gap: 6 }}>
-        <button
-          type="button"
-          aria-label="Notifications"
-          onClick={onBell}
-          className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-[rgba(95,230,175,0.1)]"
-        >
-          <BellGlyph size={15} />
-          {bellUnread && (
-            <span
-              aria-hidden
-              className="absolute rounded-full"
-              style={{ top: 9, right: 9, width: 6, height: 6, background: tokens.accent.liveDot }}
-            />
+        <div className="relative">
+          <button
+            type="button"
+            aria-label="Notifications"
+            aria-expanded={bellOpen}
+            onClick={onBell}
+            className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+          >
+            <BellGlyph size={15} />
+            {bellUnread && (
+              <span aria-hidden className="absolute rounded-full" style={{ top: 9, right: 9, width: 6, height: 6, background: tokens.accent.liveDot }} />
+            )}
+          </button>
+          {bellPopover && (
+            <div className="absolute z-[10]" style={{ left: 50, top: -7 }} onMouseDown={(e) => e.stopPropagation()}>
+              {bellPopover}
+            </div>
           )}
-        </button>
-        <button
-          type="button"
-          aria-label="Settings"
-          onClick={onGear}
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-[rgba(95,230,175,0.1)]"
-        >
-          <GearGlyph size={15} />
-        </button>
+        </div>
+        <div className="relative">
+          <button
+            type="button"
+            aria-label="Settings"
+            aria-expanded={gearOpen}
+            onClick={onGear}
+            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+          >
+            <GearGlyph size={15} />
+          </button>
+          {gearPopover && (
+            <div className="absolute z-[10]" style={{ left: 50, top: -7 }} onMouseDown={(e) => e.stopPropagation()}>
+              {gearPopover}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Logout — pinned to the rail bottom */}
@@ -94,10 +124,7 @@ export function Rail({
         aria-label="Log out"
         onClick={onLogout}
         className="mt-auto flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-[rgba(110,196,186,0.06)] transition-colors hover:bg-[rgba(95,230,175,0.1)]"
-        style={{
-          border: `1px solid ${tokens.glass.railBorder}`,
-          boxShadow: tokens.glass.cardShadow,
-        }}
+        style={{ border: `1px solid ${tokens.glass.railBorder}`, boxShadow: tokens.glass.cardShadow }}
       >
         <LogoutGlyph size={15} />
       </button>

@@ -1,10 +1,9 @@
 /**
- * Notifications panel — the bell popover (modals.md §4).
+ * Notifications panel — the bell popover (dashboard handoff §Side rail).
  *
- * Anchored popover: render inside a `position:relative` wrapper around the
- * bell puck; the panel sits at left 50 / top -7 off the puck and unfolds from
- * its top-left corner. A full-viewport scrim (z-3) sits behind it; clicking
- * the scrim (or pressing Esc) closes.
+ * Rendered by the Rail, which positions it anchored beside the bell icon
+ * (left ~50 / top ~-7) and provides the outside-click catcher. This component
+ * is just the frosted card, unfolding from its top-left corner.
  */
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect } from "react";
@@ -28,29 +27,18 @@ export function NotificationsPanel({ open, onClose, notifs, onRead, onMarkAllRea
   return (
     <AnimatePresence>
       {open && (
-        <>
-          <motion.div
-            key="scrim"
-            className="fixed inset-0 z-[3]"
-            style={{ background: tokens.bg.scrim }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 0.15, ease: "easeIn" } }}
-            transition={{ duration: reduced ? 0.14 : 0.2, ease: "easeOut" }}
-            onMouseDown={onClose}
-          />
           <motion.div
             key="panel"
             role="dialog"
             aria-label="Notifications"
-            className="absolute z-10 cursor-auto overflow-hidden text-left"
+            className="cursor-auto overflow-hidden text-left"
             style={{
-              left: 50,
-              top: -7,
               width: 270,
               borderRadius: 27,
               border: "1px solid rgba(255,255,255,0.11)",
               background: "rgba(52,92,72,0.21)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
               padding: 20,
               transformOrigin: "0 0",
             }}
@@ -62,7 +50,6 @@ export function NotificationsPanel({ open, onClose, notifs, onRead, onMarkAllRea
                 : { opacity: 0, y: -6, scale: 0.97, transition: { duration: 0.17, ease: [0.4, 0, 1, 1] } }
             }
             transition={{ duration: reduced ? 0.14 : 0.34, ease: [0.2, 1.06, 0.3, 1] }}
-            onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-[7px]">
@@ -121,7 +108,6 @@ export function NotificationsPanel({ open, onClose, notifs, onRead, onMarkAllRea
               ))}
             </div>
           </motion.div>
-        </>
       )}
     </AnimatePresence>
   );

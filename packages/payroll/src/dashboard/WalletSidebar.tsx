@@ -177,7 +177,6 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
                     value={data.balance.value}
                     revealed={balanceRevealed}
                     pending={data.balance.pending}
-                    keepLock
                     label="balance"
                   />
                   <div style={{ fontWeight: 700 }}>cUSDd</div>

@@ -161,21 +161,24 @@ export function Insights({ data }: InsightsScreenProps) {
         {/* Payroll runway */}
         <GlassCard style={{ padding: "18px 22px" }}>
           <div style={{ fontWeight: 400, fontSize: 16 }}>Payroll runway</div>
-          <div className="flex items-baseline" style={{ gap: 8, fontWeight: 700, fontSize: 27, marginTop: 7 }}>
-            <RevealAmount
-              value={data.runway.value}
-              revealed={data.showAll || data.runway.revealed}
-              pending={data.runway.pending}
-              onToggle={data.runway.toggle}
-              label="payroll runway"
-            />
-            <span className="cursor-pointer" onClick={data.runway.toggle}>
-              runs left
-            </span>
+          <div
+            className="cursor-pointer"
+            style={{ fontWeight: 700, fontSize: 27, marginTop: 7 }}
+            onClick={data.runway.toggle}
+          >
+            <div>
+              <RevealAmount
+                value={data.runway.value}
+                revealed={data.showAll || data.runway.revealed}
+                pending={data.runway.pending}
+                label="payroll runway"
+              />
+            </div>
+            <div style={{ fontWeight: 700 }}>runs left</div>
           </div>
           <div className="flex items-center justify-between" style={{ marginTop: 5 }}>
             <span className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
-              {data.runway.hint}
+              at {data.monthly.value} / run · {data.runway.hint}
             </span>
             <span
               className="inline-flex items-center"

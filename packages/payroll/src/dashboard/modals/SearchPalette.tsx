@@ -1,11 +1,13 @@
 /**
- * Search command palette (modals.md §6) — full overlay dim + blur, panel
- * unfolds downward from a fixed top position (transform-origin top center).
- * Employees + Payouts sections are live-filtered; result rows stagger in on
- * open; close is one quick collapse. Esc / overlay click closes.
+ * Search dropdown (dashboard handoff top-bar search). Rendered INSIDE the
+ * top-bar's `position:relative; z-index:60` search container: a full-viewport
+ * dimming overlay sits at z-index -1 (behind the search bar + this popup but
+ * above all page content), and the popup unfolds directly below the bar
+ * (top: 100% + 13px). So the search bar stays visible and on top while the
+ * rest of the page dims. Esc / overlay click closes.
  *
- * The query input lives in the shell's top bar (it stays above this overlay);
- * the palette receives `query` and renders results only.
+ * The query input lives in the top bar itself (it stays above the overlay);
+ * this component receives `query` and renders results only.
  */
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect } from "react";
@@ -13,16 +15,14 @@ import { useEffect } from "react";
 import { Pill } from "../../design/kit2";
 import { SendGlyph } from "../../design/icons";
 import { initials } from "../../lib/seed";
-import { tokens } from "../../design/tokens";
 import type { Person, RunView, SearchPaletteProps } from "../contracts";
 
 function shortTx(tx: string): string {
   return tx.length > 12 ? `${tx.slice(0, 6)}…${tx.slice(-4)}` : tx;
 }
 
-export function SearchPalette({ open, onClose, query, setQuery, people, runs, onPickPerson, onPickRun }: SearchPaletteProps) {
+export function SearchPalette({ open, onClose, query, people, runs, onPickPerson, onPickRun }: SearchPaletteProps) {
   const reduced = useReducedMotion();
-  void setQuery; // typing happens in the shell's top-bar input
 
   useEffect(() => {
     if (!open) return;
@@ -49,11 +49,13 @@ export function SearchPalette({ open, onClose, query, setQuery, people, runs, on
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[60]">
+        <>
+          {/* Dimming overlay: fixed + z-index -1 so it covers the page but sits
+              behind the search bar and this popup (both inside the z-60 container). */}
           <motion.div
             key="overlay"
-            className="absolute inset-0"
-            style={{ background: tokens.bg.scrim, backdropFilter: "blur(6px)" }}
+            className="fixed inset-0"
+            style={{ background: "#0D1411F2", zIndex: -1 }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.18, ease: "easeIn" } }}
@@ -64,34 +66,32 @@ export function SearchPalette({ open, onClose, query, setQuery, people, runs, on
             key="panel"
             role="dialog"
             aria-label="Search"
-            className="absolute left-1/2 overflow-hidden"
+            className="absolute overflow-hidden"
             style={{
-              top: 76,
+              top: "calc(100% + 13px)",
+              left: 0,
               width: 468,
               maxWidth: "calc(100vw - 32px)",
               borderRadius: 28,
               border: "1px solid rgba(255,255,255,0.11)",
               background: "#121D1ABF",
               backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
               padding: 14,
               transformOrigin: "top center",
             }}
-            initial={reduced ? { opacity: 0, x: "-50%" } : { opacity: 0, x: "-50%", y: -8, scale: 0.98 }}
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}
             animate={{
               opacity: 1,
-              x: "-50%",
               y: 0,
               scale: 1,
-              transition: reduced
-                ? { duration: 0.12 }
-                : { duration: 0.38, delay: 0.08, ease: [0.2, 1.06, 0.3, 1] },
+              transition: reduced ? { duration: 0.12 } : { duration: 0.38, delay: 0.08, ease: [0.2, 1.06, 0.3, 1] },
             }}
             exit={
               reduced
-                ? { opacity: 0, x: "-50%", transition: { duration: 0.12 } }
-                : { opacity: 0, x: "-50%", y: -8, scale: 0.98, transition: { duration: 0.19, ease: [0.4, 0, 1, 1] } }
+                ? { opacity: 0, transition: { duration: 0.12 } }
+                : { opacity: 0, y: -8, scale: 0.98, transition: { duration: 0.19, ease: [0.4, 0, 1, 1] } }
             }
-            onMouseDown={(e) => e.stopPropagation()}
           >
             {empty ? (
               <p className="text-center" style={{ padding: "20px 12px", fontSize: 13.5, color: "#9db3aa" }}>
@@ -124,7 +124,7 @@ export function SearchPalette({ open, onClose, query, setQuery, people, runs, on
               </div>
             )}
           </motion.div>
-        </div>
+        </>
       )}
     </AnimatePresence>
   );

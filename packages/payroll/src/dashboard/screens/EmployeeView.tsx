@@ -24,7 +24,6 @@ export function EmployeeView({
   onToggleRow,
   rowRevealed,
   showAll,
-  paymentsCount,
   onBack,
   employerAddress,
 }: EmployeeViewProps) {
@@ -117,7 +116,7 @@ export function EmployeeView({
           className="relative z-[1] flex items-baseline"
           style={{ gap: 9, fontWeight: 700, fontSize: 25, color: "#fff", marginTop: 13 }}
         >
-          <RevealAmount value={fmtAmountFull(person.salary)} revealed={salaryShown} keepLock label="salary" />
+          <RevealAmount value={fmtAmountFull(person.salary)} revealed={salaryShown} label="salary" />
           <span>cUSDd / month</span>
         </div>
         <div className="relative z-[1]" style={{ fontSize: 11, color: "rgba(240,250,245,0.75)", marginTop: 4 }}>
@@ -129,24 +128,6 @@ export function EmployeeView({
           </span>
           <span style={{ fontSize: 10, color: "rgba(240,250,245,0.7)" }}>cUSDd · Sepolia</span>
         </div>
-      </div>
-
-      {/* Stat cards */}
-      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-        <GlassCard style={{ padding: "18px 22px" }}>
-          <div style={{ fontSize: 11, color: tokens.text.muted }}>Payments received</div>
-          <div className="tnum" style={{ fontSize: 18, fontWeight: 500, marginTop: 5 }}>
-            {paymentsCount}
-          </div>
-        </GlassCard>
-        <GlassCard style={{ padding: "18px 22px" }}>
-          <div style={{ fontSize: 11, color: tokens.text.muted }}>Team</div>
-          <div style={{ fontSize: 18, fontWeight: 500, marginTop: 5 }}>{person.dept}</div>
-        </GlassCard>
-        <GlassCard style={{ padding: "18px 22px", gridColumn: "1 / -1" }}>
-          <div style={{ fontSize: 11, color: tokens.text.muted }}>Role</div>
-          <div style={{ fontSize: 18, fontWeight: 500, marginTop: 5 }}>{person.role}</div>
-        </GlassCard>
       </div>
 
       {/* Payment history */}
