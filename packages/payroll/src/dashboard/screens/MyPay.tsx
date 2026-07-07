@@ -10,6 +10,7 @@
 import { formatAmount } from "@dispersekit/widget";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { motion, useReducedMotion } from "framer-motion";
+import { useEffect } from "react";
 
 import { RevealAmount } from "../../design/RevealAmount";
 import { SealLogo } from "../../design/SealLogo";
@@ -19,6 +20,7 @@ import { tokens } from "../../design/tokens";
 import { humanizeError } from "../../lib/humanizeError";
 import { useMyPay } from "../../lib/myPay";
 import { shortHash, shortWallet } from "../../lib/seed";
+import { THEME_COLORS, setThemeColor } from "../../lib/themeColor";
 
 const GRADIENT = "linear-gradient(135deg,#41b091 0%,#2e9478 50%,#26826a 100%)";
 const PILL: React.CSSProperties = {
@@ -87,6 +89,14 @@ export function MyPay({ onExit }: { onExit: () => void }) {
   const reduced = useReducedMotion();
   const pay = useMyPay();
   const sym = pay.symbol ?? "cUSDd";
+
+  useEffect(() => setThemeColor(THEME_COLORS.recipient), []);
+  // Auto-scan the moment the recipient's wallet is connected on Sepolia — one
+  // fewer click; the only action left is Reveal.
+  useEffect(() => {
+    if (pay.ready && pay.payments === undefined && pay.phase === "idle") void pay.scan();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pay.ready, pay.me]);
   const fmt = (v: bigint) => (pay.decimals !== undefined ? formatAmount(v, pay.decimals) : undefined);
 
   return (

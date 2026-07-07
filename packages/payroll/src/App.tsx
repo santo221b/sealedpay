@@ -86,14 +86,29 @@ function compactAmount(v: number): string {
 
 export function App() {
   const [onboarded, setOnboarded] = useState(() => loadIdentity().onboarded);
+  // A ?view=mypay deep link opens the recipient view directly — shareable, works
+  // on any device, and needs no employer login (the real recipient use case).
+  const [recipient, setRecipient] = useState(() => {
+    try {
+      return new URLSearchParams(window.location.search).get("view") === "mypay";
+    } catch {
+      return false;
+    }
+  });
   return (
     <DisperseProviders theme={sealedTheme} appName="SealedPay">
-      {onboarded ? <Dashboard /> : <Onboarding onDone={() => setOnboarded(true)} />}
+      {recipient ? (
+        <MyPay onExit={() => setRecipient(false)} />
+      ) : onboarded ? (
+        <Dashboard onViewMyPay={() => setRecipient(true)} />
+      ) : (
+        <Onboarding onDone={() => setOnboarded(true)} />
+      )}
     </DisperseProviders>
   );
 }
 
-function Dashboard() {
+function Dashboard({ onViewMyPay }: { onViewMyPay: () => void }) {
   /* ── toast (top-center) — also surfaces balance reveal / decrypt errors ── */
   const [toast, setToastState] = useState<ToastState | null>(null);
   const toastTimer = useRef<number>(undefined);
@@ -122,12 +137,11 @@ function Dashboard() {
   const [popup, setPopup] = useState<PopupKind>(null);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [loggedOut, setLoggedOut] = useState(false);
-  const [recipientMode, setRecipientMode] = useState(false); // the recipient "My pay" view
 
   // Keep the browser toolbar tinted to whichever screen is on top (Safari).
   useEffect(() => {
-    setThemeColor(recipientMode ? THEME_COLORS.recipient : loggedOut ? THEME_COLORS.signedOut : THEME_COLORS.dashboard);
-  }, [recipientMode, loggedOut]);
+    setThemeColor(loggedOut ? THEME_COLORS.signedOut : THEME_COLORS.dashboard);
+  }, [loggedOut]);
   const [profileOpen, setProfileOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [fundOpen, setFundOpen] = useState(false);
@@ -455,20 +469,9 @@ function Dashboard() {
   );
 
   /* ── layout ────────────────────────────────────────────────────────────── */
-  // Recipient "My pay" view — the same wallet stack, a different door.
-  if (recipientMode) {
-    return <MyPay onExit={() => setRecipientMode(false)} />;
-  }
   if (loggedOut) {
     return (
-      <SignedOutScreen
-        name={identity.name || "there"}
-        onSignIn={() => setLoggedOut(false)}
-        onViewMyPay={() => {
-          setLoggedOut(false);
-          setRecipientMode(true);
-        }}
-      />
+      <SignedOutScreen name={identity.name || "there"} onSignIn={() => setLoggedOut(false)} onViewMyPay={onViewMyPay} />
     );
   }
 
@@ -648,7 +651,7 @@ function Dashboard() {
         }}
       />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); setLoggedOut(true); }} />
-      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} onViewMyPay={() => { setProfileOpen(false); setRecipientMode(true); }} />
+      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} onViewMyPay={() => { setProfileOpen(false); onViewMyPay(); }} />
       <ReminderModal
         open={remindOpen}
         onClose={() => setRemindOpen(false)}
