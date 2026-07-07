@@ -60,7 +60,7 @@ import { useHistory } from "./lib/history";
 import { useNotifications } from "./lib/notifications";
 import { savePendingRun, useOrphanRun } from "./lib/orphan";
 import { THEME_COLORS, setThemeColor } from "./lib/themeColor";
-import { loadIdentity } from "./lib/prefs";
+import { loadIdentity, loadLoggedOut, setLoggedOutPref } from "./lib/prefs";
 import { useSettings } from "./lib/prefs";
 import { rosterToRows } from "./lib/roster";
 import { SEEDED_KEY, SEED_EMPLOYEES, fmtAmount, midWallet, shortWallet } from "./lib/seed";
@@ -137,7 +137,7 @@ function Dashboard({ onViewMyPay }: { onViewMyPay: () => void }) {
   const [activeBar, setActiveBar] = useState(""); // defaulted to the third-last bar on load (effect below)
   const [popup, setPopup] = useState<PopupKind>(null);
   const [logoutOpen, setLogoutOpen] = useState(false);
-  const [loggedOut, setLoggedOut] = useState(false);
+  const [loggedOut, setLoggedOut] = useState(() => loadLoggedOut());
 
   // Keep the browser toolbar tinted to whichever screen is on top (Safari).
   useEffect(() => {
@@ -472,7 +472,7 @@ function Dashboard({ onViewMyPay }: { onViewMyPay: () => void }) {
   /* ── layout ────────────────────────────────────────────────────────────── */
   if (loggedOut) {
     return (
-      <SignedOutScreen name={identity.name || "there"} onSignIn={() => setLoggedOut(false)} onViewMyPay={onViewMyPay} />
+      <SignedOutScreen name={identity.name || "there"} onSignIn={() => { setLoggedOut(false); setLoggedOutPref(false); }} onViewMyPay={onViewMyPay} />
     );
   }
 
@@ -677,8 +677,8 @@ function Dashboard({ onViewMyPay }: { onViewMyPay: () => void }) {
           setFundOpen(false);
         }}
       />
-      <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); setLoggedOut(true); }} />
-      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} onViewMyPay={() => { setProfileOpen(false); onViewMyPay(); }} />
+      <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); setLoggedOut(true); setLoggedOutPref(true); }} />
+      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} />
       <ReminderModal
         open={remindOpen}
         onClose={() => setRemindOpen(false)}

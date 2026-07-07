@@ -33,6 +33,22 @@ export function saveIdentity(name: string, avatar: string) {
 }
 
 /**
+ * Logout is a soft session lock (the SignedOutScreen offers a one-click
+ * "Sign back in"), so it must survive a reload — otherwise reloading while
+ * logged out drops you straight back into the dashboard.
+ */
+const LOGGED_OUT_KEY = "sealedpay_logged_out";
+
+export function loadLoggedOut(): boolean {
+  return localStorage.getItem(LOGGED_OUT_KEY) === "1";
+}
+
+export function setLoggedOutPref(value: boolean) {
+  if (value) localStorage.setItem(LOGGED_OUT_KEY, "1");
+  else localStorage.removeItem(LOGGED_OUT_KEY);
+}
+
+/**
  * Wipe all local demo state (identity, settings, employees, history, seed
  * markers) and reload — so a shared URL starts clean for the next visitor and
  * one judge's edits don't leak into the next.
