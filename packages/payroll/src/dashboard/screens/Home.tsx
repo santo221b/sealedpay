@@ -346,7 +346,7 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
             <div style={{ fontWeight: 400, fontSize: 17 }}>Team</div>
             <ViewAll />
           </div>
-          <div className="flex flex-1 items-center" style={{ gap: 23, marginTop: 7 }}>
+          <div className="flex flex-1 items-center justify-center" style={{ gap: 23, marginTop: 7 }}>
             <div className="relative" style={{ width: 144, height: 144 }}>
               <Doughnut data={donutData} options={donutOptions} />
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
