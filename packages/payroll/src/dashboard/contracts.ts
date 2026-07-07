@@ -156,6 +156,8 @@ export interface FundWalletModalProps {
   onClose: () => void;
   employerShort: string; // destination display
   busy: boolean;
+  /** idle → confirming (awaiting wallet signature) → minting (tx on-chain). */
+  phase: "idle" | "confirming" | "minting";
   error?: string;
   /** Real faucet mint; resolves true on success (shell closes + refreshes balance). */
   onFund: (amount: string) => Promise<boolean>;

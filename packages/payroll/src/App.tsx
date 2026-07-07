@@ -63,7 +63,7 @@ import { useSettings } from "./lib/prefs";
 import { rosterToRows } from "./lib/roster";
 import { SEEDED_KEY, SEED_EMPLOYEES, fmtAmount, midWallet, shortWallet } from "./lib/seed";
 import { useVerifyRun } from "./lib/verifyRun";
-import { activityRows, employeeRows, encryptedAmountsCount, toPerson, toRunViews } from "./lib/views";
+import { activityRows, employeeRows, encryptedAmountsCount, toPerson, toRunViews, type FundingEvent } from "./lib/views";
 import { useFundWallet, useWalletBalance } from "./lib/wallet";
 import { Onboarding } from "./onboarding/Onboarding";
 import { sealedTheme } from "./theme";
@@ -120,6 +120,7 @@ function Dashboard() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [fundOpen, setFundOpen] = useState(false);
+  const [fundings, setFundings] = useState<FundingEvent[]>([]); // real deposits made this session
   const [remindOpen, setRemindOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ] = useState("");
@@ -320,7 +321,7 @@ function Dashboard() {
   /* ── derived views ─────────────────────────────────────────────────────── */
   const people = useMemo(() => employees.map(toPerson), [employees]);
   const runsView = useMemo(() => toRunViews(liveRuns, people), [liveRuns, people]);
-  const activity = useMemo(() => activityRows(runsView, people), [runsView, people]);
+  const activity = useMemo(() => activityRows(runsView, people, fundings), [runsView, people, fundings]);
   const monthlyTotal = useMemo(() => people.reduce((a, p) => a + p.salary, 0), [people]);
 
   const runwayValue = useMemo(() => {
@@ -581,7 +582,23 @@ function Dashboard() {
           return null;
         }}
       />
-      <FundWalletModalWired open={fundOpen} onClose={() => setFundOpen(false)} employer={employer} decimals={decimals} onFail={(m) => showToast("err", m)} onFunded={() => { void balance.refresh(); showToast("ok", "Wallet funded"); addNotif({ title: "Funds deposited", sub: "faucet mint confirmed on Sepolia", color: "#5fe3ab", tone: "ok" }); }} />
+      <FundWalletModalWired
+        open={fundOpen}
+        onClose={() => setFundOpen(false)}
+        employer={employer}
+        decimals={decimals}
+        onFail={(m) => showToast("err", m)}
+        onFunded={({ amountText, hash }) => {
+          const shown = Number(amountText).toLocaleString("en-US", { maximumFractionDigits: 6 });
+          setFundings((f) => [{ key: `fund-${hash}`, amountText: shown, url: `https://sepolia.etherscan.io/tx/${hash}` }, ...f].slice(0, 3));
+          void balance.refresh();
+          showToast("ok", `+${shown} cUSDd added to your wallet`);
+          addNotif({ title: "Funds added", sub: `+${shown} cUSDd · faucet mint on Sepolia`, color: "#5fe3ab", tone: "ok" });
+          // Close from here so the modal exits straight from the "transferring"
+          // view — batched with the phase reset, no flash back to the form.
+          setFundOpen(false);
+        }}
+      />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); setLoggedOut(true); }} />
       <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} />
       <ReminderModal
@@ -612,7 +629,21 @@ function Dashboard() {
 }
 
 /** Fund Wallet wired to the real faucet mint. */
-function FundWalletModalWired({ open, onClose, employer, decimals, onFunded, onFail }: { open: boolean; onClose: () => void; employer?: `0x${string}`; decimals?: number; onFunded: () => void; onFail: (msg: string) => void }) {
+function FundWalletModalWired({
+  open,
+  onClose,
+  employer,
+  decimals,
+  onFunded,
+  onFail,
+}: {
+  open: boolean;
+  onClose: () => void;
+  employer?: `0x${string}`;
+  decimals?: number;
+  onFunded: (info: { amountText: string; hash: `0x${string}` }) => void;
+  onFail: (msg: string) => void;
+}) {
   const fund = useFundWallet(decimals, onFunded, onFail);
   return (
     <FundWalletModal
@@ -620,11 +651,12 @@ function FundWalletModalWired({ open, onClose, employer, decimals, onFunded, onF
       onClose={onClose}
       employerShort={employer ? midWallet(employer) : "connect a wallet"}
       busy={fund.busy}
+      phase={fund.phase}
       error={fund.error}
       onFund={async (amount) => {
-        const ok = await fund.fund(amount);
-        if (ok) onClose();
-        return ok;
+        // Success closes via onFunded (batched with the phase reset); only a
+        // failure keeps the modal open to show the inline error.
+        return fund.fund(amount);
       }}
     />
   );

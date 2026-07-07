@@ -138,11 +138,18 @@ export function useWalletBalance(decimals: number | undefined, onError?: (msg: s
   };
 }
 
-export function useFundWallet(decimals: number | undefined, onFunded: () => void, onError?: (msg: string) => void) {
+/** idle → confirming (awaiting the wallet signature) → minting (tx on-chain). */
+export type FundPhase = "idle" | "confirming" | "minting";
+
+export function useFundWallet(
+  decimals: number | undefined,
+  onFunded: (info: { amountText: string; hash: `0x${string}` }) => void,
+  onError?: (msg: string) => void,
+) {
   const { address: employer } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
-  const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<FundPhase>("idle");
   const [error, setError] = useState<string>();
 
   const fund = useCallback(
@@ -165,8 +172,9 @@ export function useFundWallet(decimals: number | undefined, onFunded: () => void
         setError("The demo faucet mints at most 1,000,000 cUSDd per call");
         return false;
       }
-      setBusy(true);
+      setPhase("confirming");
       try {
+        // The wallet prompt happens here; once it resolves the tx is broadcast.
         const hash = await walletClient.writeContract({
           address: TOKEN,
           abi: demoTokenAbi,
@@ -174,8 +182,9 @@ export function useFundWallet(decimals: number | undefined, onFunded: () => void
           args: [employer, amount],
           account: employer,
         });
+        setPhase("minting");
         await publicClient.waitForTransactionReceipt({ hash });
-        onFunded();
+        onFunded({ amountText: amountText.trim(), hash });
         return true;
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
@@ -188,11 +197,11 @@ export function useFundWallet(decimals: number | undefined, onFunded: () => void
         onError?.(friendly);
         return false;
       } finally {
-        setBusy(false);
+        setPhase("idle");
       }
     },
     [employer, walletClient, publicClient, decimals, onFunded],
   );
 
-  return { fund, busy, error, employer };
+  return { fund, phase, busy: phase !== "idle", error, employer };
 }

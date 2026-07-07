@@ -133,7 +133,14 @@ export function employeeRows(
  * base rows are derived from the current roster / newest seeded run so they
  * never contradict the charts or name an employee who no longer exists.
  */
-export function activityRows(runs: RunView[], people: Person[]): ActivityRow[] {
+/** A real faucet mint the employer just made this session. */
+export interface FundingEvent {
+  key: string;
+  amountText: string;
+  url: string;
+}
+
+export function activityRows(runs: RunView[], people: Person[], fundings: FundingEvent[] = []): ActivityRow[] {
   const liveRuns = runs.filter((r) => r.live).slice(0, 4);
   const rows: ActivityRow[] = liveRuns.map((r) => ({
     key: r.id,
@@ -152,8 +159,19 @@ export function activityRows(runs: RunView[], people: Person[]): ActivityRow[] {
   if (n < 3 && newest)
     rows.push({ key: "base1", title: "Employee added", sub: `${newest.name} · ${newest.dept}`, pill: "Active", icon: "person" });
   if (n < 2) rows.push({ key: "base2", title: "Operator authorized", sub: "expires in 1 h", pill: "Pending", icon: "key" });
-  if (n < 1) rows.push({ key: "base3", title: "Funds deposited", sub: "demo faucet", pill: "Verified", icon: "deposit" });
-  return rows;
+  // The seed "demo faucet" row only stands in until the user makes a real deposit.
+  if (n < 1 && fundings.length === 0) rows.push({ key: "base3", title: "Funds deposited", sub: "demo faucet", pill: "Verified", icon: "deposit" });
+
+  // Real deposits made this session lead the feed (newest first).
+  const fundRows: ActivityRow[] = fundings.slice(0, 3).map((f) => ({
+    key: f.key,
+    title: "Funds added",
+    sub: `+${f.amountText} cUSDd · just now`,
+    pill: "Verified",
+    url: f.url,
+    icon: "deposit",
+  }));
+  return [...fundRows, ...rows].slice(0, 5);
 }
 
 /** Privacy scorecard: every per-recipient amount ever encrypted (seed + live). */
