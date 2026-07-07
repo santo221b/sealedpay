@@ -23,7 +23,7 @@ That's the whole integration. Recipients, amounts, encryption, operator approval
 
 ## Live demos
 
-- **SealedPay (the product)** — `PASTE_SEALEDPAY_URL_HERE` (run locally with `npm run dev:payroll`; deploy steps below)
+- **SealedPay (the product)** — [sealedpay.vercel.app](https://sealedpay.vercel.app) (the confidential payroll dashboard; run locally with `npm run dev:payroll`)
 - **DisperseKit widget playground** — [dispersekit-widget.vercel.app](https://dispersekit-widget.vercel.app) (the engine standalone + a gallery of every state + the integration test bench)
 - **White-label embed** — [dispersekit-demo.vercel.app](https://dispersekit-demo.vercel.app) ("Acme Payroll", a fictional partner product embedding the widget with one import)
 
