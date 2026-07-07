@@ -81,6 +81,8 @@ export interface HomeScreenProps {
   data: DashboardData;
   tab: string;
   setTab: (tab: string) => void;
+  /** Open the Add-employee modal (used by the empty team state). */
+  onAddEmployee: () => void;
 }
 
 export interface TeamScreenProps {

@@ -19,5 +19,6 @@
       "runtimeArgs": ["run", "dev", "--workspace", "packages/payroll"],
       "port": 5175
     }
-  ]
+  ],
+  "autoVerify": false
 }

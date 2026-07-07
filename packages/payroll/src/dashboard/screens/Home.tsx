@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Doughnut } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
 
-import { CheckGlyph, ChevronRightGlyph, PadlockGlyph } from "../../design/icons";
+import { CheckGlyph, ChevronRightGlyph, PadlockGlyph, PersonPlusGlyph } from "../../design/icons";
 import { GlassCard } from "../../design/kit2";
 import { tokens } from "../../design/tokens";
 import { fmtAmount } from "../../lib/seed";
@@ -114,7 +114,7 @@ function ViewAll() {
 
 /* ── Screen ─────────────────────────────────────────────────────────────── */
 
-export function Home({ data, tab, setTab }: HomeScreenProps) {
+export function Home({ data, tab, setTab, onAddEmployee }: HomeScreenProps) {
   const reduced = useReducedMotion();
 
   // Which stacked block (month + segment id) the cursor is over, so the tooltip
@@ -392,35 +392,61 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
             <div style={{ fontWeight: 400, fontSize: 17 }}>Team</div>
             <ViewAll />
           </div>
-          <div className="flex flex-1 items-center justify-center" style={{ gap: 23, marginTop: 7 }}>
-            <div className="relative" style={{ width: 144, height: 144 }}>
-              <Doughnut data={donutData} options={donutOptions} />
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <div className="tnum" style={{ fontWeight: 700, fontSize: 20 }}>
-                  {String(data.people.length).padStart(2, "0")}
+          {data.people.length === 0 ? (
+            <div
+              className="flex flex-1 flex-col items-center justify-center text-center"
+              style={{ gap: 5, padding: "20px 0 8px" }}
+            >
+              <span
+                className="flex items-center justify-center rounded-full"
+                style={{ width: 48, height: 48, background: "rgba(95,230,175,0.12)", border: "1px solid rgba(95,230,175,0.2)", marginBottom: 5 }}
+              >
+                <PersonPlusGlyph size={21} color="#78e9c0" />
+              </span>
+              <div style={{ fontSize: 13.5, fontWeight: 500, color: tokens.text.secondary }}>No team yet</div>
+              <div style={{ fontSize: 11.5, color: tokens.text.muted, lineHeight: 1.5, maxWidth: 200 }}>
+                Add your first employee to run a confidential payroll.
+              </div>
+              <button
+                type="button"
+                onClick={onAddEmployee}
+                className="cursor-pointer rounded-full transition-transform hover:scale-[1.04] active:scale-[0.97]"
+                style={{ marginTop: 11, background: "#5fe3ab", color: "#0b1512", fontSize: 12, fontWeight: 500, padding: "8px 20px" }}
+              >
+                Add employee
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-1 items-center justify-center" style={{ gap: 23, marginTop: 7 }}>
+              <div className="relative" style={{ width: 144, height: 144 }}>
+                <Doughnut data={donutData} options={donutOptions} />
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="tnum" style={{ fontWeight: 700, fontSize: 20 }}>
+                    {String(data.people.length).padStart(2, "0")}
+                  </div>
+                  <div style={{ fontSize: 10, color: tokens.text.muted }}>Employees</div>
                 </div>
-                <div style={{ fontSize: 10, color: tokens.text.muted }}>Employees</div>
+              </div>
+              <div className="flex flex-col" style={{ gap: 16 }}>
+                {DONUT_DEPTS.map((d, i) => (
+                  <div key={d} className="flex items-start" style={{ gap: 8 }}>
+                    <span
+                      className="shrink-0 rounded-full"
+                      style={{ width: 8, height: 8, marginTop: 3.5, background: DONUT_COLORS[i] }}
+                    />
+                    <span>
+                      <span className="block" style={{ fontSize: 12, fontWeight: 600, color: "#e8f0ec" }}>
+                        {d}
+                      </span>
+                      <span className="tnum block" style={{ fontSize: 11, color: tokens.text.muted }}>
+                        {counts[i]} people
+                      </span>
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="flex flex-col" style={{ gap: 16 }}>
-              {DONUT_DEPTS.map((d, i) => (
-                <div key={d} className="flex items-start" style={{ gap: 8 }}>
-                  <span
-                    className="shrink-0 rounded-full"
-                    style={{ width: 8, height: 8, marginTop: 3.5, background: DONUT_COLORS[i] }}
-                  />
-                  <span>
-                    <span className="block" style={{ fontSize: 12, fontWeight: 600, color: "#e8f0ec" }}>
-                      {d}
-                    </span>
-                    <span className="tnum block" style={{ fontSize: 11, color: tokens.text.muted }}>
-                      {counts[i]} people
-                    </span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
         </GlassCard>
 
         {/* Monthly payroll + Last run */}
