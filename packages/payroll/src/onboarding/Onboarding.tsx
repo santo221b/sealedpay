@@ -656,12 +656,18 @@ function FundStep() {
 
   return (
     <motion.div
-      initial={reduced ? false : { opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: EASE }}
-      className="mt-3.5"
-      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "14px 15px" }}
+      initial={reduced ? false : { opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      transition={reduced ? { duration: 0 } : { height: { duration: 0.5, ease: EASE }, opacity: { duration: 0.42, ease: EASE } }}
+      style={{ overflow: "hidden" }}
     >
+      <motion.div
+        initial={reduced ? false : { y: 6 }}
+        animate={{ y: 0 }}
+        transition={reduced ? { duration: 0 } : { duration: 0.45, ease: EASE }}
+        className="mt-3.5"
+        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "14px 15px" }}
+      >
       <div className="flex items-center gap-2.5">
         <DepositBoxGlyph size={17} color="#78e9c0" />
         <span style={{ fontSize: 13.5, fontWeight: 600, color: "#eef4f1" }}>Add payroll funds</span>
@@ -710,6 +716,7 @@ function FundStep() {
       <p style={{ fontSize: 10.5, color: "#7f9a8f", marginTop: 8, paddingLeft: 5, lineHeight: 1.45 }}>
         You can also fund later from the dashboard.
       </p>
+      </motion.div>
     </motion.div>
   );
 }
