@@ -132,7 +132,7 @@ export function FundWalletModal({ open, onClose, employerShort, employerFull, bu
                     onClick={copyAddress}
                     aria-label={copied ? "Address copied" : "Copy wallet address"}
                     title={copied ? "Copied" : "Copy address"}
-                    className="flex shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors hover:bg-[rgba(255,255,255,0.08)]"
+                    className="flex shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-[rgba(255,255,255,0.08)]"
                     style={{ width: 26, height: 26, border: "1px solid rgba(255,255,255,0.1)", color: copied ? "#78e9c0" : "#9db3aa" }}
                   >
                     {copied ? (
