@@ -186,6 +186,8 @@ export interface ProfilePopupProps {
   name: string;
   avatar: string;
   employerShort?: string;
+  /** Switch to the recipient "My pay" view. */
+  onViewMyPay: () => void;
 }
 
 export interface ReminderModalProps {
@@ -198,6 +200,8 @@ export interface ReminderModalProps {
 export interface SignedOutScreenProps {
   name: string;
   onSignIn: () => void;
+  /** Second door: connect as a recipient to view your own pay. */
+  onViewMyPay: () => void;
 }
 
 export interface ToastState {

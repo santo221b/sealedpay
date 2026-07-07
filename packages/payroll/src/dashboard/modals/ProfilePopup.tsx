@@ -7,7 +7,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ModalShell } from "../../design/kit2";
 import type { ProfilePopupProps } from "../contracts";
 
-export function ProfilePopup({ open, onClose, name, avatar, employerShort }: ProfilePopupProps) {
+export function ProfilePopup({ open, onClose, name, avatar, employerShort, onViewMyPay }: ProfilePopupProps) {
   const reduced = useReducedMotion();
   return (
     <ModalShell open={open} onClose={onClose} width={342} labelledBy="profile-name">
@@ -44,6 +44,16 @@ export function ProfilePopup({ open, onClose, name, avatar, employerShort }: Pro
             {employerShort}
           </span>
         )}
+        <motion.button
+          type="button"
+          onClick={onViewMyPay}
+          whileHover={reduced ? undefined : { scale: 1.03 }}
+          whileTap={reduced ? undefined : { scale: 0.97 }}
+          className="cursor-pointer rounded-full"
+          style={{ marginTop: 22, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#e8f0ec", fontSize: 12.6, fontWeight: 500, padding: "11px 26px" }}
+        >
+          View my pay as an employee
+        </motion.button>
       </div>
     </ModalShell>
   );

@@ -7,7 +7,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { SealLogo } from "../../design/SealLogo";
 import type { SignedOutScreenProps } from "../contracts";
 
-export function SignedOutScreen({ name, onSignIn }: SignedOutScreenProps) {
+export function SignedOutScreen({ name, onSignIn, onViewMyPay }: SignedOutScreenProps) {
   const reduced = useReducedMotion();
   return (
     <motion.div
@@ -35,10 +35,18 @@ export function SignedOutScreen({ name, onSignIn }: SignedOutScreenProps) {
           whileHover={reduced ? undefined : { scale: 1.04 }}
           whileTap={reduced ? undefined : { scale: 0.97 }}
           className="cursor-pointer rounded-full"
-          style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 12.6, fontWeight: 700, padding: "12px 30px", marginTop: 23 }}
+          style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 12.6, fontWeight: 500, padding: "12px 30px", marginTop: 23 }}
         >
-          Sign back in
+          Sign back in as employer
         </motion.button>
+        <button
+          type="button"
+          onClick={onViewMyPay}
+          className="cursor-pointer hover:text-[#e8f0ec]"
+          style={{ background: "none", border: "none", color: "#9db3aa", fontSize: 12, fontWeight: 500, marginTop: 16 }}
+        >
+          I’m an employee · view my pay
+        </button>
       </motion.div>
     </motion.div>
   );

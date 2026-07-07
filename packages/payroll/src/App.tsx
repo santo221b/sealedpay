@@ -51,6 +51,7 @@ import { SignedOutScreen } from "./dashboard/modals/SignedOutScreen";
 import { Toast } from "./dashboard/modals/Toast";
 import { EmployeeView } from "./dashboard/screens/EmployeeView";
 import { Home } from "./dashboard/screens/Home";
+import { MyPay } from "./dashboard/screens/MyPay";
 import { Insights } from "./dashboard/screens/Insights";
 import { Team } from "./dashboard/screens/Team";
 import { tokens } from "./design/tokens";
@@ -120,6 +121,7 @@ function Dashboard() {
   const [popup, setPopup] = useState<PopupKind>(null);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [loggedOut, setLoggedOut] = useState(false);
+  const [recipientMode, setRecipientMode] = useState(false); // the recipient "My pay" view
   const [profileOpen, setProfileOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [fundOpen, setFundOpen] = useState(false);
@@ -447,8 +449,21 @@ function Dashboard() {
   );
 
   /* ── layout ────────────────────────────────────────────────────────────── */
+  // Recipient "My pay" view — the same wallet stack, a different door.
+  if (recipientMode) {
+    return <MyPay onExit={() => setRecipientMode(false)} />;
+  }
   if (loggedOut) {
-    return <SignedOutScreen name={identity.name || "there"} onSignIn={() => setLoggedOut(false)} />;
+    return (
+      <SignedOutScreen
+        name={identity.name || "there"}
+        onSignIn={() => setLoggedOut(false)}
+        onViewMyPay={() => {
+          setLoggedOut(false);
+          setRecipientMode(true);
+        }}
+      />
+    );
   }
 
   const navSel = (nav === 3 ? 1 : nav) as 0 | 1 | 2;
@@ -627,7 +642,7 @@ function Dashboard() {
         }}
       />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); setLoggedOut(true); }} />
-      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} />
+      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} onViewMyPay={() => { setProfileOpen(false); setRecipientMode(true); }} />
       <ReminderModal
         open={remindOpen}
         onClose={() => setRemindOpen(false)}
