@@ -30,7 +30,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatUnits, isAddress, parseUnits } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
 
 import type { DashboardData, NavIndex, PopupKind, Person, ToastState } from "./dashboard/contracts";
 import { Rail } from "./dashboard/Rail";
@@ -130,6 +130,7 @@ function Dashboard({ onViewMyPay, onSignBackIn }: { onViewMyPay: () => void; onS
 
   /* ── data hooks ────────────────────────────────────────────────────────── */
   const { address: employer } = useAccount();
+  const { disconnect } = useDisconnect();
   const { employees, add, update, remove, replaceAll } = useEmployees();
   const [editEmp, setEditEmp] = useState<Employee | null>(null); // employee being edited
   const { runs: liveRuns, addRun, markVerified } = useHistory();
@@ -686,7 +687,7 @@ function Dashboard({ onViewMyPay, onSignBackIn }: { onViewMyPay: () => void; onS
           setFundOpen(false);
         }}
       />
-      <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); setLoggedOut(true); setLoggedOutPref(true); }} />
+      <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); disconnect(); setLoggedOut(true); setLoggedOutPref(true); }} />
       <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} />
       <ReminderModal
         open={remindOpen}
