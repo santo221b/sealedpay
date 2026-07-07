@@ -18,9 +18,18 @@ const FHE_NETWORK = "https://ethereum-sepolia-rpc.publicnode.com";
 const TRANSFER_EVENT = parseAbiItem(
   "event ConfidentialTransfer(address indexed from, address indexed to, bytes32 indexed amount)",
 );
-// Dedicated read-only client on a permissive RPC. The wallet's default RPC
-// (thirdweb) caps eth_getLogs block ranges, which broke the payment scan.
-const scanClient = createPublicClient({ chain: sepolia, transport: http(FHE_NETWORK) });
+// The wallet's default RPC (thirdweb) caps eth_getLogs ranges and other public
+// RPCs reject different params, so the scan tries several until one answers.
+const SCAN_RPCS = [
+  "https://sepolia.drpc.org",
+  "https://sepolia.gateway.tenderly.co",
+  "https://1rpc.io/sepolia",
+  "https://ethereum-sepolia-rpc.publicnode.com",
+  "https://rpc.sepolia.org",
+];
+// Recent-first block windows — a freshly received payment is only minutes old,
+// so a modest range finds it while staying inside every RPC's limits.
+const SCAN_SPANS = [9_000n, 2_000n, 500n];
 
 export interface MyPayment {
   txHash: `0x${string}`;
@@ -59,42 +68,50 @@ export function useMyPay() {
     if (!me) return;
     setPhase("scanning");
     setError(undefined);
-    try {
-      const latest = await scanClient.getBlockNumber();
-      const getLogs = (span: bigint) =>
-        scanClient.getLogs({
-          address: TOKEN,
-          event: TRANSFER_EVENT,
-          args: { to: me },
-          fromBlock: latest > span ? latest - span : 0n,
-          toBlock: latest,
-        });
-      // Try a wide window first, then narrower ones if the RPC caps the range.
-      const logs = await getLogs(200_000n)
-        .catch(() => getLogs(20_000n))
-        .catch(() => getLogs(2_000n));
-      const incoming: MyPayment[] = logs
-        .map((log) => ({
-          txHash: log.transactionHash,
-          from: log.args.from as `0x${string}`,
-          handle: log.args.amount as `0x${string}`,
-          url: `https://sepolia.etherscan.io/tx/${log.transactionHash}`,
-        }))
-        .reverse();
-      setPayments(incoming);
-
-      const handle = (await scanClient.readContract({
-        address: TOKEN,
-        abi: erc7984Abi,
-        functionName: "confidentialBalanceOf",
-        args: [me],
-      })) as `0x${string}`;
-      setBalanceHandle(handle === zeroHash ? undefined : handle);
-      setPhase("idle");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      setPhase("idle");
+    let lastErr: unknown;
+    for (const rpc of SCAN_RPCS) {
+      const client = createPublicClient({ chain: sepolia, transport: http(rpc) });
+      let latest: bigint;
+      try {
+        latest = await client.getBlockNumber();
+      } catch (e) {
+        lastErr = e;
+        continue;
+      }
+      for (const span of SCAN_SPANS) {
+        try {
+          const logs = await client.getLogs({
+            address: TOKEN,
+            event: TRANSFER_EVENT,
+            args: { to: me },
+            fromBlock: latest > span ? latest - span : 0n,
+            toBlock: latest,
+          });
+          const incoming: MyPayment[] = logs
+            .map((log) => ({
+              txHash: log.transactionHash as `0x${string}`,
+              from: log.args.from as `0x${string}`,
+              handle: log.args.amount as `0x${string}`,
+              url: `https://sepolia.etherscan.io/tx/${log.transactionHash}`,
+            }))
+            .reverse();
+          setPayments(incoming);
+          const handle = (await client.readContract({
+            address: TOKEN,
+            abi: erc7984Abi,
+            functionName: "confidentialBalanceOf",
+            args: [me],
+          })) as `0x${string}`;
+          setBalanceHandle(handle === zeroHash ? undefined : handle);
+          setPhase("idle");
+          return;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
     }
+    setError(lastErr instanceof Error ? lastErr.message : "Could not read your payments right now. Try again in a moment.");
+    setPhase("idle");
   }, [me]);
 
   const reveal = useCallback(async () => {
