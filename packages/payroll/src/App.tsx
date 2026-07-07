@@ -80,7 +80,7 @@ function compactAmount(v: number): string {
 export function App() {
   const [onboarded, setOnboarded] = useState(() => loadIdentity().onboarded);
   return (
-    <DisperseProviders theme={sealedTheme}>
+    <DisperseProviders theme={sealedTheme} appName="SealedPay">
       {onboarded ? <Dashboard /> : <Onboarding onDone={() => setOnboarded(true)} />}
     </DisperseProviders>
   );

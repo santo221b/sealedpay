@@ -13,4 +13,5 @@ export const sealedTheme: DisperseTheme = {
   muted: "#9db3aa",
   border: "rgba(255,255,255,0.11)",
   radius: "16px",
+  font: "'Manrope', ui-sans-serif, system-ui, sans-serif",
 };
