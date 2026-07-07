@@ -22,13 +22,14 @@ import {
   DisperseProviders,
   SEPOLIA_CHAIN_ID,
   formatAmount,
+  isValidAmountText,
   useDisperseFlow,
   useTokenMeta,
   type DeliveryResult,
 } from "@dispersekit/widget";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { formatUnits, parseUnits } from "viem";
+import { formatUnits, isAddress, parseUnits } from "viem";
 import { useAccount } from "wagmi";
 
 import type { DashboardData, NavIndex, PopupKind, Person, ToastState } from "./dashboard/contracts";
@@ -100,7 +101,7 @@ function Dashboard() {
 
   /* ── data hooks ────────────────────────────────────────────────────────── */
   const { address: employer } = useAccount();
-  const { employees, add, update, replaceAll } = useEmployees();
+  const { employees, add, replaceAll } = useEmployees();
   const { runs: liveRuns, addRun, markVerified } = useHistory();
   const { settings, set: setSetting } = useSettings();
   const { notifs, unread, add: addNotif, markRead, markAllRead } = useNotifications();
@@ -289,17 +290,27 @@ function Dashboard() {
   }, [flow, balance]);
 
   // Employee page: edit a recipient wallet (validate + persist) and pay just one.
-  const onUpdateEmployeeAddress = useCallback(
-    (address: string): string | null => {
-      const emp = employees.find((e) => e.id === empId);
-      if (!emp) return "Employee not found.";
-      const input = { name: emp.name, role: emp.role ?? "", dept: emp.dept ?? "", address, salary: emp.salary };
-      const problem = validateEmployee(input, decimals);
-      if (problem) return problem;
-      update(emp.id, input);
-      return null;
+  // One-off "Pay {name}" validation — checks an ad-hoc recipient + amount for
+  // a single payment WITHOUT persisting anything to the employee roster.
+  const validatePayOne = useCallback(
+    (recipient: string, amount: string): { recipient: string | null; amount: string | null } => {
+      const recipientError = isAddress(recipient.trim())
+        ? null
+        : "Not a valid address (mixed-case must match its EIP-55 checksum).";
+      let amountError: string | null = null;
+      if (!isValidAmountText(amount)) {
+        amountError = "Amount must be a plain decimal, e.g. 2500.50";
+      } else if (Number(amount) <= 0) {
+        amountError = "Amount must be greater than zero.";
+      } else {
+        const fraction = amount.trim().split(".")[1];
+        if (decimals !== undefined && fraction && fraction.length > decimals) {
+          amountError = `The token supports at most ${decimals} decimal places.`;
+        }
+      }
+      return { recipient: recipientError, amount: amountError };
     },
-    [employees, empId, update, decimals],
+    [decimals],
   );
   const onPayEmployee = useCallback(() => {
     setPayrollOnlyId(empId ?? null);
@@ -594,7 +605,7 @@ function Dashboard() {
           setPermPrompt(false);
         }}
       />
-      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} onUpdateAddress={payrollOnlyId ? onUpdateEmployeeAddress : undefined} />
+      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} onValidatePayOne={payrollOnlyId ? validatePayOne : undefined} balance={payrollOnlyId ? data.balance : undefined} />
       <Toast toast={toast} />
     </div>
   );

@@ -214,6 +214,15 @@ export function EmployeeView({
                   className="flex cursor-pointer items-center"
                   style={{ gap: 4, fontSize: 13.5, fontWeight: 700, color: "#eef4f1" }}
                 >
+                  {/* Same fetching loader as the wallet's Available balance: a
+                      spinning ring while the real ciphertext is decrypting. */}
+                  {row.decrypting && (
+                    <span
+                      className="inline-block animate-spin rounded-full align-middle"
+                      style={{ width: 12, height: 12, border: "1.5px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0" }}
+                      aria-hidden
+                    />
+                  )}
                   <RevealAmount
                     value={row.amount !== undefined ? fmtAmountFull(row.amount) : undefined}
                     revealed={showAll || rowRevealed(row)}

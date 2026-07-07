@@ -24,10 +24,10 @@
  */
 import { formatAmount, type DisperseFlow, type VerificationEntry } from "@dispersekit/widget";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 import { SealAmount, RevealAmount } from "../design/RevealAmount";
-import { PersonKeyGlyph, ReceiptCheckGlyph } from "../design/icons";
+import { DocCheckGlyph, PersonKeyGlyph } from "../design/icons";
 import { fmtAmount, initials } from "../lib/seed";
 import type { Person } from "./contracts";
 
@@ -43,13 +43,22 @@ export interface RunPayrollModalProps {
   onStart: (selected: Person[]) => Promise<string | null>;
   /** Close + flow.reset (only allowed when not mid-transaction). */
   onClose: () => void;
-  /** Single-employee runs: edit + persist the recipient wallet in the modal. Returns an error or null. */
-  onUpdateAddress?: (address: string) => string | null;
+  /**
+   * Single-employee runs: validate a one-off {recipient, amount} without
+   * persisting anything to the roster. Presence of this prop switches the
+   * modal into one-off "Pay {name}" mode. Returns a per-field error or null.
+   */
+  onValidatePayOne?: (recipient: string, amount: string) => { recipient: string | null; amount: string | null };
+  /**
+   * Wallet balance control (one-off mode only) — same reveal/fetch mechanism
+   * as the sidebar's Available balance: hidden by default, tapping decrypts.
+   */
+  balance?: { value: string | undefined; revealed: boolean; pending: boolean; toggle: () => void };
 }
 
 type DesignStep = 0 | 1 | 2 | 3;
 
-export function RunPayrollModal({ open, people, flow, decimals, autoverify, onStart, onClose, onUpdateAddress }: RunPayrollModalProps) {
+export function RunPayrollModal({ open, people, flow, decimals, autoverify, onStart, onClose, onValidatePayOne, balance }: RunPayrollModalProps) {
   const reduced = useReducedMotion();
   const [sel, setSel] = useState<Record<string, boolean>>({});
   const [payReveal, setPayReveal] = useState(false);
@@ -60,6 +69,13 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
   // Selected snapshot for steps 1-3 (selection order = row order = event order).
   const [running, setRunning] = useState<Person[]>([]);
 
+  // One-off "Pay {name}" mode: opened from an Employee page for a single person.
+  // The recipient + amount are editable and DO NOT persist to the roster — this
+  // is a one-off payment, not a salary change.
+  const single = people.length === 1 && Boolean(onValidatePayOne) ? people[0] : null;
+  const [payRecipient, setPayRecipient] = useState("");
+  const [payAmount, setPayAmount] = useState("");
+
   useEffect(() => {
     if (open) {
       setSel({});
@@ -69,10 +85,25 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
       setEncIdx(0);
       setDeliveredN(0);
       setRunning([]);
+      // Prefill the one-off form from the employee (their own wallet + salary).
+      setPayRecipient(people.length === 1 ? people[0].wallet : "");
+      setPayAmount(people.length === 1 ? String(people[0].salary) : "");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const selected = useMemo(() => people.filter((p) => sel[p.id] !== false), [people, sel]);
+  const payErrors = single && onValidatePayOne ? onValidatePayOne(payRecipient, payAmount) : { recipient: null, amount: null };
+  const payBlocked = single ? payErrors.recipient !== null || payErrors.amount !== null : false;
+
+  // In one-off mode the "selection" is a single override person carrying the
+  // edited wallet + amount; startRun reads .wallet/.salary off it directly.
+  const selected = useMemo(() => {
+    if (single) {
+      const amt = Number(payAmount);
+      return [{ ...single, wallet: payRecipient.trim(), salary: Number.isFinite(amt) ? amt : 0 }];
+    }
+    return people.filter((p) => sel[p.id] !== false);
+  }, [single, payRecipient, payAmount, people, sel]);
   const allChecked = selected.length === people.length;
   const total = selected.reduce((a, p) => a + p.salary, 0);
   const phase = flow.phase;
@@ -123,7 +154,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
   }, [open, autoverify, phase, flow]);
 
   async function handleContinue() {
-    if (selected.length === 0) return;
+    if (selected.length === 0 || payBlocked) return;
     setStartError(null);
     setRunning(selected);
     const err = await onStart(selected);
@@ -253,15 +284,24 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
                     error={startError ?? flow.error}
                     busy={phase === "review" && running.length > 0}
                     onContinue={() => void handleContinue()}
-                    onUpdateAddress={onUpdateAddress}
+                    single={single}
+                    payRecipient={payRecipient}
+                    payAmount={payAmount}
+                    onRecipientChange={setPayRecipient}
+                    onAmountChange={setPayAmount}
+                    recipientError={payErrors.recipient}
+                    amountError={payErrors.amount}
+                    blocked={payBlocked}
+                    balance={balance}
                   />
                 )}
-                {step === 1 && <StepEncrypting people={running} encIdx={encIdx} />}
+                {step === 1 && <StepEncrypting people={running} encIdx={encIdx} single={Boolean(single)} />}
                 {step === 2 && <StepAuthorize alreadyAuthorized={flow.operatorAlreadySet === true} />}
                 {step === 3 && !finale && (
                   <StepDisperse
                     n={n}
                     phase={phase}
+                    single={Boolean(single)}
                     verifying={flow.verifying || (Boolean(verification) && deliveredN < (verification?.length ?? 0))}
                     verification={verification}
                     deliveredN={deliveredN}
@@ -279,6 +319,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
                 {step === 3 && finale && (
                   <Finale
                     n={n}
+                    single={Boolean(single)}
                     verifiedOk={verification ? verifiedOk : undefined}
                     total={total}
                     decimals={decimals}
@@ -317,25 +358,25 @@ function StepSelect(props: {
   error?: string | null;
   busy: boolean;
   onContinue: () => void;
-  onUpdateAddress?: (address: string) => string | null;
+  /** Non-null → one-off "Pay {name}" mode with editable recipient + amount. */
+  single: Person | null;
+  payRecipient: string;
+  payAmount: string;
+  onRecipientChange: (v: string) => void;
+  onAmountChange: (v: string) => void;
+  recipientError: string | null;
+  amountError: string | null;
+  blocked: boolean;
+  balance?: { value: string | undefined; revealed: boolean; pending: boolean; toggle: () => void };
 }) {
-  const { people, sel, selectedCount, onUpdateAddress } = props;
-  // Single-employee run (opened from an Employee page): let the judge retarget
-  // the payout to any address right here, then run the exact same payroll flow.
-  const single = people.length === 1 && onUpdateAddress ? people[0] : null;
-  const [addr, setAddr] = useState(single?.wallet ?? "");
-  const [addrErr, setAddrErr] = useState<string | null>(null);
-  useEffect(() => {
-    setAddr(single?.wallet ?? "");
-    setAddrErr(null);
-  }, [single?.id, single?.wallet]);
+  const { people, sel, selectedCount, single } = props;
   return (
     <div className="mt-2.5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>{single ? `Pay ${single.name}` : "Run payroll"}</h2>
           <p style={{ fontSize: 12, color: "#9db3aa", marginTop: 4 }}>
-            {single ? "Send this month's salary. Edit the wallet to pay a different address." : "Review who gets paid this run."}
+            {single ? "A one-off confidential payment." : "Review who gets paid this run."}
           </p>
         </div>
         {!single && (
@@ -345,98 +386,140 @@ function StepSelect(props: {
         )}
       </div>
 
-      <div className="slim-scroll -mx-1.5 mt-3.5 flex flex-col gap-0.5 overflow-y-auto px-1.5" style={{ maxHeight: 268 }}>
-        {people.map((p) => {
-          const checked = sel[p.id] !== false;
-          return (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => props.onToggle(p.id)}
-              className="flex cursor-pointer items-center gap-3 text-left transition-colors hover:bg-[rgba(95,230,175,0.1)]"
-              style={{ padding: 8, borderRadius: 14 }}
-            >
-              <span className="flex shrink-0 items-center justify-center" style={{ width: 20, height: 20, borderRadius: "50%", background: checked ? "#5fe3ab" : "rgba(255,255,255,0.04)", border: checked ? "1px solid transparent" : "1px solid rgba(255,255,255,0.16)", transition: "background .18s" }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0b1512" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: checked ? 1 : 0, transition: "opacity .18s" }} aria-hidden>
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </span>
-              <span className="flex shrink-0 items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(59,191,142,0.18)", border: "1px solid rgba(255,255,255,0.06)", fontSize: 12, fontWeight: 800, color: "#d3ecdd" }}>
-                {initials(p.name)}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate" style={{ fontSize: 13.5, fontWeight: 600, color: "#eef4f1" }}>
-                  {p.name}
-                </span>
-                <span className="block" style={{ fontSize: 10.5, color: "#9db3aa", marginTop: 1 }}>
-                  {p.role}
-                </span>
-              </span>
-              <span className="tnum shrink-0" style={{ fontSize: 13.5, fontWeight: 700, color: "#eef4f1" }}>
-                <RevealAmount value={fmtAmount(p.salary)} revealed={props.payReveal} label="salary" /> <span style={{ fontSize: 10.5, color: "#9db3aa" }}>cUSDd</span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {single ? (
+        <div className="mt-4 flex flex-col gap-3">
+          {/* Recipient wallet — prefilled with the employee's address, editable. */}
+          <div>
+            <label htmlFor="pay-one-recipient" className="block" style={{ fontSize: 11, color: "#9db3aa", marginBottom: 6, paddingLeft: 5 }}>
+              Recipient wallet
+            </label>
+            <input
+              id="pay-one-recipient"
+              value={props.payRecipient}
+              spellCheck={false}
+              autoComplete="off"
+              onChange={(e) => props.onRecipientChange(e.target.value)}
+              className="tnum w-full"
+              style={{ ...PAY_INPUT_STYLE, borderColor: props.recipientError ? "rgba(224,110,98,0.55)" : "rgba(255,255,255,0.12)" }}
+            />
+            {props.recipientError && (
+              <p role="alert" style={{ fontSize: 11, color: "#eb8f85", marginTop: 6, paddingLeft: 5 }}>
+                {props.recipientError}
+              </p>
+            )}
+          </div>
 
-      {single && (
-        <div className="mt-3">
-          <label htmlFor="pay-one-recipient" className="block" style={{ fontSize: 11, color: "#9db3aa", marginBottom: 6, paddingLeft: 5 }}>
-            Recipient wallet
-          </label>
-          <input
-            id="pay-one-recipient"
-            value={addr}
-            spellCheck={false}
-            autoComplete="off"
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              setAddr(v);
-              setAddrErr(onUpdateAddress ? onUpdateAddress(v) : null);
-            }}
-            className="tnum w-full"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: `1px solid ${addrErr ? "rgba(224,110,98,0.55)" : "rgba(255,255,255,0.12)"}`,
-              borderRadius: 12,
-              color: "#eef4f1",
-              fontSize: 12.5,
-              letterSpacing: 0.3,
-              padding: "11px 13px",
-              outline: "none",
-            }}
-          />
-          {addrErr && (
-            <p role="alert" style={{ fontSize: 11, color: "#eb8f85", marginTop: 6, paddingLeft: 5 }}>
-              {addrErr}
-            </p>
-          )}
+          {/* Amount — a one-off amount, not the stored salary; nothing persists. */}
+          <div>
+            <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
+              <label htmlFor="pay-one-amount" style={{ fontSize: 11, color: "#9db3aa", paddingLeft: 5 }}>
+                Amount
+              </label>
+              {props.balance && (
+                <button
+                  type="button"
+                  onClick={props.balance.toggle}
+                  disabled={props.balance.pending}
+                  title={props.balance.pending ? "Fetching balance" : props.balance.revealed ? "Hide balance" : "Reveal balance"}
+                  className={`tnum flex items-center ${props.balance.pending ? "cursor-wait" : "cursor-pointer hover:text-[#c2d0c9]"}`}
+                  style={{ gap: 4, fontSize: 10.5, color: "#9db3aa", paddingRight: 5 }}
+                >
+                  <span>Balance</span>
+                  {props.balance.pending && (
+                    <span
+                      className="inline-block animate-spin rounded-full align-middle"
+                      style={{ width: 10, height: 10, border: "1.5px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0" }}
+                      aria-hidden
+                    />
+                  )}
+                  <RevealAmount value={props.balance.value} revealed={props.balance.revealed} pending={props.balance.pending} label="wallet balance" />
+                  <span>cUSDd</span>
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <input
+                id="pay-one-amount"
+                value={props.payAmount}
+                inputMode="decimal"
+                spellCheck={false}
+                autoComplete="off"
+                onChange={(e) => props.onAmountChange(e.target.value)}
+                className="tnum w-full"
+                style={{ ...PAY_INPUT_STYLE, paddingRight: 62, borderColor: props.amountError ? "rgba(224,110,98,0.55)" : "rgba(255,255,255,0.12)" }}
+              />
+              <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center" style={{ paddingRight: 14, fontSize: 12, color: "#9db3aa" }}>
+                cUSDd
+              </span>
+            </div>
+            {props.amountError && (
+              <p role="alert" style={{ fontSize: 11, color: "#eb8f85", marginTop: 6, paddingLeft: 5 }}>
+                {props.amountError}
+              </p>
+            )}
+          </div>
         </div>
+      ) : (
+        <>
+          <div className="slim-scroll -mx-1.5 mt-3.5 flex flex-col gap-0.5 overflow-y-auto px-1.5" style={{ maxHeight: 268 }}>
+            {people.map((p) => {
+              const checked = sel[p.id] !== false;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => props.onToggle(p.id)}
+                  className="flex cursor-pointer items-center gap-3 text-left transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+                  style={{ padding: 8, borderRadius: 14 }}
+                >
+                  <span className="flex shrink-0 items-center justify-center" style={{ width: 20, height: 20, borderRadius: "50%", background: checked ? "#5fe3ab" : "rgba(255,255,255,0.04)", border: checked ? "1px solid transparent" : "1px solid rgba(255,255,255,0.16)", transition: "background .18s" }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0b1512" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: checked ? 1 : 0, transition: "opacity .18s" }} aria-hidden>
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span className="flex shrink-0 items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(59,191,142,0.18)", border: "1px solid rgba(255,255,255,0.06)", fontSize: 12, fontWeight: 800, color: "#d3ecdd" }}>
+                    {initials(p.name)}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate" style={{ fontSize: 13.5, fontWeight: 600, color: "#eef4f1" }}>
+                      {p.name}
+                    </span>
+                    <span className="block" style={{ fontSize: 10.5, color: "#9db3aa", marginTop: 1 }}>
+                      {p.role}
+                    </span>
+                  </span>
+                  <span className="tnum shrink-0" style={{ fontSize: 13.5, fontWeight: 700, color: "#eef4f1" }}>
+                    <RevealAmount value={fmtAmount(p.salary)} revealed={props.payReveal} label="salary" /> <span style={{ fontSize: 10.5, color: "#9db3aa" }}>cUSDd</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-3.5 flex items-end justify-between" style={{ paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.09)" }}>
+            <div>
+              <p style={{ fontSize: 10.5, color: "#9db3aa" }}>
+                Total to disperse ·{" "}
+                <button type="button" onClick={props.onToggleReveal} className="cursor-pointer hover:underline" style={{ color: "#78e9c0" }}>
+                  {props.payReveal ? "Hide" : "Reveal"}
+                </button>
+              </p>
+              <p className="mt-0.5 flex items-baseline gap-1.5">
+                <span className="tnum" style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
+                  <RevealAmount value={fmtAmount(props.total)} revealed={props.payReveal} label="total" />
+                </span>
+                <span style={{ fontSize: 12, color: "#9db3aa" }}>cUSDd</span>
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="tnum" style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
+                {String(selectedCount).padStart(2, "0")}
+              </p>
+              <p style={{ fontSize: 10.5, color: "#9db3aa", marginTop: 3 }}>recipients</p>
+            </div>
+          </div>
+        </>
       )}
-
-      <div className="mt-3.5 flex items-end justify-between" style={{ paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.09)" }}>
-        <div>
-          <p style={{ fontSize: 10.5, color: "#9db3aa" }}>
-            Total to disperse ·{" "}
-            <button type="button" onClick={props.onToggleReveal} className="cursor-pointer hover:underline" style={{ color: "#78e9c0" }}>
-              {props.payReveal ? "Hide" : "Reveal"}
-            </button>
-          </p>
-          <p className="mt-0.5 flex items-baseline gap-1.5">
-            <span className="tnum" style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
-              <RevealAmount value={fmtAmount(props.total)} revealed={props.payReveal} label="total" />
-            </span>
-            <span style={{ fontSize: 12, color: "#9db3aa" }}>cUSDd</span>
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="tnum" style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
-            {String(selectedCount).padStart(2, "0")}
-          </p>
-          <p style={{ fontSize: 10.5, color: "#9db3aa", marginTop: 3 }}>recipients</p>
-        </div>
-      </div>
 
       {props.error && (
         <p role="alert" className="mt-3 rounded-xl p-2.5" style={{ background: "rgba(224,110,98,0.1)", border: "1px solid rgba(224,110,98,0.4)", color: "#eb8f85", fontSize: 11.5 }}>
@@ -448,23 +531,37 @@ function StepSelect(props: {
         type="button"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        disabled={selectedCount === 0 || props.busy || Boolean(addrErr)}
+        disabled={selectedCount === 0 || props.busy || props.blocked}
         onClick={props.onContinue}
         className="mt-4 w-full rounded-full text-center font-semibold disabled:cursor-not-allowed disabled:opacity-40"
         style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 13.5, padding: "12.6px 0" }}
       >
-        {props.busy ? "Preparing" : "Continue"}
+        {props.busy ? "Preparing" : single ? "Pay" : "Continue"}
       </motion.button>
     </div>
   );
 }
 
+/** Shared style for the one-off Pay form inputs (recipient + amount). */
+const PAY_INPUT_STYLE: CSSProperties = {
+  background: "rgba(255,255,255,0.04)",
+  border: "1px solid rgba(255,255,255,0.12)",
+  borderRadius: 12,
+  color: "#eef4f1",
+  fontSize: 12.5,
+  letterSpacing: 0.3,
+  padding: "11px 13px",
+  outline: "none",
+};
+
 /* ── Step 1 — Encrypting (real proof + design cascade) ───────────────────── */
 
-function StepEncrypting({ people, encIdx }: { people: Person[]; encIdx: number }) {
+function StepEncrypting({ people, encIdx, single }: { people: Person[]; encIdx: number; single: boolean }) {
   return (
     <div className="mt-2.5">
-      <h2 style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>Encrypting {people.length} salaries in your browser</h2>
+      <h2 style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
+        {single ? "Encrypting the amount in your browser" : `Encrypting ${people.length} salaries in your browser`}
+      </h2>
       <p style={{ fontSize: 12, color: "#9db3aa", marginTop: 4 }}>Amounts are sealed locally before anything is sent.</p>
 
       <div className="mt-4 grid grid-cols-2 gap-2.5">
@@ -528,6 +625,7 @@ function StepAuthorize({ alreadyAuthorized }: { alreadyAuthorized: boolean }) {
 function StepDisperse(props: {
   n: number;
   phase: string;
+  single: boolean;
   verifying: boolean;
   verification?: VerificationEntry[];
   deliveredN: number;
@@ -537,7 +635,7 @@ function StepDisperse(props: {
   pendingTxHash?: `0x${string}`;
   onRetryConfirm: () => void;
 }) {
-  const headline = props.phase === "dispersing" ? "Sending payroll" : "Confirmed on-chain";
+  const headline = props.phase === "dispersing" ? (props.single ? "Sending payment" : "Sending payroll") : "Confirmed on-chain";
   const dispersed = props.phase !== "dispersing";
   const walletHint = props.phase === "dispersing" && !props.pendingTxHash;
   return (
@@ -554,7 +652,9 @@ function StepDisperse(props: {
           {headline}
         </motion.h2>
       </AnimatePresence>
-      <p style={{ fontSize: 12, color: "#9db3aa", marginTop: 4 }}>One disperse call settles every salary at once.</p>
+      <p style={{ fontSize: 12, color: "#9db3aa", marginTop: 4 }}>
+        {props.single ? "The amount is sealed on-chain, sent in one call." : "One disperse call settles every salary at once."}
+      </p>
       {walletHint && (
         <p style={{ fontSize: 11, color: "#78e9c0", marginTop: 6 }}>Approve the payment in your wallet</p>
       )}
@@ -640,6 +740,7 @@ function StatusLine({ label, state, color }: { label: string; state: "pending" |
 
 function Finale(props: {
   n: number;
+  single: boolean;
   verifiedOk?: number;
   total: number;
   decimals?: number;
@@ -663,10 +764,10 @@ function Finale(props: {
           transition={{ duration: 1.1, ease: "easeOut" }}
         />
         <motion.span initial={{ scale: 0 }} animate={{ scale: [0, 1.18, 1] }} transition={{ duration: 0.55, ease: EASE }}>
-          <ReceiptCheckGlyph size={56} color="#5fe3ab" />
+          <DocCheckGlyph size={56} color="#5fe3ab" />
         </motion.span>
       </div>
-      <h2 style={{ fontSize: 22, fontWeight: 700, color: "#f2f7f4", marginTop: 14 }}>Payroll delivered</h2>
+      <h2 style={{ fontSize: 22, fontWeight: 700, color: "#f2f7f4", marginTop: 14 }}>{props.single ? "Payment delivered" : "Payroll delivered"}</h2>
       <p className="tnum" style={{ fontSize: 12.6, color: "#9db3aa", marginTop: 6 }}>
         {props.verifiedOk !== undefined ? `${props.verifiedOk}/${props.n} verified` : `${props.n} paid`}
       </p>
@@ -683,7 +784,7 @@ function Finale(props: {
 
       {props.onVerify && props.verifiedOk === undefined && (
         <button type="button" onClick={props.onVerify} disabled={props.verifying} className="mx-auto mt-3 block w-full rounded-full font-semibold disabled:opacity-50" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
-          {props.verifying ? "Decrypting" : "Verify salaries were delivered"}
+          {props.verifying ? "Decrypting" : props.single ? "Verify the payment was delivered" : "Verify salaries were delivered"}
         </button>
       )}
       {props.verifyError && props.verifiedOk === undefined && !props.verifying && (
