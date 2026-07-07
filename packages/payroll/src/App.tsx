@@ -46,6 +46,7 @@ import { NotificationsPanel } from "./dashboard/modals/NotificationsPanel";
 import { PermissionPrompt } from "./dashboard/modals/PermissionPrompt";
 import { ProfilePopup } from "./dashboard/modals/ProfilePopup";
 import { ReminderModal } from "./dashboard/modals/ReminderModal";
+import { RecipientNoticeModal } from "./dashboard/modals/RecipientNoticeModal";
 import { SettingsPanel } from "./dashboard/modals/SettingsPanel";
 import { Toast } from "./dashboard/modals/Toast";
 import { EmployeeView } from "./dashboard/screens/EmployeeView";
@@ -146,6 +147,14 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   const [activeBar, setActiveBar] = useState(""); // defaulted to the third-last bar on load (effect below)
   const [popup, setPopup] = useState<PopupKind>(null);
   const [logoutOpen, setLogoutOpen] = useState(false);
+  // Testing-only entry to the recipient view — gated behind a one-off notice so
+  // it is clearly a testing convenience, not a real product feature.
+  const [recipientNoticeOpen, setRecipientNoticeOpen] = useState(false);
+  const requestRecipientView = () => {
+    setPopup(null);
+    setPayrollOpen(false);
+    setRecipientNoticeOpen(true);
+  };
 
   // Keep the browser toolbar tinted to the dashboard (Safari).
   useEffect(() => {
@@ -544,7 +553,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
           <NotificationsPanel open={popup === "bell"} onClose={() => setPopup(null)} notifs={notifs} onRead={markRead} onMarkAllRead={markAllRead} />
         }
         gearPopover={
-          <SettingsPanel open={popup === "gear"} onClose={() => setPopup(null)} maskDefault={settings.maskDefault} reminders={settings.reminders} autoverify={settings.autoverify} onToggle={(key, value) => setSetting(key, value)} />
+          <SettingsPanel open={popup === "gear"} onClose={() => setPopup(null)} maskDefault={settings.maskDefault} reminders={settings.reminders} autoverify={settings.autoverify} onToggle={(key, value) => setSetting(key, value)} onViewRecipient={requestRecipientView} />
         }
       />
 
@@ -681,6 +690,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
         }}
       />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); disconnect(); onLoggedOut(); }} />
+      <RecipientNoticeModal open={recipientNoticeOpen} onClose={() => setRecipientNoticeOpen(false)} onConfirm={() => { setRecipientNoticeOpen(false); onViewMyPay(); }} />
       <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} />
       <ReminderModal
         open={remindOpen}
@@ -703,7 +713,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
           setPermPrompt(false);
         }}
       />
-      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} onValidatePayOne={payrollOnlyId ? validatePayOne : undefined} balance={payrollOnlyId ? data.balance : undefined} myAddress={employer} onViewMyPay={onViewMyPay} />
+      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} onValidatePayOne={payrollOnlyId ? validatePayOne : undefined} balance={payrollOnlyId ? data.balance : undefined} myAddress={employer} onViewMyPay={requestRecipientView} />
       <Toast toast={toast} />
     </div>
   );

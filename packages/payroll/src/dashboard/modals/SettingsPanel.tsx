@@ -17,7 +17,7 @@ const TOGGLES: { key: "maskDefault" | "reminders" | "autoverify"; label: string 
   { key: "autoverify", label: "Auto-verify after payout" },
 ];
 
-export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverify, onToggle }: SettingsPanelProps) {
+export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverify, onToggle, onViewRecipient }: SettingsPanelProps) {
   const reduced = useReducedMotion();
   const values = { maskDefault, reminders, autoverify };
 
@@ -85,6 +85,19 @@ export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverif
               <span style={{ fontSize: 12, color: "#e8f0ec" }}>Network</span>
               <span style={{ fontSize: 11, color: "#9db3aa" }}>Sepolia Testnet</span>
             </div>
+
+            <button
+              type="button"
+              onClick={onViewRecipient}
+              className="mt-2.5 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full transition-colors hover:bg-[rgba(255,255,255,0.07)]"
+              style={{ fontSize: 11.5, fontWeight: 500, color: "#cfdcd6", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", padding: "8px 0" }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              View as a recipient
+            </button>
 
             <button
               type="button"

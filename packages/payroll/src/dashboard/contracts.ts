@@ -144,6 +144,8 @@ export interface SettingsPanelProps {
   reminders: boolean;
   autoverify: boolean;
   onToggle: (key: "maskDefault" | "reminders" | "autoverify", value: boolean) => void;
+  /** Testing shortcut: jump to the recipient "My pay" view (via a notice). */
+  onViewRecipient: () => void;
 }
 
 export interface AddEmployeeModalProps {
