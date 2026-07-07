@@ -713,9 +713,6 @@ function FundStep() {
         {label}
       </motion.button>
 
-      <p style={{ fontSize: 10.5, color: "#7f9a8f", marginTop: 8, paddingLeft: 5, lineHeight: 1.45 }}>
-        You can also fund later from the dashboard.
-      </p>
       </motion.div>
     </motion.div>
   );
