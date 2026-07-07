@@ -73,7 +73,7 @@ export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverif
               style={{
                 height: 1,
                 background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.16) 22%, rgba(255,255,255,0.16) 78%, transparent)",
-                margin: "6px 0",
+                margin: "10px 0",
               }}
             />
 
