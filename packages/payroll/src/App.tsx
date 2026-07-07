@@ -116,7 +116,7 @@ function Dashboard() {
   const [nav, setNav] = useState<NavIndex>(0);
   const [empId, setEmpId] = useState<string>();
   const [tab, setTab] = useState("All");
-  const [activeBar, setActiveBar] = useState(() => new Date().toLocaleString("en-US", { month: "short" }));
+  const [activeBar, setActiveBar] = useState(""); // defaulted to the third-last bar on load (effect below)
   const [popup, setPopup] = useState<PopupKind>(null);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [loggedOut, setLoggedOut] = useState(false);
@@ -335,6 +335,20 @@ function Dashboard() {
   const people = useMemo(() => employees.map(toPerson), [employees]);
   const runsView = useMemo(() => toRunViews(liveRuns, people), [liveRuns, people]);
   const activity = useMemo(() => activityRows(runsView, people, fundings), [runsView, people, fundings]);
+
+  // Default the highlighted Payout Activity bar to the third-last month, once
+  // per page load, so a reload always lands on the same deterministic bar
+  // (independent of today's date). User hovers change it after that.
+  const didInitBar = useRef(false);
+  useEffect(() => {
+    if (didInitBar.current || runsView.length === 0) return;
+    didInitBar.current = true;
+    const seedOldest = runsView.filter((r) => !r.live).map((r) => r.month).reverse();
+    const liveOldest = runsView.filter((r) => r.live).map((r) => r.month).reverse();
+    const months = [...seedOldest];
+    for (const m of liveOldest) if (!months.includes(m)) months.push(m);
+    if (months.length) setActiveBar(months[Math.max(0, months.length - 3)]);
+  }, [runsView]);
   const monthlyTotal = useMemo(() => people.reduce((a, p) => a + p.salary, 0), [people]);
 
   const runwayValue = useMemo(() => {
