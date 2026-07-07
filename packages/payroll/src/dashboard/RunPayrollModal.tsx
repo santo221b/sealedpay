@@ -823,7 +823,7 @@ function Finale(props: {
           into one surface, so the finale reads as confirm + one primary. */}
       <div
         className="mx-auto mt-[18px]"
-        style={{ borderRadius: 16, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.18)", padding: "15px 16px 6px" }}
+        style={{ borderRadius: 16, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.18)", padding: "15px 16px 4px" }}
       >
         <button
           type="button"
@@ -848,7 +848,7 @@ function Finale(props: {
           target="_blank"
           rel="noreferrer"
           className="flex items-center justify-between transition-colors hover:text-[#e8f0ec]"
-          style={{ fontSize: 12, color: "#9db3aa", textDecoration: "none", padding: "11px 0 3px" }}
+          style={{ fontSize: 12, color: "#9db3aa", textDecoration: "none", padding: "13px 6px 11px" }}
         >
           View on Etherscan
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
