@@ -47,13 +47,22 @@ function load(): Employee[] {
   }
 }
 
-/** Validation shared by add + edit. Returns a problem string or null if OK. */
+/** Checksum when the address is well-formed; otherwise keep exactly what was
+ *  entered. Address verification is intentionally NOT enforced at add/edit
+ *  time, so this never throws (plain getAddress would on a bad address). */
+function normalizeAddress(address: string): `0x${string}` {
+  const trimmed = address.trim();
+  return (isAddress(trimmed) ? getAddress(trimmed) : trimmed) as `0x${string}`;
+}
+
+/** Validation shared by add + edit. Returns a problem string or null if OK.
+ *  Note: the wallet address is deliberately NOT verified here — only name and
+ *  salary formatting are checked. */
 export function validateEmployee(
   input: EmployeeInput,
   decimals?: number,
 ): string | null {
   if (!input.name.trim()) return "Name is required.";
-  if (!isAddress(input.address)) return "Not a valid address (mixed-case must match its EIP-55 checksum).";
   if (!isValidAmountText(input.salary)) return "Salary must be a plain decimal, e.g. 2500.50";
   const fraction = input.salary.trim().split(".")[1];
   if (decimals !== undefined && fraction && fraction.length > decimals) {
@@ -77,7 +86,7 @@ export function useEmployees() {
         name: input.name.trim(),
         role: input.role?.trim() || undefined,
         dept: input.dept?.trim() || undefined,
-        address: getAddress(input.address), // normalize to checksummed form
+        address: normalizeAddress(input.address),
         salary: input.salary.trim(),
       },
     ]);
@@ -92,7 +101,7 @@ export function useEmployees() {
               name: input.name.trim(),
               role: input.role?.trim() || undefined,
         dept: input.dept?.trim() || undefined,
-              address: getAddress(input.address),
+              address: normalizeAddress(input.address),
               salary: input.salary.trim(),
             }
           : e,
@@ -112,7 +121,7 @@ export function useEmployees() {
         name: input.name.trim(),
         role: input.role?.trim() || undefined,
         dept: input.dept?.trim() || undefined,
-        address: getAddress(input.address),
+        address: normalizeAddress(input.address),
         salary: input.salary.trim(),
       })),
     );
