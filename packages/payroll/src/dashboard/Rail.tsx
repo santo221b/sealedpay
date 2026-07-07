@@ -126,9 +126,10 @@ export function Rail({
             <GearGlyph size={15} />
           </button>
           {gearPopover && (
-            // The gear sits low on the rail, so the (tall) settings popover
-            // opens UPWARD from the icon's bottom to stay on screen.
-            <div className="absolute z-[10]" style={{ left: 50, bottom: -7 }} onMouseDown={(e) => e.stopPropagation()}>
+            // The gear sits low on the rail and the settings popover is tall, so
+            // pin it to the viewport bottom-left (beside the rail). It opens
+            // upward and can never clip off the top or bottom of the screen.
+            <div className="fixed z-[10]" style={{ left: 92, bottom: 22 }} onMouseDown={(e) => e.stopPropagation()}>
               {gearPopover}
             </div>
           )}
