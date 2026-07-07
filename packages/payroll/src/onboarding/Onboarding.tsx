@@ -746,7 +746,7 @@ function FundControls({
         {label}
       </motion.button>
 
-      <p style={{ fontSize: 11.5, color: "#7f9a8f", marginTop: 11, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 11.5, color: "#7f9a8f", marginTop: 11, paddingLeft: 7, lineHeight: 1.5 }}>
         Needs a little Sepolia ETH for gas.{" "}
         <a href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia" target="_blank" rel="noreferrer" style={{ color: "#5fe3ab", textDecoration: "none" }}>
           Get some free
