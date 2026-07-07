@@ -629,10 +629,9 @@ function VerificationsTab({ data }: { data: DashboardData }) {
   const verified = data.runs.filter((r) => r.verified).length;
   return (
     <div className="flex flex-col" style={{ gap: 20 }}>
-      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
+      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <StatCard value={String(data.encryptedCount)} label="Amounts encrypted" sub="on-chain, never public" />
         <StatCard value={`${verified}/${data.runs.length}`} label="Runs verified" sub="decrypted and matched" />
-        <StatCard value="0" label="Amounts ever public" sub="fully confidential" accent />
       </div>
       <GlassCard style={{ padding: "20px 23px" }}>
         <div style={{ fontWeight: 400, fontSize: 17 }}>Verifications</div>
