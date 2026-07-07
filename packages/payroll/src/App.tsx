@@ -87,6 +87,16 @@ export function App() {
 }
 
 function Dashboard() {
+  /* ── toast (top-center) — also surfaces balance reveal / decrypt errors ── */
+  const [toast, setToastState] = useState<ToastState | null>(null);
+  const toastTimer = useRef<number>(undefined);
+  const showToast = useCallback((kind: "ok" | "err", msg: string) => {
+    window.clearTimeout(toastTimer.current);
+    setToastState({ kind, msg, id: Date.now() });
+    toastTimer.current = window.setTimeout(() => setToastState(null), 4200);
+  }, []);
+  const onRevealError = useCallback((msg: string) => showToast("err", msg), [showToast]);
+
   /* ── data hooks ────────────────────────────────────────────────────────── */
   const { address: employer } = useAccount();
   const { employees, add } = useEmployees();
@@ -94,7 +104,7 @@ function Dashboard() {
   const { settings, set: setSetting } = useSettings();
   const { notifs, unread, add: addNotif, markRead, markAllRead } = useNotifications();
   const { decimals } = useTokenMeta(TOKEN);
-  const balance = useWalletBalance(decimals);
+  const balance = useWalletBalance(decimals, onRevealError);
   const retro = useVerifyRun(TOKEN);
 
   /* ── ui state ──────────────────────────────────────────────────────────── */
@@ -115,18 +125,10 @@ function Dashboard() {
   const [revealMonthly, setRevealMonthly] = useState(false);
   const [empReveal, setEmpReveal] = useState(false);
   const [empRows, setEmpRows] = useState<Record<string, boolean>>({});
-  const [toast, setToastState] = useState<ToastState | null>(null);
   const [permPrompt, setPermPrompt] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const toastTimer = useRef<number>(undefined);
 
   const identity = loadIdentity();
-
-  const showToast = useCallback((kind: "ok" | "err", msg: string) => {
-    window.clearTimeout(toastTimer.current);
-    setToastState({ kind, msg, id: Date.now() });
-    toastTimer.current = window.setTimeout(() => setToastState(null), 4200);
-  }, []);
 
   /* ── seed the design's demo team once, on first dashboard visit ────────── */
   const seededRef = useRef(false);

@@ -161,11 +161,22 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
                 <span>Available balance</span>
                 <button
                   type="button"
-                  aria-label={balanceRevealed ? "Hide balance" : "Reveal balance"}
+                  aria-label={
+                    data.balance.pending ? "Decrypting balance" : balanceRevealed ? "Hide balance" : "Reveal balance"
+                  }
                   onClick={data.balance.toggle}
-                  className="cursor-pointer opacity-85 transition-opacity hover:opacity-100"
+                  disabled={data.balance.pending}
+                  className={`transition-opacity ${data.balance.pending ? "cursor-wait opacity-100" : "cursor-pointer opacity-85 hover:opacity-100"}`}
                 >
-                  <EyeGlyph size={13} />
+                  {data.balance.pending ? (
+                    <span
+                      className="inline-block animate-spin rounded-full align-middle"
+                      style={{ width: 12, height: 12, border: "1.5px solid rgba(255,255,255,0.4)", borderTopColor: "#fff" }}
+                      aria-hidden
+                    />
+                  ) : (
+                    <EyeGlyph size={13} />
+                  )}
                 </button>
               </div>
               <div
@@ -180,9 +191,6 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
                     label="balance"
                   />
                   <div style={{ fontWeight: 700 }}>cUSDd</div>
-                  {data.balance.error && (
-                    <div style={{ fontSize: 10, color: tokens.warn.dangerText, marginTop: 2 }}>{data.balance.error}</div>
-                  )}
                 </div>
               </div>
             </div>

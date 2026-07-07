@@ -24,7 +24,7 @@ const TOKEN = DEMO_TOKEN_ADDRESS;
 /** Per-call faucet cap enforced by the demo token contract (6 decimals). */
 export const MAX_FAUCET_MINT = 1_000_000n * 10n ** 6n;
 
-export function useWalletBalance(decimals: number | undefined) {
+export function useWalletBalance(decimals: number | undefined, onError?: (msg: string) => void) {
   const { address: employer } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
@@ -37,6 +37,10 @@ export function useWalletBalance(decimals: number | undefined) {
   // Compare-against without adding `handle` to refresh's deps (avoids setState
   // inside a setState updater, which trips React's "update while rendering").
   const handleRef = useRef<`0x${string}`>(undefined);
+  // A synchronous latch: one decryption may be in flight at a time. Set before
+  // the first await so a burst of impatient clicks can't each open a wallet
+  // signature prompt (the popup can lag seconds behind the click).
+  const inFlight = useRef(false);
 
   const refresh = useCallback(async () => {
     if (!publicClient || !employer || !TOKEN) return;
@@ -75,10 +79,13 @@ export function useWalletBalance(decimals: number | undefined) {
 
   /** Real decryption (one wallet signature). Cached in memory until the handle changes. */
   const reveal = useCallback(async () => {
+    // Ignore repeat clicks while a decryption is already running — otherwise
+    // each one queues another wallet signature prompt.
+    if (inFlight.current) return;
     setError(undefined);
     // A wallet is required before anything is revealed — never fabricate a 0.
     if (!employer || !walletClient || !TOKEN) {
-      setError("Connect your wallet first");
+      onError?.("Connect your wallet first");
       return;
     }
     if (clear !== undefined) {
@@ -90,6 +97,7 @@ export function useWalletBalance(decimals: number | undefined) {
       setRevealed(true);
       return;
     }
+    inFlight.current = true;
     setPending(true);
     try {
       const instance = await getFhevmInstance(FHE_NETWORK);
@@ -105,11 +113,14 @@ export function useWalletBalance(decimals: number | undefined) {
       setRevealed(true);
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      setError(/user rejected|denied/i.test(message) ? "Request cancelled in the wallet." : message);
+      const friendly = /user rejected|denied/i.test(message) ? "Request cancelled in the wallet." : message;
+      setError(friendly);
+      onError?.(friendly);
     } finally {
+      inFlight.current = false;
       setPending(false);
     }
-  }, [clear, handle, employer, walletClient]);
+  }, [clear, handle, employer, walletClient, onError]);
 
   const hide = useCallback(() => setRevealed(false), []);
 
