@@ -86,6 +86,10 @@ function compactAmount(v: number): string {
 
 export function App() {
   const [onboarded, setOnboarded] = useState(() => loadIdentity().onboarded);
+  // Signing back in after logout replays the onboarding flow (pre-filled with
+  // the saved identity), so "Sign back in as employer" leads through the
+  // branded welcome and wallet reconnect instead of dropping into the dashboard.
+  const [reonboard, setReonboard] = useState(false);
   // A ?view=mypay deep link opens the recipient view directly — shareable, works
   // on any device, and needs no employer login (the real recipient use case).
   const [recipient, setRecipient] = useState(() => {
@@ -95,20 +99,25 @@ export function App() {
       return false;
     }
   });
+  const identity = loadIdentity();
   return (
     <DisperseProviders theme={sealedTheme} appName="SealedPay">
       {recipient ? (
         <MyPay onExit={() => setRecipient(false)} />
       ) : onboarded ? (
-        <Dashboard onViewMyPay={() => setRecipient(true)} />
+        <Dashboard onViewMyPay={() => setRecipient(true)} onSignBackIn={() => { setReonboard(true); setOnboarded(false); }} />
       ) : (
-        <Onboarding onDone={() => setOnboarded(true)} />
+        <Onboarding
+          onDone={() => { setReonboard(false); setOnboarded(true); }}
+          initialName={reonboard ? identity.name : ""}
+          initialAvatar={reonboard ? identity.avatar : ""}
+        />
       )}
     </DisperseProviders>
   );
 }
 
-function Dashboard({ onViewMyPay }: { onViewMyPay: () => void }) {
+function Dashboard({ onViewMyPay, onSignBackIn }: { onViewMyPay: () => void; onSignBackIn: () => void }) {
   /* ── toast (top-center) — also surfaces balance reveal / decrypt errors ── */
   const [toast, setToastState] = useState<ToastState | null>(null);
   const toastTimer = useRef<number>(undefined);
@@ -472,7 +481,7 @@ function Dashboard({ onViewMyPay }: { onViewMyPay: () => void }) {
   /* ── layout ────────────────────────────────────────────────────────────── */
   if (loggedOut) {
     return (
-      <SignedOutScreen name={identity.name || "there"} onSignIn={() => { setLoggedOut(false); setLoggedOutPref(false); }} onViewMyPay={onViewMyPay} />
+      <SignedOutScreen name={identity.name || "there"} onSignIn={() => { setLoggedOutPref(false); setLoggedOut(false); onSignBackIn(); }} onViewMyPay={onViewMyPay} />
     );
   }
 

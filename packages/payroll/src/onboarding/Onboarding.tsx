@@ -99,13 +99,15 @@ const stageVariants = (reduced: boolean): Variants => ({
 
 /* ── The component ───────────────────────────────────────────────────────── */
 
-export function Onboarding({ onDone }: { onDone: () => void }) {
+export function Onboarding({ onDone, initialName = "", initialAvatar = "" }: { onDone: () => void; initialName?: string; initialAvatar?: string }) {
   const reduced = useReducedMotion();
   useEffect(() => setThemeColor(THEME_COLORS.onboarding), []);
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
-  const [name, setName] = useState("");
-  const [avatar, setAvatar] = useState("");
+  // Pre-filled when signing back in (returning employer) so it is a quick
+  // welcome-back click-through; blank for a genuine first run.
+  const [name, setName] = useState(initialName);
+  const [avatar, setAvatar] = useState(initialAvatar);
   const [understood, setUnderstood] = useState(false);
 
   // Real wallet state replaces the prototype's simulated connect.
