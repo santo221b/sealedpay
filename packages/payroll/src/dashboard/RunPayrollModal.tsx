@@ -392,7 +392,7 @@ function StepSelect(props: {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>{single ? `Pay ${single.name}` : "Run payroll"}</h2>
-          <p style={{ fontSize: 12, color: "#9db3aa", marginTop: 4 }}>
+          <p style={{ fontSize: 12, color: "#9db3aa", marginTop: 4, fontWeight: single ? 600 : 400 }}>
             {single ? "A one-off confidential payment." : "Review who gets paid this run."}
           </p>
         </div>
@@ -550,7 +550,7 @@ function StepSelect(props: {
         whileTap={{ scale: 0.98 }}
         disabled={selectedCount === 0 || props.busy || props.blocked}
         onClick={props.onContinue}
-        className="mt-4 w-full rounded-full text-center font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+        className="mt-4 w-full rounded-full text-center font-medium disabled:cursor-not-allowed disabled:opacity-40"
         style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 13.5, padding: "12.6px 0" }}
       >
         {props.busy ? "Preparing" : single ? "Pay" : "Continue"}
@@ -723,7 +723,7 @@ function StepDisperse(props: {
             {props.error}
           </p>
           {props.pendingTxHash && (
-            <button type="button" onClick={props.onRetryConfirm} className="mt-2 w-full rounded-full font-semibold" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
+            <button type="button" onClick={props.onRetryConfirm} className="mt-2 w-full rounded-full font-medium" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
               Retry confirmation
             </button>
           )}
@@ -800,7 +800,7 @@ function Finale(props: {
       </button>
 
       {props.onVerify && props.verifiedOk === undefined && (
-        <button type="button" onClick={props.onVerify} disabled={props.verifying} className="mx-auto mt-3 block w-full rounded-full font-semibold disabled:opacity-50" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
+        <button type="button" onClick={props.onVerify} disabled={props.verifying} className="mx-auto mt-3 block w-full rounded-full font-medium disabled:opacity-50" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
           {props.verifying ? "Decrypting" : props.single ? "Verify the payment was delivered" : "Verify salaries were delivered"}
         </button>
       )}
@@ -814,7 +814,7 @@ function Finale(props: {
         View on Etherscan
       </a>
 
-      <motion.button type="button" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={props.onDone} className="mt-[18px] w-full rounded-full font-semibold" style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 13.5, padding: "12.6px 0" }}>
+      <motion.button type="button" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={props.onDone} className="mt-[18px] w-full rounded-full font-medium" style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 13.5, padding: "12.6px 0" }}>
         Done
       </motion.button>
     </div>

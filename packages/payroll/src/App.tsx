@@ -536,7 +536,7 @@ function Dashboard() {
                     ) but this page closed before it was recorded.
                   </p>
                   <span className="flex items-center gap-3">
-                    <button className="rounded-full px-3 py-1.5 font-semibold" style={{ background: "#5fe3ab", color: "#0b1512" }} onClick={() => void orphan.recover(orphanRecord)} disabled={orphan.busy}>
+                    <button className="rounded-full px-3 py-1.5 font-medium" style={{ background: "#5fe3ab", color: "#0b1512" }} onClick={() => void orphan.recover(orphanRecord)} disabled={orphan.busy}>
                       {orphan.busy ? "Checking" : "Check & record"}
                     </button>
                     <button className="hover:underline" onClick={() => orphan.dismiss(orphanRecord.txHash)}>

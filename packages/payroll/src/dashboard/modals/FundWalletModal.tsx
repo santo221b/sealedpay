@@ -129,7 +129,7 @@ export function FundWalletModal({ open, onClose, employerShort, busy, phase, err
                 type="button"
                 onClick={onClose}
                 disabled={busy}
-                className="flex-1 cursor-pointer rounded-full text-center font-semibold transition-colors hover:bg-[rgba(95,230,175,0.1)] disabled:opacity-45"
+                className="flex-1 cursor-pointer rounded-full text-center font-medium transition-colors hover:bg-[rgba(95,230,175,0.1)] disabled:opacity-45"
                 style={{
                   background: "rgba(255,255,255,0.06)",
                   border: "1px solid rgba(255,255,255,0.09)",
@@ -151,7 +151,7 @@ export function FundWalletModal({ open, onClose, employerShort, busy, phase, err
                   background: "#f5f8f6",
                   color: "#14503b",
                   fontSize: 12.6,
-                  fontWeight: 700,
+                  fontWeight: 500,
                   padding: "11px 0",
                   opacity: !valid && !busy ? 0.45 : 1,
                 }}

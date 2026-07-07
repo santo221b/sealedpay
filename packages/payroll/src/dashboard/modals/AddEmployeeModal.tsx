@@ -167,7 +167,7 @@ export function AddEmployeeModal({ open, onClose, onAdd }: AddEmployeeModalProps
               type="button"
               onClick={handleAdd}
               disabled={!valid}
-              className="flex-1 cursor-pointer rounded-full text-center font-semibold transition-transform hover:scale-[1.03] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
+              className="flex-1 cursor-pointer rounded-full text-center font-medium transition-transform hover:scale-[1.03] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
               style={{ background: "#f5f8f6", color: "#14503b", fontSize: 12.6, padding: "11px 0" }}
             >
               Add employee

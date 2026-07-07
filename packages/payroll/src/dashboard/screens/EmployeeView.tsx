@@ -103,7 +103,7 @@ export function EmployeeView({
               gap: 5,
               background: "#f5f8f6",
               color: tokens.text.onAccentDark,
-              fontWeight: 700,
+              fontWeight: 500,
               fontSize: 12,
               borderRadius: tokens.radius.pill,
               padding: "9px 18px",
@@ -137,7 +137,7 @@ export function EmployeeView({
               style={{
                 background: "#f5f8f6",
                 color: tokens.text.onAccentDark,
-                fontWeight: 700,
+                fontWeight: 500,
                 fontSize: 11,
                 borderRadius: tokens.radius.pill,
                 padding: "5px 15px",

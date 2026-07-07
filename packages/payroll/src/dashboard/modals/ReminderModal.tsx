@@ -29,7 +29,7 @@ export function ReminderModal({ open, onClose, reminderSet, onConfirm }: Reminde
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 cursor-pointer rounded-full text-center font-semibold transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+            className="flex-1 cursor-pointer rounded-full text-center font-medium transition-colors hover:bg-[rgba(95,230,175,0.1)]"
             style={{
               background: "rgba(255,255,255,0.06)",
               border: "1px solid rgba(255,255,255,0.09)",
@@ -44,7 +44,7 @@ export function ReminderModal({ open, onClose, reminderSet, onConfirm }: Reminde
             type="button"
             onClick={onConfirm}
             className="flex-1 cursor-pointer rounded-full text-center transition-transform hover:scale-[1.03] active:scale-[0.97]"
-            style={{ background: "#f5f8f6", color: "#14503b", fontSize: 12.6, fontWeight: 700, padding: "11px 0" }}
+            style={{ background: "#f5f8f6", color: "#14503b", fontSize: 12.6, fontWeight: 500, padding: "11px 0" }}
           >
             {reminderSet ? "Remove reminder" : "Set reminder"}
           </button>

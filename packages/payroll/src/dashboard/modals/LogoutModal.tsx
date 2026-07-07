@@ -28,7 +28,7 @@ export function LogoutModal({ open, onClose, onConfirm }: LogoutModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 cursor-pointer rounded-full text-center font-semibold transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+            className="flex-1 cursor-pointer rounded-full text-center font-medium transition-colors hover:bg-[rgba(95,230,175,0.1)]"
             style={{
               background: "rgba(255,255,255,0.06)",
               border: "1px solid rgba(255,255,255,0.09)",
@@ -48,7 +48,7 @@ export function LogoutModal({ open, onClose, onConfirm }: LogoutModalProps) {
               border: `1px solid ${tokens.warn.dangerBorder}`,
               color: tokens.warn.dangerText,
               fontSize: 12.6,
-              fontWeight: 600,
+              fontWeight: 500,
               padding: "11px 0",
             }}
           >

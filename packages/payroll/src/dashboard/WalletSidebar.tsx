@@ -206,7 +206,7 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
               >
                 <PlusGlyph size={16} />
               </motion.button>
-              <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: 0.2, color: "rgba(240,250,245,0.9)" }}>Fund</span>
+              <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 0.2, color: "rgba(240,250,245,0.9)" }}>Fund</span>
             </div>
           </div>
         </div>

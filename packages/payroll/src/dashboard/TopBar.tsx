@@ -40,7 +40,7 @@ export function TopBar({
   const reduced = useReducedMotion();
 
   return (
-    <div className="absolute inset-x-0 top-0 z-40 flex items-center" style={{ gap: 22, padding: "16px 32px 9px 32px" }}>
+    <div className="absolute inset-x-0 top-0 z-40 flex items-center" style={{ gap: 22, padding: "16px 32px 9px 45px" }}>
       {/* Logo block */}
       <div className="flex items-center" style={{ gap: 9 }}>
         <SealLogo size={31} />

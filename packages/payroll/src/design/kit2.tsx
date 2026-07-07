@@ -94,7 +94,7 @@ export function PrimaryButton({ children, className = "", disabled, ...rest }: B
       whileHover={disabled || reduced ? undefined : { scale: 1.03, boxShadow: tokens.glass.buttonGlow }}
       whileTap={disabled || reduced ? undefined : { scale: 0.97 }}
       disabled={disabled}
-      className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
+      className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
       style={{ borderRadius: tokens.radius.control, background: tokens.accent.primary, color: tokens.text.onAccentDark }}
       {...(rest as object)}
     >
@@ -110,7 +110,7 @@ export function SecondaryButton({ children, className = "", disabled, ...rest }:
       whileHover={disabled || reduced ? undefined : { scale: 1.03 }}
       whileTap={disabled || reduced ? undefined : { scale: 0.97 }}
       disabled={disabled}
-      className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
+      className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
       style={{
         borderRadius: tokens.radius.control,
         background: tokens.glass.rail,

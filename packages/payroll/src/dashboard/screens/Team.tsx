@@ -53,7 +53,7 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
               background: tokens.accent.primary,
               color: "#0b1512",
               fontSize: 13,
-              fontWeight: 600,
+              fontWeight: 500,
               padding: "10px 22px",
             }}
           >
@@ -82,7 +82,7 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
           />
           <div className="relative z-[1] flex items-center justify-between">
             <span style={{ fontSize: 11, color: "rgba(240,250,245,0.85)" }}>Headcount</span>
-            <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.9, color: "rgba(240,250,245,0.9)" }}>
+            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.9, color: "rgba(240,250,245,0.9)" }}>
               ACTIVE
             </span>
           </div>
@@ -118,7 +118,7 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
           />
           <div className="relative z-[1] flex items-center justify-between">
             <span style={{ fontSize: 11, color: tokens.text.muted }}>Monthly payroll</span>
-            <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.9, color: tokens.text.muted }}>
+            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.9, color: tokens.text.muted }}>
               ENCRYPTED
             </span>
           </div>
