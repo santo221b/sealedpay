@@ -11,9 +11,12 @@
   },
   "dependencies": {
     "@dispersekit/widget": "*",
+    "@fontsource/manrope": "^5.2.8",
     "@rainbow-me/rainbowkit": "^2.2.11",
+    "chart.js": "^4.5.1",
     "framer-motion": "^12.42.2",
     "react": "^19.2.7",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.7",
     "viem": "^2.38.0",
     "wagmi": "^2.19.0"

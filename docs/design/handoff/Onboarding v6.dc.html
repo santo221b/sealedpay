@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;background:#0b100e;}
+  *{box-sizing:border-box;scrollbar-width:none;-ms-overflow-style:none;}
+  *::-webkit-scrollbar{display:none;width:0;height:0;}
+  input::placeholder{color:#6a7e75;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  @keyframes glowpulse{0%,100%{opacity:0.5}50%{opacity:0.85}}
+  @keyframes dcStepSheen{0%{transform:translateX(-130%)}100%{transform:translateX(230%)}}
+  @keyframes dcAurora1{0%{transform:translate(0,0) scale(1)}50%{transform:translate(6%,-5%) scale(1.16)}100%{transform:translate(0,0) scale(1)}}
+  @keyframes dcAurora2{0%{transform:translate(0,0) scale(1.12)}50%{transform:translate(-6%,4%) scale(1)}100%{transform:translate(0,0) scale(1.12)}}
+  @media (prefers-reduced-motion: reduce){ .dcaurora{animation:none !important} .floaty-el{animation:none !important} }
+</style>
+</helmet>
+<div style="min-height:100vh;width:100%;display:flex;flex-direction:column;justify-content:center;font-family:'Manrope',sans-serif;color:#e8f0ec;position:relative;overflow:hidden;padding:40px;background:radial-gradient(135% 82% at 50% 124%, rgba(78,206,152,0.6), rgba(46,148,116,0.14) 40%, rgba(0,0,0,0) 66%), linear-gradient(180deg, #070c0a 0%, #0a110e 48%, #0c1712 100%)">
+  <div class="dcaurora" style="position:absolute;bottom:-22%;left:8%;width:62%;height:72%;border-radius:50%;background:radial-gradient(circle, rgba(78,206,152,0.13), rgba(0,0,0,0) 70%);filter:blur(46px);pointer-events:none;z-index:0;animation:dcAurora1 17s ease-in-out infinite"></div>
+  <div class="dcaurora" style="position:absolute;bottom:-14%;right:6%;width:52%;height:62%;border-radius:50%;background:radial-gradient(circle, rgba(46,148,116,0.11), rgba(0,0,0,0) 70%);filter:blur(56px);pointer-events:none;z-index:0;animation:dcAurora2 22s ease-in-out infinite"></div>
+
+  <div ref="{{ numRef }}" style="position:absolute;top:50%;right:9%;transform:translateY(-50%);font-family:'Manrope',sans-serif;font-weight:800;font-size:300px;line-height:1;letter-spacing:-0.05em;font-variant-numeric:tabular-nums;font-feature-settings:'tnum';perspective:900px;color:rgba(120,233,192,0.055);pointer-events:none;user-select:none;z-index:0"><span>0</span><span ref="{{ digitRef }}" style="display:inline-block;transform-origin:center center;backface-visibility:hidden">{{ stepDigit }}</span></div>
+  <div ref="{{ cardRef }}" style="width:100%;max-width:540px;margin-left:9%;position:relative;z-index:2">
+
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:30px">
+      <sc-for list="{{ dots }}" as="d" hint-placeholder-count="6">
+        <div onClick="{{ d.onClick }}" style="position:relative;height:{{ d.h }};border-radius:999px;flex:1;background:rgba(255,255,255,0.1);overflow:hidden;cursor:{{ d.cursor }};transition:height .4s ease, filter .2s ease" style-hover="{{ d.hover }}">
+          <div style="position:absolute;inset:0;transform-origin:left center;transform:scaleX({{ d.fill }});background:linear-gradient(90deg,#2f9d74,#78e9c0);border-radius:999px;transition:transform .6s cubic-bezier(.22,1,.36,1)">
+            <sc-if value="{{ d.current }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;background:linear-gradient(100deg,rgba(255,255,255,0) 38%,rgba(255,255,255,0.65) 50%,rgba(255,255,255,0) 62%);animation:dcStepSheen 1.5s ease-in-out infinite;pointer-events:none"></div></sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div ref="{{ contentRef }}" style="min-height:328px;display:flex;flex-direction:column">
+
+      <!-- STEP 0 — WELCOME -->
+      <sc-if value="{{ isStep0 }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+          <div data-anim="" style="position:relative;width:128px;height:128px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">
+            <div style="position:absolute;inset:-14px;border-radius:50%;background:radial-gradient(circle, rgba(90,200,150,0.12), rgba(0,0,0,0) 72%);animation:glowpulse 3.4s ease-in-out infinite"></div>
+            <div class="floaty-el" style="animation:floaty 5s ease-in-out infinite"><svg width="92" height="92" viewBox="0 0 512 512" fill="none"><path fill="#c9bfa8" d="M38.992 42.84a7.723 7.723 0 0 1-7.265-5.107 7.722 7.722 0 0 1 4.647-9.883L68.03 16.444a7.723 7.723 0 0 1 5.236 14.53L41.609 42.381a7.692 7.692 0 0 1-2.617.459zM62.581 76.511a7.721 7.721 0 0 1-6.503-11.876l19.135-29.994a7.722 7.722 0 1 1 13.02 8.307L69.098 72.942a7.715 7.715 0 0 1-6.517 3.569z"></path><path fill="#e3dcc9" d="M121.948 276.016s27.637 72.5.756 91.11c-13.597 9.414-43.483 24.888-54.647 35.966-7.168 7.113-2.134 19.34 7.964 19.365l53.628.132c18.325.045 36.415-4.212 52.738-12.542 26.58-13.563 62.419-39.576 76.033-85.008z"></path><path fill="#e3dcc9" d="M480.697 354.34c.625-21.492-6.902-42.495-21.194-58.56-54.344-63.219-185.243-40.515-231.495-114.791-40.411-50.987-1.287-107.243-32.058-149.643C180.634 13.92 170.808.396 108.174.396 99.716 1.899 66.59-4.1 61.796 6.212a13.06 13.06 0 0 0 .339 14.974c63.066 76.152 10.821 60.009 7.713 144.573-5.159 56.561-.686 87.609 21.009 140.13 42.59 114.409 164.866 85.865 261.538 87.593 8.02.143 11.06 10.736 4.251 14.976l-.166.103c-27.992 18.259-62.495 19.128-94.316 12.415-19.662-.15-6.349 31.567 4.419 41.622 2.7 2.58 3.492 6.569 1.93 9.96-6.352 12.954-7.239 47.959 11.899 37.53 22.129-18.871 48.269-43.172 78.175-47.431 61.074-4.576 115.323-16.059 121.561-89.683l.012-.005c.255-4.833.34-13.681.537-18.629z"></path><path fill="#c9bfa8" d="M459.503 295.78c-54.344-63.219-185.243-40.515-231.495-114.791-40.411-50.987-1.287-107.243-32.058-149.643C181.073 14.42 171.371 1.176 113.429.43c21.457 5.639 29.112 15.806 39.094 27.713 30.771 44.45-8.353 115.782 32.058 169.235 46.252 77.867 177.151 54.065 231.495 120.341 14.292 16.841 21.819 38.86 21.194 61.391-.197 5.187-.282 14.463-.538 19.529l-.012.005c-1.91 23.627-8.324 41.141-18.051 54.22 33.193-10.542 57.432-32.149 61.478-79.893l.012-.005c.256-4.832.341-13.68.538-18.628.625-21.49-6.902-42.494-21.194-58.558z"></path><path fill="#c9bfa8" d="M124.11 46.385a7.722 7.722 0 0 1-7.722-7.722v-6.067c0-4.265 3.457-7.722 7.722-7.722s7.722 3.457 7.722 7.722v6.067a7.722 7.722 0 0 1-7.722 7.722z"></path></svg></div>
+          </div>
+          <div data-anim="" style="font-size:12px;font-weight:400;letter-spacing:0.4px;color:#78e9c0;margin-top:20px">Confidential payroll</div>
+          <div data-anim="" style="font-family:'Manrope',sans-serif;font-weight:700;font-size:34px;line-height:1.15;margin-top:12px;letter-spacing:0.2px" ref="{{ welcomeRef }}">Welcome to SealedPay</div>
+          <div data-anim="" style="font-size:15px;font-weight:400;color:#9db3aa;margin-top:14px;max-width:400px;line-height:1.55">Pay your whole team in one transaction. Salaries stay encrypted, on-chain, end to end.</div>
+        </div>
+      </sc-if>
+
+      <!-- STEP 1 — NAME -->
+      <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+          <div data-anim="" style="font-size:12px;font-weight:600;letter-spacing:0.4px;color:#78e9c0">Get started</div>
+          <div data-anim="" style="font-family:'Manrope',sans-serif;font-weight:700;font-size:29px;margin-top:12px;line-height:1.2">First, what should we call you?</div>
+          <div data-anim="" style="font-size:14px;color:#9db3aa;margin-top:12px;line-height:1.5">We’ll use your name to personalize the workspace.</div>
+          <div data-anim="" style="margin-top:26px">
+            <input value="{{ name }}" onInput="{{ onName }}" placeholder="Enter your first name" style="width: 100%; background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.14); border-radius: 98px; padding: 17px 22px; color: #f2f7f4; font-size: 17px; font-family: 'Manrope',sans-serif; outline: none; backdrop-filter: blur(22px) saturate(1.3); -webkit-backdrop-filter: blur(22px) saturate(1.3); box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.12), inset 0 -1px 0 0 rgba(0,0,0,0.15), 0 10px 30px -14px rgba(0,0,0,0.55); transition: border .2s" style-focus="border:1px solid rgba(95,230,175,0.6)">
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- STEP 2 — ROLE / CONTEXT -->
+      <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+          <div data-anim="" style="font-size:12px;font-weight:600;letter-spacing:0.4px;color:#78e9c0">Your role</div>
+          <div data-anim="" style="font-family:'Manrope',sans-serif;font-weight:700;font-size:29px;margin-top:12px;line-height:1.25">You’re the payroll administrator{{ nameComma }}</div>
+          <div data-anim="" style="font-size:14.5px;color:#9db3aa;margin-top:16px;line-height:1.6">You run confidential payroll for a team of 8. Salaries are encrypted on-chain with Zama FHE. You approve <span style="color:#cfe0d8">one transaction</span>, and everyone gets paid without exposing a single amount.</div>
+          <div data-anim="" onClick="{{ toggleUnderstood }}" style="display: flex; align-items: flex-start; gap: 14px; margin-top: 22px; background: rgba(110,196,186,0.17); border: 1px solid rgba(255,255,255,0.13); border-radius: 20px; padding: 18px 20px; cursor: pointer; user-select: none">
+            <div ref="{{ checkRef }}" style="width:26px;height:26px;border-radius:50%;background:{{ understoodBg }};border:{{ understoodBorder }};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:background .2s, border .2s">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#08331f" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:{{ understoodCheckOpacity }};transition:opacity .18s"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div style="font-size:13.5px;color:#c2d0c9;line-height:1.55">We’ve pre-loaded a demo team and <span style="color:#f2f7f4;font-weight:600">6 months of payroll history</span> so you can explore right away. Any real payroll you run settles live on Sepolia, and those transactions appear here in the UI with their own Etherscan links, on top of the sample data.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- STEP 3 — AVATAR -->
+      <sc-if value="{{ isStep3 }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+          <div data-anim="" style="font-size:12px;font-weight:600;letter-spacing:0.4px;color:#78e9c0">Your profile</div>
+          <div data-anim="" style="font-family:'Manrope',sans-serif;font-weight:700;font-size:29px;margin-top:12px">Choose your avatar</div>
+          <div data-anim="" style="font-size:14px;color:#9db3aa;margin-top:12px">Pick a face for your admin profile.</div>
+          <div data-anim="" style="display:flex;gap:15px;margin-top:28px;justify-content:center">
+            <div onClick="{{ pick1 }}" style="position:relative;width:104px;height:104px;border-radius:50%;cursor:pointer;padding:4px;background:{{ ring1 }};transform:{{ scale1 }};transition:background .25s, transform .2s" style-hover="transform:translateY(-4px)">
+              <img src="avatars/avatar-1.svg" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;background:rgba(20,40,32,0.6);display:block">
+              <sc-if value="{{ sel1 }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;bottom:2px;right:2px;width:28px;height:28px;border-radius:50%;background:#3bbf8e;border:3px solid #101915;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#08331f" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              </sc-if>
+            </div>
+            <div onClick="{{ pick2 }}" style="position:relative;width:104px;height:104px;border-radius:50%;cursor:pointer;padding:4px;background:{{ ring2 }};transform:{{ scale2 }};transition:background .25s, transform .2s" style-hover="transform:translateY(-4px)">
+              <img src="avatars/avatar-2.svg" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;background:rgba(20,40,32,0.6);display:block">
+              <sc-if value="{{ sel2 }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;bottom:2px;right:2px;width:28px;height:28px;border-radius:50%;background:#3bbf8e;border:3px solid #101915;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#08331f" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              </sc-if>
+            </div>
+            <div onClick="{{ pick3 }}" style="position:relative;width:104px;height:104px;border-radius:50%;cursor:pointer;padding:4px;background:{{ ring3 }};transform:{{ scale3 }};transition:background .25s, transform .2s" style-hover="transform:translateY(-4px)">
+              <img src="avatars/avatar-3.svg" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;background:rgba(20,40,32,0.6);display:block">
+              <sc-if value="{{ sel3 }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;bottom:2px;right:2px;width:28px;height:28px;border-radius:50%;background:#3bbf8e;border:3px solid #101915;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#08331f" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              </sc-if>
+            </div>
+            <div onClick="{{ pick4 }}" style="position:relative;width:104px;height:104px;border-radius:50%;cursor:pointer;padding:4px;background:{{ ring4 }};transform:{{ scale4 }};transition:background .25s, transform .2s" style-hover="transform:translateY(-4px)">
+              <img src="avatars/avatar-profile.svg" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;background:rgba(20,40,32,0.6);display:block">
+              <sc-if value="{{ sel4 }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;bottom:2px;right:2px;width:28px;height:28px;border-radius:50%;background:#3bbf8e;border:3px solid #101915;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#08331f" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- STEP 4 — WALLET -->
+      <sc-if value="{{ isStep4 }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+          <div data-anim="" style="font-size:12px;font-weight:600;letter-spacing:0.4px;color:#78e9c0">Connect</div>
+          <div data-anim="" style="font-family:'Manrope',sans-serif;font-weight:700;font-size:29px;margin-top:12px">Connect your wallet</div>
+          <div data-anim="" style="font-size:14px;color:#9db3aa;margin-top:12px;line-height:1.5">Payroll settles from your wallet on the Sepolia testnet. No real funds, it’s a demo.</div>
+          <div data-anim="" style="margin-top:26px">
+            <sc-if value="{{ walletIdle }}" hint-placeholder-val="{{ true }}">
+              <div onClick="{{ connectWallet }}" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: #3bbf8e; color: #08331f; font-size: 15px; font-weight: 500; border-radius: 85px; padding: 16px 0; cursor: pointer; transition: transform .15s" style-hover="transform:scale(1.02)" style-active="transform:scale(0.98)">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#08331f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2.5"></rect><path d="M16 12h.01"></path><path d="M2 9h16a2 2 0 0 1 2 2"></path></svg>
+                <span>Connect wallet</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ walletConnecting }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;justify-content:center;gap:11px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#cfdcd6;font-size:15px;font-weight:600;border-radius:15px;padding:16px 0">
+                <div style="width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(120,233,192,0.25);border-top-color:#78e9c0;animation:spin 0.7s linear infinite"></div>
+                <span>Connecting…</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ walletConnected }}" hint-placeholder-val="{{ false }}">
+              <div ref="{{ walletCardRef }}" style="display: flex; align-items: center; gap: 13px; background: rgba(110,196,186,0.14); border: 1px solid rgba(95,230,175,0.35); border-radius: 86px; padding: 16px 18px">
+                <div style="width:38px;height:38px;border-radius:50%;background:rgba(95,230,175,0.18);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <div style="flex:1">
+                  <div style="font-size:14px;font-weight:600;color:#eef4f1">Wallet connected</div>
+                  <div style="font-size:12px;color:#9db3aa;margin-top:2px">0x3F9e4A21…9bC83Fc3 · Sepolia</div>
+                </div>
+                <div style="width:8px;height:8px;border-radius:50%;background:#34d399"></div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- STEP 5 — ALL SET -->
+      <sc-if value="{{ isStep5 }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+          <div data-anim="" style="position:relative;width:96px;height:96px;margin-bottom:6px">
+            <div style="position:absolute;inset:0;border-radius:50%;background:rgba(95,230,175,0.14);border:1px solid rgba(95,230,175,0.3)"></div>
+            <img ref="{{ chosenImgRef }}" alt="You" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="position:absolute;inset:6px;width:84px;height:84px;border-radius:50%;object-fit:cover;background:rgba(20,40,32,0.6)">
+            <div style="position:absolute;bottom:0;right:0;width:30px;height:30px;border-radius:50%;background:#3bbf8e;border:3px solid #101915;display:flex;align-items:center;justify-content:center">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#08331f" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+          </div>
+          <div data-anim="" style="font-size:12px;font-weight:400;letter-spacing:0.4px;color:#78e9c0;margin-top:18px">All set</div>
+          <div data-anim="" style="font-family:'Manrope',sans-serif;font-weight:700;font-size:31px;margin-top:8px">You’re all set{{ nameComma }}</div>
+          <div data-anim="" style="font-size:14.5px;color:#9db3aa;margin-top:12px;max-width:380px;line-height:1.55">Your workspace is ready. Everything below is live. Reveal amounts, run payroll, explore the team.</div>
+          <div data-anim="" style="display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;justify-content:center">
+            <div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0);border:1px solid rgba(95,230,175,0.5);color:#78e9c0;font-size:12px;border-radius:999px;padding:6px 13px"><div style="width:6px;height:6px;border-radius:50%;background:#34d399"></div>Wallet connected</div>
+            <div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0);border:1px solid rgba(95,230,175,0.5);color:#78e9c0;font-size:12px;border-radius:999px;padding:6px 13px">Team of 8 loaded</div>
+            <div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0);border:1px solid rgba(95,230,175,0.5);color:#78e9c0;font-size:12px;border-radius:999px;padding:6px 13px">6 months history</div>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:26px">
+      <sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ onBack }}" style="font-size:14px;color:#9db3aa;cursor:pointer;padding:11px 18px;border-radius:999px;transition:background .2s, color .2s;user-select:none" style-hover="background:rgba(255,255,255,0.05);color:#e8f0ec">Back</div>
+      </sc-if>
+      <sc-if value="{{ hideBack }}" hint-placeholder-val="{{ true }}">
+        <div></div>
+      </sc-if>
+      <div onClick="{{ onContinue }}" style="display:flex;align-items:center;gap:8px;background:{{ continueBg }};color:{{ continueColor }};font-size:14.5px;font-weight:500;border-radius:999px;padding:13px 26px;cursor:{{ continueCursor }};opacity:{{ continueOpacity }};transition:transform .15s, opacity .25s;user-select:none" style-hover="transform:scale(1.03)">
+        <span>{{ continueLabel }}</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ continueColor }}" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="position:absolute;bottom:22px;left:0;right:0;text-align:center;font-size:11px;color:rgba(233,244,238,0.62);text-shadow:0 1px 5px rgba(6,20,14,0.55)">SealedPay · Powered by DisperseKit · TokenOps disperse · Zama FHE</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { step: 0, name: '', avatar: '', wallet: 'idle', understood: false, transitioning: false };
+  cardRef = React.createRef();
+  contentRef = React.createRef();
+  walletCardRef = React.createRef();
+  chosenImgRef = React.createRef();
+  numRef = React.createRef();
+  digitRef = React.createRef();
+  checkRef = React.createRef();
+  welcomeRef = React.createRef();
+  TOTAL = 6;
+  AVATARS = ['avatars/avatar-1.svg', 'avatars/avatar-2.svg', 'avatars/avatar-3.svg', 'avatars/avatar-profile.svg'];
+
+  EASE = 'cubic-bezier(0.22,1,0.36,1)';
+
+  componentDidMount() {
+    requestAnimationFrame(() => this.animateIn(true));
+    this._wScr = setTimeout(() => this.scrambleWelcome(), 280);
+  }
+
+  scrambleWelcome() {
+    const el = this.welcomeRef.current;
+    const target = 'Welcome to SealedPay';
+    if (!el) return;
+    const reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if (reduce) { el.textContent = target; return; }
+    const glyphs = '*#$%';
+    const scrStart = 0, per = 82, hold = 102, start = performance.now();
+    let lastFlick = 0, cache = '';
+    const tick = (now) => {
+      const t = now - start;
+      const flick = (now - lastFlick) >= 75;
+      if (flick) lastFlick = now;
+      let out = '';
+      for (let i = 0; i < target.length; i++) {
+        const c = target[i];
+        if (c === ' ' || i < scrStart) { out += c; continue; }
+        if (t >= (i - scrStart) * per + hold) out += c;
+        else if (flick || !cache[i]) out += glyphs[(Math.random() * glyphs.length) | 0];
+        else out += cache[i];
+      }
+      cache = out;
+      el.textContent = out;
+      if (t < (target.length - scrStart) * per + hold + 60) requestAnimationFrame(tick);
+      else el.textContent = target;
+    };
+    requestAnimationFrame(tick);
+  }
+
+  flipDigit() {
+    const el = this.digitRef.current;
+    if (!el || !el.animate) return;
+    const reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if (reduce) return;
+    el.animate([{ transform: 'rotateX(-90deg)', opacity: 0 }, { transform: 'rotateX(12deg)', opacity: 1, offset: 0.72 }, { transform: 'rotateX(0deg)', opacity: 1 }], { duration: 360, easing: this.EASE, fill: 'both' });
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.step !== this.state.step) this.flipDigit();
+  }
+
+  animateIn(first) {
+    const cimg = this.chosenImgRef.current;
+    if (cimg) cimg.src = this.state.avatar || this.AVATARS[0];
+    const stage = this.contentRef.current;
+    if (!stage || !stage.animate) return;
+    stage.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 320, fill: 'both' });
+    const items = stage.querySelectorAll('[data-anim]');
+    items.forEach((el, i) => {
+      el.animate([{ opacity: 0, transform: 'translateY(20px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 560, delay: 50 + i * 75, easing: this.EASE, fill: 'both' });
+    });
+    if (first && this.cardRef.current && this.cardRef.current.animate) {
+      this.cardRef.current.animate([{ opacity: 0, transform: 'translateY(24px) scale(0.97)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }], { duration: 620, easing: this.EASE, fill: 'both' });
+    }
+  }
+
+  go(next) {
+    if (this.state.transitioning) return;
+    if (next < 0 || next >= this.TOTAL) return;
+    const stage = this.contentRef.current;
+    const advance = () => this.setState({ step: next, transitioning: false }, () => this.animateIn(false));
+    if (stage && stage.animate) {
+      this.setState({ transitioning: true });
+      const dir = next > this.state.step ? -16 : 16;
+      const a = stage.animate([{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(' + dir + 'px)' }], { duration: 240, easing: 'cubic-bezier(0.4,0,1,1)', fill: 'both' });
+      a.finished.then(advance).catch(advance);
+    } else {
+      this.setState({ step: next }, () => this.animateIn(false));
+    }
+  }
+
+  connectWallet() {
+    if (this.state.wallet !== 'idle') return;
+    this.setState({ wallet: 'connecting' });
+    setTimeout(() => {
+      this.setState({ wallet: 'connected' }, () => {
+        const el = this.walletCardRef.current;
+        if (el && el.animate) el.animate([{ opacity: 0, transform: 'scale(0.94)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 450, easing: this.EASE, fill: 'both' });
+      });
+    }, 1250);
+  }
+
+  finish() {
+    try {
+      localStorage.setItem('sealedpay_onboarded', '1');
+      if (this.state.name.trim()) localStorage.setItem('sealedpay_name', this.state.name.trim());
+      if (this.state.avatar) localStorage.setItem('sealedpay_avatar', this.state.avatar);
+    } catch (e) {}
+    window.location.href = 'DisperseKit%20Payroll.dc.html';
+  }
+
+  renderVals() {
+    const step = this.state.step;
+    const accent = '#3bbf8e';
+    const dots = [];
+    for (let i = 0; i < this.TOTAL; i++) {
+      const clickable = i < step;
+      dots.push({ fill: i <= step ? 1 : 0, current: i === step, h: i <= step ? '3px' : '2px', cursor: clickable ? 'pointer' : 'default', hover: clickable ? 'filter:brightness(1.4)' : '', onClick: clickable ? ((t) => () => this.go(t))(i) : null });
+    }
+    const first = (this.state.name.trim().split(' ')[0]) || '';
+    const nameComma = first ? ', ' + first + '.' : '.';
+    const avatarSel = this.state.avatar;
+    const avatars = this.AVATARS.map((src) => ({
+      src,
+      selected: avatarSel === src,
+      ring: avatarSel === src ? 'linear-gradient(135deg, #5fe3ab, #2f9d74)' : 'rgba(255,255,255,0.08)',
+      onPick: () => this.setState({ avatar: src })
+    }));
+    const chosen = avatarSel || this.AVATARS[0];
+    const P = this.AVATARS;
+    const ringOf = (p) => avatarSel === p ? 'linear-gradient(135deg, #5fe3ab, #2f9d74)' : 'rgba(255,255,255,0.08)';
+    const pickOf = (p) => () => this.setState({ avatar: p });
+
+    let canContinue = true;
+    if (step === 1) canContinue = first.length > 0;
+    if (step === 2) canContinue = this.state.understood;
+    if (step === 3) canContinue = !!avatarSel;
+    if (step === 4) canContinue = this.state.wallet === 'connected';
+
+    let continueLabel = 'Continue';
+    if (step === 0) continueLabel = "Let's get started";
+    if (step === this.TOTAL - 1) continueLabel = "Let's go";
+
+    const onContinue = () => {
+      if (!canContinue) return;
+      if (step === this.TOTAL - 1) return this.finish();
+      this.go(step + 1);
+    };
+
+    return {
+      dots,
+      numRef: this.numRef,
+      digitRef: this.digitRef,
+      welcomeRef: this.welcomeRef,
+      stepDigit: String(step + 1).padStart(2, '0').slice(-1),
+      checkRef: this.checkRef,
+      toggleUnderstood: () => this.setState((st) => ({ understood: !st.understood }), () => { const el = this.checkRef.current; if (this.state.understood && el && el.animate) el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.22)' }, { transform: 'scale(1)' }], { duration: 300, easing: this.EASE }); }),
+      understoodBg: this.state.understood ? '#3bbf8e' : 'rgba(255,255,255,0.05)',
+      understoodBorder: this.state.understood ? '1px solid rgba(0,0,0,0)' : '1px solid rgba(255,255,255,0.18)',
+      understoodCheckOpacity: this.state.understood ? 1 : 0,
+      stepNum: String(step + 1).padStart(2, '0'),
+      chosenImgRef: this.chosenImgRef,
+      ring1: ringOf(P[0]), sel1: avatarSel === P[0], pick1: pickOf(P[0]),
+      ring2: ringOf(P[1]), sel2: avatarSel === P[1], pick2: pickOf(P[1]),
+      ring3: ringOf(P[2]), sel3: avatarSel === P[2], pick3: pickOf(P[2]),
+      ring4: ringOf(P[3]), sel4: avatarSel === P[3], pick4: pickOf(P[3]),
+      scale1: avatarSel===P[0]?'scale(1.15)':'none', scale2: avatarSel===P[1]?'scale(1.15)':'none', scale3: avatarSel===P[2]?'scale(1.15)':'none', scale4: avatarSel===P[3]?'scale(1.15)':'none',
+      isStep0: step === 0, isStep1: step === 1, isStep2: step === 2,
+      isStep3: step === 3, isStep4: step === 4, isStep5: step === 5,
+      name: this.state.name,
+      onName: (e) => this.setState({ name: e.target.value }),
+      nameComma,
+      avatars,
+      chosenAvatarSrc: chosen,
+      walletIdle: this.state.wallet === 'idle',
+      walletConnecting: this.state.wallet === 'connecting',
+      walletConnected: this.state.wallet === 'connected',
+      connectWallet: () => this.connectWallet(),
+      walletCardRef: this.walletCardRef,
+      cardRef: this.cardRef,
+      contentRef: this.contentRef,
+      showBack: step > 0,
+      hideBack: step === 0,
+      onBack: () => this.go(step - 1),
+      onContinue,
+      continueLabel,
+      continueBg: accent,
+      continueColor: '#08331f',
+      continueCursor: canContinue ? 'pointer' : 'not-allowed',
+      continueOpacity: canContinue ? 1 : 0.4
+    };
+  }
+}
+</script>
+</body>
+</html>

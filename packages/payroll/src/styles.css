@@ -1,5 +1,117 @@
+/* Manrope — self-hosted so the app renders identically offline and on Vercel. */
+@import "@fontsource/manrope/400.css";
+@import "@fontsource/manrope/500.css";
+@import "@fontsource/manrope/600.css";
+@import "@fontsource/manrope/700.css";
+@import "@fontsource/manrope/800.css";
+
 @import "tailwindcss";
 
 /* The widget ships as workspace source; scan it so its utility classes are
    generated in this app's stylesheet (same as demo-host). */
 @source "../../widget/src";
+
+/* SealedPay design-system base (per design handoff README §Design Tokens). */
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background: #070d0b;
+  color: #f2f7f4;
+  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  /* The document itself never scrolls — only the dashboard content column. */
+  overflow: hidden;
+}
+
+/* Amounts never jitter while scrambling. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Diagonal hatch for inactive Payout Activity bars. */
+.hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(196, 181, 253, 0.55) 0 3px,
+    rgba(196, 181, 253, 0.12) 3px 7px
+  );
+}
+
+/* Onboarding ambient animations (verbatim from the design prototype). */
+@keyframes dc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes dc-floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+@keyframes dc-glowpulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+@keyframes dc-step-sheen {
+  0% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(230%);
+  }
+}
+@keyframes dc-aurora-1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(6%, -5%) scale(1.16);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+@keyframes dc-aurora-2 {
+  0% {
+    transform: translate(0, 0) scale(1.12);
+  }
+  50% {
+    transform: translate(-6%, 4%) scale(1);
+  }
+  100% {
+    transform: translate(0, 0) scale(1.12);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dc-aurora,
+  .dc-floaty,
+  .dc-sheen,
+  .dc-glow {
+    animation: none !important;
+  }
+}
+
+/* Thin translucent scrollbars for internal scroll areas. */
+.slim-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.slim-scroll::-webkit-scrollbar-thumb {
+  background: rgba(157, 179, 170, 0.25);
+  border-radius: 899px;
+}
+.slim-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(157, 179, 170, 0.25) transparent;
+}

@@ -25,6 +25,8 @@ import { useAccount } from "wagmi";
 
 import { Sidebar, type Screen } from "./components/Sidebar";
 import { PButton, Spinner } from "./components/kit";
+import { Onboarding } from "./onboarding/Onboarding";
+import { loadIdentity } from "./lib/prefs";
 import { useEmployees } from "./lib/employees";
 import { useHistory, useNextDue } from "./lib/history";
 import { clearPendingRun, savePendingRun, useOrphanRun } from "./lib/orphan";
@@ -48,9 +50,11 @@ const TITLES: Record<Screen, { title: string; sub?: string }> = {
 };
 
 export function App() {
+  // First-run gate (design-mandated): onboarding until sealedpay_onboarded=1.
+  const [onboarded, setOnboarded] = useState(() => loadIdentity().onboarded);
   return (
     <DisperseProviders theme={payrollTheme}>
-      <Shell />
+      {onboarded ? <Shell /> : <Onboarding onDone={() => setOnboarded(true)} />}
     </DisperseProviders>
   );
 }

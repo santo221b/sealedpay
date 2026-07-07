@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  html,body{margin:0;padding:0;background:#070d0b;}
+  *{box-sizing:border-box;}
+  input::placeholder{color:#566a61;}
+  @keyframes dcOvKf{from{opacity:0}to{opacity:1}}
+  @keyframes dcPopKf{from{opacity:0;transform:translateY(-8px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+  .dcov{animation:dcOvKf .2s ease-out both}
+  .dcpop{animation:dcPopKf .34s cubic-bezier(.2,1.06,.3,1) both}
+  .dcpop-tl{transform-origin:0 0}
+  @media (prefers-reduced-motion: reduce){.dcov,.dcpop{animation:dcOvKf .14s ease-out both}}
+  *{scrollbar-width:none;-ms-overflow-style:none;}
+  *::-webkit-scrollbar{display:none;width:0;height:0;}
+  @keyframes dcSpin{to{transform:rotate(360deg)}}
+  @keyframes dcShim{0%{background-position:120% 0}100%{background-position:-120% 0}}
+  @keyframes dcPulse{0%,100%{opacity:0.5;transform:scale(1)}50%{opacity:0.85;transform:scale(1.08)}}
+  @keyframes dcFlow{0%{transform:translateX(-130%)}100%{transform:translateX(340%)}}
+  @keyframes dcSealOut{0%{opacity:1;filter:blur(0)}100%{opacity:0;filter:blur(3px);transform:scale(0.9)}}
+  @keyframes dcSealIn{0%{opacity:0;transform:scale(0.5)}60%{opacity:1;transform:scale(1.15)}100%{opacity:1;transform:scale(1)}}
+  @keyframes dcSheen{0%{background-position:130% 0}100%{background-position:-130% 0}}
+  @keyframes dcBloom{0%{opacity:0;transform:scale(0.55)}55%{opacity:1}100%{opacity:0.6;transform:scale(1)}}
+  @keyframes dcCheckPop{0%{transform:scale(0);opacity:0}62%{transform:scale(1.18);opacity:1}100%{transform:scale(1)}}
+  @keyframes dcBarPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.16)}}
+  @keyframes dcToastIn{from{opacity:0;transform:translateX(-50%) translateY(-14px) scale(0.96)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+  .dctoast{animation:dcToastIn .34s cubic-bezier(.2,1.06,.3,1) both}
+  @media (prefers-reduced-motion: reduce){.dctoast{animation:dcToastIn .12s ease-out both}.dcpop{animation:dcOvKf .14s ease-out both}}
+</style>
+</helmet>
+<div style="width:100%;min-width:1062px;height:100vh;display:flex;flex-direction:column;font-family:'Manrope',sans-serif;color:#e8f0ec;position:relative;overflow:hidden;background:radial-gradient(585px 459px at 90% 45%, rgba(90,160,131,0.52), rgba(0,0,0,0) 62%), radial-gradient(426.01px 365.15px at -1% 70%, rgba(90,160,131,0.40), rgba(0,0,0,0) 60%), linear-gradient(180deg, #0c1310 0%, #101915 50%, #0d1411 100%)">
+
+  <!-- Top bar -->
+  <div style="display:flex;align-items:center;gap:21.6px;padding:16.2px 32.4px 9px 32.4px;position:absolute;top:0;left:0;right:0;z-index:40">
+    <div style="position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg, rgba(12,19,16,0.98) 0%, rgba(12,19,16,0.97) 70%, rgba(12,19,16,0.72) 84%, rgba(12,19,16,0) 100%);opacity:0;transition:opacity .25s" ref="{{ fadeRef }}"></div>
+    <div style="display:flex;align-items:center;gap:9px">
+      <div style="display:flex;align-items:center;justify-content:center">
+        <svg width="30.6" height="30.6" viewBox="0 0 512 512" fill="none"><path fill="#c9bfa8" d="M38.992 42.84a7.723 7.723 0 0 1-7.265-5.107 7.722 7.722 0 0 1 4.647-9.883L68.03 16.444a7.723 7.723 0 0 1 5.236 14.53L41.609 42.381a7.692 7.692 0 0 1-2.617.459zM62.581 76.511a7.721 7.721 0 0 1-6.503-11.876l19.135-29.994a7.722 7.722 0 1 1 13.02 8.307L69.098 72.942a7.715 7.715 0 0 1-6.517 3.569z"></path><path fill="#e3dcc9" d="M121.948 276.016s27.637 72.5.756 91.11c-13.597 9.414-43.483 24.888-54.647 35.966-7.168 7.113-2.134 19.34 7.964 19.365l53.628.132c18.325.045 36.415-4.212 52.738-12.542 26.58-13.563 62.419-39.576 76.033-85.008z"></path><path fill="#e3dcc9" d="M480.697 354.34c.625-21.492-6.902-42.495-21.194-58.56-54.344-63.219-185.243-40.515-231.495-114.791-40.411-50.987-1.287-107.243-32.058-149.643C180.634 13.92 170.808.396 108.174.396 99.716 1.899 66.59-4.1 61.796 6.212a13.06 13.06 0 0 0 .339 14.974c63.066 76.152 10.821 60.009 7.713 144.573-5.159 56.561-.686 87.609 21.009 140.13 42.59 114.409 164.866 85.865 261.538 87.593 8.02.143 11.06 10.736 4.251 14.976l-.166.103c-27.992 18.259-62.495 19.128-94.316 12.415-19.662-.15-6.349 31.567 4.419 41.622 2.7 2.58 3.492 6.569 1.93 9.96-6.352 12.954-7.239 47.959 11.899 37.53 22.129-18.871 48.269-43.172 78.175-47.431 61.074-4.576 115.323-16.059 121.561-89.683l.012-.005c.255-4.833.34-13.681.537-18.629z"></path><path fill="#c9bfa8" d="M459.503 295.78c-54.344-63.219-185.243-40.515-231.495-114.791-40.411-50.987-1.287-107.243-32.058-149.643C181.073 14.42 171.371 1.176 113.429.43c21.457 5.639 29.112 15.806 39.094 27.713 30.771 44.45-8.353 115.782 32.058 169.235 46.252 77.867 177.151 54.065 231.495 120.341 14.292 16.841 21.819 38.86 21.194 61.391-.197 5.187-.282 14.463-.538 19.529l-.012.005c-1.91 23.627-8.324 41.141-18.051 54.22 33.193-10.542 57.432-32.149 61.478-79.893l.012-.005c.256-4.832.341-13.68.538-18.628.625-21.49-6.902-42.494-21.194-58.558z"></path><path fill="#c9bfa8" d="M124.11 46.385a7.722 7.722 0 0 1-7.722-7.722v-6.067c0-4.265 3.457-7.722 7.722-7.722s7.722 3.457 7.722 7.722v6.067a7.722 7.722 0 0 1-7.722 7.722z"></path></svg>
+      </div>
+      <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:14.4px;color:#f2f7f4">SealedPay</div>
+    </div>
+    <div style="position:relative;z-index:60;margin-left:32.4px">
+    <div ref="{{ searchBarRef }}" style="display:flex;align-items:center;gap:9px;border:0.9px solid rgba(225,248,238,0.045);background:rgba(110,196,186,0.06);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:899.1px;padding:10.8px 18px;width:306px">
+      <svg width="14.4" height="14.4" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#9db3aa" stroke-width="1.5"></circle><line x1="11" y1="11" x2="15" y2="15" stroke="#9db3aa" stroke-width="1.5" stroke-linecap="round"></line></svg>
+      <input value="{{ searchQ }}" onChange="{{ onSearchInput }}" onFocus="{{ onSearchFocus }}" placeholder="Search employees or payouts" style="background:rgba(0,0,0,0);border:none;outline:none;color:#e8f0ec;font-size:11.7px;font-family:'Manrope',sans-serif;flex:1">
+    </div>
+    <sc-if value="{{ isSearchMounted }}" hint-placeholder-val="{{ false }}">
+      <div ref="{{ searchOverlayRef }}" onClick="{{ closeSearch }}" style="position: fixed; inset: 0; z-index: -1; background-color: #0D1411F2"></div>
+      <div ref="{{ searchPopupRef }}" style="position: absolute; top: calc(100% + 13px); left: 0; width: 468px; border-radius: 28px; border: 0.9px solid rgba(255,255,255,0.11); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); padding: 14px; overflow: hidden; background-color: #121D1ABF">
+        <sc-if value="{{ hasSearchEmps }}" hint-placeholder-val="{{ true }}">
+          <div data-slabel="" style="font-size:11.7px;color:#9db3aa;padding:7px 12px 4.5px 12px">Employees</div>
+          <sc-for list="{{ searchEmps }}" as="se" hint-placeholder-count="3">
+            <div data-srow="" onClick="{{ se.onOpen }}" style="display:flex;align-items:center;gap:13px;padding:9.5px 12px;border-radius:999px;cursor:pointer;transition:background .15s" style-hover="background:rgba(95,230,175,0.1)">
+              <div style="width:38px;height:38px;border-radius:50%;background:rgba(59,191,142,0.18);border:0.9px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-family:'Manrope',sans-serif;font-weight:800;font-size:12px;color:#d3ecdd;flex-shrink:0">{{ se.initials }}</div>
+              <div>
+                <div style="font-size:15px;font-weight:600;color:#eef4f1">{{ se.name }}</div>
+                <div style="font-size:11.7px;color:#9db3aa;margin-top:1.5px">{{ se.sub }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </sc-if>
+        <sc-if value="{{ hasSearchRuns }}" hint-placeholder-val="{{ true }}">
+          <div data-slabel="" style="font-size:11.7px;color:#9db3aa;padding:11px 12px 4.5px 12px">Payouts</div>
+          <sc-for list="{{ searchRuns }}" as="sr" hint-placeholder-count="2">
+            <div data-srow="" onClick="{{ sr.onOpen }}" style="display:flex;align-items:center;gap:13px;padding:9.5px 12px;border-radius:999px;cursor:pointer;transition:background .15s" style-hover="background:rgba(95,230,175,0.1)">
+              <div style="width:38px;height:38px;border-radius:50%;background:rgba(59,191,142,0.18);border:0.9px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#cfe5d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"></path><path d="M22 2 15 22l-4-9-9-4z"></path></svg>
+              </div>
+              <div>
+                <div style="font-size:15px;font-weight:600;color:#eef4f1">{{ sr.date }}</div>
+                <div style="font-size:11.7px;color:#9db3aa;margin-top:1.5px">{{ sr.sub }}</div>
+              </div>
+              <div style="margin-left:auto;background:rgba(0,0,0,0);border:0.9px solid rgba(95,230,175,0.55);color:#78e9c0;font-size:10.8px;font-weight:400;border-radius:899.1px;padding:4px 11px">Verified</div>
+            </div>
+          </sc-for>
+        </sc-if>
+        <sc-if value="{{ searchEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:20px 12px;text-align:center;font-size:13.5px;color:#9db3aa">No matches. Try a name, team, or month.</div>
+        </sc-if>
+      </div>
+    </sc-if>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:12.6px">
+      <img ref="{{ topAvatarRef }}" src="avatars/avatar-profile.svg" alt="Profile" onClick="{{ profileClick }}" style="cursor:pointer;width:39.6px;height:39.6px;border-radius:50%;border:1.8px solid rgba(255,255,255,0.15);object-fit:cover;background:linear-gradient(135deg,#34d399,#0e9f6e);display:block">
+    </div>
+  </div>
+
+  <!-- Body grid -->
+  <div style="flex:1;min-height:0;display:flex;padding:0 0 0 32.4px">
+
+    <!-- Side rail -->
+    <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:57.6px;padding:97.2px 0 21.6px 0;z-index:5">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:7.2px;border:0.9px solid rgba(225,248,238,0.045);background:rgba(110,196,186,0.06);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:899.1px;padding:0">
+        <div onClick="{{ nav0Click }}" style="width:39.6px;height:39.6px;border-radius:50%;background:{{ nav0Bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s">
+          <svg width="15.3" height="15.3" viewBox="0 0 24 24" fill="none" style="filter:drop-shadow(0 0 5.4px rgba(240,250,245,0.18))"><path d="M12.5 3.247a1 1 0 0 0-1 0L4 7.577V20h4.5v-6a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v6H20V7.577zm-2-1.732a3 3 0 0 1 3 0l7.5 4.33a2 2 0 0 1 1 1.732V21a1 1 0 0 1-1 1h-6.5a1 1 0 0 1-1-1v-6h-3v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.577a2 2 0 0 1 1-1.732z" fill="{{ nav0Stroke }}"></path></svg>
+        </div>
+        <div onClick="{{ nav1Click }}" style="width:39.6px;height:39.6px;border-radius:50%;background:{{ nav1Bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s">
+          <svg width="15.3" height="15.3" viewBox="0 0 24 24" fill="none" style="filter:drop-shadow(0 0 5.4px rgba(240,250,245,0.18))" stroke="{{ nav1Stroke }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </div>
+        <div onClick="{{ nav2Click }}" style="width:39.6px;height:39.6px;border-radius:50%;background:{{ nav2Bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s">
+          <svg width="15.3" height="15.3" viewBox="0 0 24 24" fill="none" style="filter:drop-shadow(0 0 5.4px rgba(240,250,245,0.18))" stroke="{{ nav2Stroke }}" stroke-width="2" stroke-linecap="round"><line x1="6" y1="20" x2="6" y2="12"></line><line x1="12" y1="20" x2="12" y2="6"></line><line x1="18" y1="20" x2="18" y2="10"></line></svg>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:1.8px;border:0.9px solid rgba(225,248,238,0.045);background:rgba(110,196,186,0.06);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:899.1px;padding:0 0;margin-top:19.8px;gap:6.12px">
+        <div onClick="{{ bellClick }}" style="width:39.6px;height:39.6px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:background .2s" style-hover="background:rgba(95,230,175,0.1)">
+          <svg width="15.3" height="15.3" viewBox="0 0 24 24" fill="none" style="filter:drop-shadow(0 0 5.4px rgba(240,250,245,0.18))" stroke="#9db3aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+          <sc-if value="{{ hasUnread }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute;top:9px;right:9px;width:6.3px;height:6.3px;border-radius:50%;background:#34d399"></div>
+          </sc-if>
+          <sc-if value="{{ isBellOpen }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ stopProp }}" data-screen-label="Notifications popup" class="dcpop dcpop-tl" style="position: absolute; left: 50.4px; top: -7.2px; width: 270px; border-radius: 27px; border: 1px solid rgba(255,255,255,0.11); background: rgba(52,92,72,0.21); padding: 20px; cursor: auto; text-align: left; z-index: 10; overflow: hidden">
+              <div style="position:relative">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div style="display:flex;align-items:center;gap:7.2px">
+                  <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:13.5px;color:#f2f7f4">Notifications</div>
+                  <div style="background:#3bbf8e;color:#0b1512;font-size:9px;font-weight:400;border-radius:899.1px;padding:1.8px 7.2px">{{ notifBadge }}</div>
+                </div>
+                <sc-if value="{{ hasUnread }}" hint-placeholder-val="{{ true }}">
+                  <div onClick="{{ markAllRead }}" style="font-size:9.9px;color:#78e9c0;cursor:pointer;user-select:none" style-hover="text-decoration:underline">Mark all read</div>
+                </sc-if>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3.6px;margin-top:9px">
+                <sc-for list="{{ notifItems }}" as="n" hint-placeholder-count="3">
+                  <div onClick="{{ n.onClick }}" style="display:flex;gap:9px;padding:7.2px;border-radius:999px;cursor:pointer;transition:background .15s" style-hover="background:rgba(95,230,175,0.1)">
+                    <div style="width:7.2px;height:7.2px;border-radius:50%;background:{{ n.dotColor }};margin-top:4.5px;flex-shrink:0"></div>
+                    <div>
+                      <div style="font-size:11.25px;font-weight:600;color:{{ n.titleColor }}">{{ n.title }}</div>
+                      <div style="font-size:9.9px;color:#9db3aa;margin-top:0.9px">{{ n.sub }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        <div onClick="{{ gearClick }}" style="width:39.6px;height:39.6px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:background .2s" style-hover="background:rgba(95,230,175,0.1)">
+          <svg width="15.3" height="15.3" viewBox="0 0 24 24" fill="none" style="filter:drop-shadow(0 0 5.4px rgba(240,250,245,0.18))" stroke="#9db3aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <sc-if value="{{ isGearOpen }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ stopProp }}" data-screen-label="Settings popup" class="dcpop dcpop-tl" style="position: absolute; left: 50.4px; top: -7.2px; width: 252px; border-radius: 27px; border: 1px solid rgba(255,255,255,0.11); background: rgba(52,92,72,0.21); padding: 20px; cursor: auto; text-align: left; z-index: 10; overflow: hidden">
+              <div style="position:relative">
+              <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:13.5px;color:#f2f7f4">Settings</div>
+              <div style="display:flex;flex-direction:column;margin-top:5.4px">
+                <sc-for list="{{ settingsRows }}" as="row" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0">
+                    <div style="font-size:11.7px;color:#e8f0ec">{{ row.label }}</div>
+                    <div onClick="{{ row.onToggle }}" style="width:36px;height:19.8px;border-radius:899.1px;background:{{ row.trackBg }};position:relative;cursor:pointer;transition:background .2s;flex-shrink:0">
+                      <div style="position:absolute;top:1.8px;left:{{ row.knobX }};width:16.2px;height:16.2px;border-radius:50%;background:#f5f8f6;transition:left .2s"></div>
+                    </div>
+                  </div>
+                </sc-for>
+                <div style="height:0.9px;background:rgba(255,255,255,0.09);margin:5.4px 0"></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0">
+                  <div style="font-size:11.7px;color:#e8f0ec">Token</div>
+                  <div style="font-size:10.8px;color:#9db3aa">cUSDd</div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0">
+                  <div style="font-size:11.7px;color:#e8f0ec">Network</div>
+                  <div style="font-size:10.8px;color:#9db3aa">Sepolia Testnet</div>
+                </div>
+              </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+      <div onClick="{{ logoutClick }}" style="margin-top:auto;width:39.6px;height:39.6px;border-radius:50%;border:0.9px solid rgba(225,248,238,0.045);background:rgba(110,196,186,0.06);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s" style-hover="background:rgba(95,230,175,0.1)">
+        <svg width="15.3" height="15.3" viewBox="0 0 512 512" fill="#9db3aa" style="filter:drop-shadow(0 0 5.4px rgba(240,250,245,0.18))"><path d="M511.9 228.01s-.01-.08-.02-.12c-.06-.59-.15-1.18-.27-1.76 0-.04-.02-.08-.03-.13-.73-3.49-2.44-6.82-5.15-9.53l-68.06-68.06c-3.71-3.71-8.57-5.57-13.44-5.57s-9.72 1.85-13.43 5.56c-7.42 7.42-7.42 19.45 0 26.87l35.66 35.66H316.09c-10.49 0-19 8.51-19 19s8.51 19 19 19h130.99l-35.64 35.64c-7.42 7.42-7.42 19.45 0 26.87 3.71 3.71 8.57 5.57 13.43 5.57s9.72-1.85 13.43-5.57l67.68-67.68c2.42-2.28 4.24-5.17 5.21-8.45v-.02c.17-.57.31-1.15.43-1.74.02-.08.02-.17.04-.25.09-.51.17-1.02.22-1.54.04-.39.04-.77.06-1.16 0-.22.03-.43.03-.66v-.04c0-.63-.03-1.26-.1-1.89z"></path><path d="M274.74 53.09c22.78 5.09 46.04 26.19 55.35 50.22 2.92 7.53 10.1 12.14 17.72 12.14 2.28 0 4.61-.42 6.86-1.29 9.78-3.79 14.64-14.8 10.85-24.58-14.02-36.18-47.25-65.77-82.68-73.61l-.24-.05c-29.27-6.08-59.57-9.07-92.62-9.13-33.07.06-63.37 3.04-92.69 9.13l-.25.05c-18.62 4.12-36.44 14.21-51.2 27.88-3.82 2.81-7.25 6.44-10.32 10.72-.5.59-.98 1.2-1.43 1.82C21.84 71.23 12.94 88.74 9.41 106.9 4.81 130.02-.4 189.94.02 229.93c-.23 21.46 1.17 48.66 3.22 72.83 1.1 15.5 2.35 28.98 3.56 37.66 5.91 43.73 32.8 92.23 62.56 112.84l.17.12c20.9 14.08 42.5 25.43 66.1 34.71 23.54 9.14 45.15 14.68 66.05 16.94l.17.02c1.32.12 2.65.18 3.96.18 26.52 0 50.05-23.74 57.41-57.72v-.01c6.51-1.04 12.96-2.21 19.36-3.54l.24-.05c35.43-7.84 68.66-37.43 82.68-73.61 3.79-9.78-1.07-20.79-10.85-24.58-2.26-.88-4.58-1.29-6.86-1.29-7.62 0-14.8 4.61-17.72 12.14-9.31 24.02-32.57 45.12-55.35 50.22-2.3.48-4.61.92-6.91 1.36 1.98-25.72 3.48-58.61 3.29-83.98.3-38.76-3.41-98.45-6.7-122.2-5.91-43.73-32.8-92.23-62.56-112.84l-.17-.12c-20.88-14.07-42.49-25.42-66.1-34.71-4.15-1.61-8.24-3.11-12.28-4.5h-.03c21.17-3.35 42.78-4.96 66.7-5 30.33.05 58.08 2.77 84.76 8.31zm-94.43 67.33c9.52 6.63 19.92 19.33 28.54 34.88 9.31 16.79 15.67 35.17 17.91 51.75 0 .04.01.08.02.12 3.09 22.32 6.62 80.55 6.34 116.69v.59c.17 22.14-1.05 53.1-3.18 80.79l-.06.86c-.46 8.39-1.88 24.82-3.74 33.13-.02.08-.03.15-.05.23-3.93 18.12-14.3 27.77-20.28 27.77-.14 0-.28 0-.42-.01-17.42-1.92-35.72-6.67-55.93-14.51-20.91-8.23-40.08-18.29-58.6-30.76-9.51-6.64-19.89-19.33-28.5-34.85-9.31-16.79-15.67-35.17-17.91-51.75 0-.04-.01-.08-.02-.12-1.05-7.55-2.25-20.36-3.29-35.14-.01-.18-.03-.35-.04-.53-2.16-25.41-3.28-50.64-3.09-69.22v-.8c-.41-39.54 4.89-96.26 8.66-115.2.01-.06.02-.12.03-.17 2.3-11.8 8.6-24.19 17.75-34.87.41-.47.8-.96 1.19-1.45.85-.1 2.1-.19 3.83-.19 14.55 0 34.85 5.83 41.48 8.08 3.6 1.24 7.23 2.57 10.8 3.96 20.91 8.23 40.06 18.28 58.55 30.73z"></path></svg>
+      </div>
+    </div>
+
+    <div onScroll="{{ onContentScroll }}" style="flex:1;min-height:0;overflow-y:auto;padding:97.2px 32.4px 21.6px 25.2px">
+    <div style="display:grid;grid-template-columns:1fr 368.28px;gap:25.2px;align-items:start">
+
+    <!-- Main column -->
+    <div style="display:flex;flex-direction:column;gap:19.8px">
+      <sc-if value="{{ isNav0 }}" hint-placeholder-val="{{ true }}">
+      <div data-screen-label="Payroll overview" style="font-family:'Manrope',sans-serif;font-weight:500;font-size:37.8px;color:#f2f7f4;letter-spacing:0.45px;line-height:1.06">Payroll</div>
+
+      <div style="display:flex;gap:12.6px">
+        <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="4">
+          <div onClick="{{ tab.onClick }}" style="background:{{ tab.bg }};border:{{ tab.border }};box-shadow:{{ tab.shadow }};color:{{ tab.color }};font-weight:{{ tab.weight }};font-size:12.6px;border-radius:899.1px;padding:9.9px 21.6px;cursor:pointer;transition:background .2s, color .2s;user-select:none">{{ tab.label }}</div>
+        </sc-for>
+      </div>
+
+      <!-- Payout Activity -->
+      <div style="background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:21.6px;padding:19.8px 23.4px 16.2px 23.4px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-family:'Manrope',sans-serif;font-weight:400;font-size:17.1px">Payout Activity</div>
+          <div onClick="{{ nav2Click }}" style="display:flex;align-items:center;gap:3.6px;font-size:10.8px;color:#9db3aa;cursor:pointer;transition:color .2s" style-hover="color:#e8f0ec">View All
+            <svg width="10.8" height="10.8" viewBox="0 0 24 24" fill="none" stroke="#9db3aa" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+        </div>
+        <div style="display:flex;gap:12.6px;margin-top:16.2px">
+          <!-- Y axis -->
+          <div style="display:flex;flex-direction:column;justify-content:space-between;height:111.6px;font-size:9.9px;color:#8ba297;padding-bottom:1.8px;width:28.8px;flex-shrink:0">
+            <sc-for list="{{ yLabels }}" as="yl" hint-placeholder-count="6"><div>{{ yl }}</div></sc-for>
+          </div>
+          <!-- Bars -->
+          <div style="flex:1;display:grid;grid-template-columns:repeat({{ barCount }},1fr);gap:19.8px;align-items:end;height:111.6px;position:relative">
+            <sc-for list="{{ bars }}" as="bar" hint-placeholder-count="6">
+              <div onMouseEnter="{{ bar.onEnter }}" style="display:flex;flex-direction:column;align-items:center;height:111.6px;justify-content:flex-end;position:relative;cursor:pointer">
+                <div style="position:relative;width:54px;display:flex;flex-direction:column-reverse;gap:3px">
+                  <sc-for list="{{ bar.segments }}" as="seg" hint-placeholder-count="1">
+                    <div data-cap="{{ seg.cap }}" style="width:54px;height:{{ seg.hpx }};background:{{ seg.bg }};border-radius:{{ seg.radius }};transform-origin:bottom;transition:background .25s"></div>
+                  </sc-for>
+                  <sc-if value="{{ bar.active }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute;bottom:calc(100% + 21.6px);left:50%;transform:translateX(-64%);background:rgba(57,70,67,0.82);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);border:0.9px solid rgba(255,255,255,0.14);box-shadow:inset 0 0.9px 0 0 rgba(255,255,255,0.16), inset 0 -0.9px 0 0 rgba(255,255,255,0.04);color:#cfd8d6;font-size:10.8px;font-weight:400;border-radius:899.1px;padding:6.3px 10.8px;white-space:nowrap;z-index:3">{{ bar.tooltip }}</div>
+                    <div style="position:absolute;top:-12.6px;left:50%;transform:translateX(-50%);width:24.3px;height:24.3px;border-radius:50%;border:5.4px solid #f5f8f6;background:rgba(0,0,0,0);box-shadow:0 0 9px 2.7px rgba(240,248,232,0.30), 0 0 23.4px 9px rgba(240,248,232,0.12), inset 0 0 8.1px 1.8px rgba(245,252,248,0.40);z-index:3"></div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat({{ barCount }},1fr);gap:19.8px;margin-left:41.4px;margin-top:7.2px">
+          <sc-for list="{{ bars }}" as="bar" hint-placeholder-count="6">
+            <div style="text-align:center;font-size:9.9px;color:#8ba297">{{ bar.month }}</div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- Bottom row -->
+      <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:19.8px">
+        <!-- Team donut -->
+        <div style="background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:21.6px;padding:16.2px 23.4px;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-family:'Manrope',sans-serif;font-weight:400;font-size:17.1px">Team</div>
+            <div onClick="{{ nav1Click }}" style="display:flex;align-items:center;gap:3.6px;font-size:10.8px;color:#9db3aa;cursor:pointer;transition:color .2s" style-hover="color:#e8f0ec">View All
+              <svg width="10.8" height="10.8" viewBox="0 0 24 24" fill="none" stroke="#9db3aa" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:23.4px;margin-top:7.2px;flex:1">
+            <div style="position:relative;width:144px;height:144px">
+              <canvas ref="{{ donutRef }}" style="display:block"></canvas>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:19.8px">08</div>
+                <div style="font-size:9.9px;color:#9db3aa">Employees</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16.2px">
+              <sc-for list="{{ legend }}" as="row" hint-placeholder-count="3">
+                <div style="display:flex;align-items:flex-start;gap:8.1px">
+                  <div style="width:8.1px;height:8.1px;border-radius:50%;margin-top:3.6px;background:{{ row.color }}"></div>
+                  <div>
+                    <div style="font-size:11.7px;font-weight:600;color:#e8f0ec">{{ row.label }}</div>
+                    <div style="font-size:10.8px;color:#9db3aa">{{ row.amount }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monthly payroll / Last run -->
+        <div style="display:flex;flex-direction:column;gap:19.8px">
+          <div style="background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:21.6px;padding:13.5px 21.6px;flex:1">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="font-family:'Manrope',sans-serif;font-weight:400;font-size:17.1px">Monthly payroll</div>
+            </div>
+            <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:27px;margin-top:7.2px;white-space:nowrap"><span>{{ monthlyEl }} cUSDd</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:9px">
+              <div style="font-size:10.8px;color:#9db3aa">8 salaries</div>
+              <div style="position:relative;display:flex" onMouseEnter="{{ showEnc }}" onMouseLeave="{{ hideTip }}"><div style="display:flex;align-items:center;justify-content:center;width:27.72px;height:27.72px;border-radius:50%;background:rgba(95,230,175,0.14);border:0.9px solid rgba(95,230,175,0.35);color:#78e9c0;flex-shrink:0"><svg width="10.59" height="10.59" viewBox="0 0 100 100" fill="currentColor"><path d="M75.745 37.602v-9.31c0-14.186-11.59-25.792-25.793-25.792S24.144 14.106 24.144 28.292v9.31c-6.998.602-12.397 6.397-12.397 13.601v32.601A13.65 13.65 0 0 0 25.442 97.5h49.116a13.65 13.65 0 0 0 13.695-13.696v-32.6c0-7.205-5.51-13-12.508-13.602zM54.861 72.12v4.374c0 1.3-1.054 2.355-2.355 2.355h-5.012a2.355 2.355 0 0 1-2.355-2.355V72.12a8.821 8.821 0 0 1-4.021-7.426c0-4.892 3.974-8.882 8.882-8.882s8.882 3.99 8.882 8.882c0 3.12-1.599 5.859-4.021 7.426zm7.79-34.722H37.254v-9.105c0-6.998 5.7-12.698 12.698-12.698 6.999 0 12.699 5.7 12.699 12.698v9.105z"></path></svg></div><div style="position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:rgba(18,30,25,0.97);color:#e8f0ec;font-size:9.9px;font-weight:500;padding:4.5px 9px;border-radius:7.2px;white-space:nowrap;pointer-events:none;transition:opacity .11s ease;box-shadow:0 6px 16px -6px rgba(0,0,0,0.6);border:0.9px solid rgba(255,255,255,0.09);z-index:30;opacity:{{ tipEncOpacity }}">Encrypted</div></div>
+            </div>
+          </div>
+          <div style="background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:21.6px;padding:13.5px 21.6px;flex:1">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="font-family:'Manrope',sans-serif;font-weight:400;font-size:17.1px">Last run</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8.1px;font-family:'Manrope',sans-serif;font-weight:700;font-size:27px;margin-top:7.2px"><span>Jul 5 Sun</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:9px">
+              <div style="font-size:10.8px;color:#9db3aa">8 employees paid</div>
+              <div style="position:relative;display:flex" onMouseEnter="{{ showVer }}" onMouseLeave="{{ hideTip }}"><div style="display:flex;align-items:center;justify-content:center;width:27.72px;height:27.72px;border-radius:50%;background:rgba(95,230,175,0.14);border:0.9px solid rgba(95,230,175,0.35);color:#78e9c0;flex-shrink:0"><svg width="11.56" height="11.56" viewBox="0 0 32 32" fill="currentColor"><path d="M16 1C7.72 1 1 7.72 1 16s6.72 15 15 15 15-6.72 15-15S24.28 1 16 1zm7.5 12.32-7 8c-.39.45-.94.68-1.5.68-.44 0-.88-.14-1.25-.44l-5-4a2.001 2.001 0 0 1-.079-3.055c.742-.666 1.889-.617 2.667.005l3.044 2.436a.493.493 0 0 0 .678-.06l5.44-6.206c.72-.83 1.99-.91 2.82-.18.83.72.91 1.99.18 2.82z"></path></svg></div><div style="position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:rgba(18,30,25,0.97);color:#e8f0ec;font-size:9.9px;font-weight:500;padding:4.5px 9px;border-radius:7.2px;white-space:nowrap;pointer-events:none;transition:opacity .11s ease;box-shadow:0 6px 16px -6px rgba(0,0,0,0.6);border:0.9px solid rgba(255,255,255,0.09);z-index:30;opacity:{{ tipVerOpacity }}">Verified</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isNav1 }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div data-screen-label="Team" style="font-family:'Manrope',sans-serif;font-weight:500;font-size:37.8px;color:#f2f7f4;letter-spacing:0.45px">Team</div>
+        <div style="display:flex;align-items:center;gap:10.8px">
+          <div onClick="{{ addOpenClick }}" style="background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);color:#cfdcd6;font-size:12.6px;font-weight:500;border-radius:899.1px;padding:9.9px 19.8px;cursor:pointer;transition:transform .15s;user-select:none" style-hover="transform:scale(1.03)">Add employee</div>
+          <div onClick="{{ openPayroll }}" style="display:flex;align-items:center;gap:7.2px;background:{{ accentColor }};color:#0b1512;font-size:12.6px;font-weight:600;border-radius:899.1px;padding:9.9px 21.6px;cursor:pointer;transition:transform .15s, box-shadow .2s;user-select:none" style-hover="transform:scale(1.03);box-shadow:0 0 0 1px rgba(120,233,192,0.4), 0 6px 22px -6px rgba(59,191,142,0.6)" style-active="transform:scale(0.97)"><svg width="14.4" height="14.4" viewBox="0 0 24 24" fill="none" stroke="#0b1512" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 3 19 12 5 21 5 3"></polyline></svg><span>Run payroll</span></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:19.8px">
+        <div style="position:relative;border-radius:18px;background:linear-gradient(135deg,#41b091 0%,#2e9478 50%,#26826a 100%);padding:19.8px;overflow:hidden;min-height:171px">
+          <div style="position:absolute;top:-45px;right:-36px;width:153px;height:153px;border-radius:50%;background:rgba(255,255,255,0.10)"></div>
+          <div style="position:absolute;top:-14.4px;right:50.4px;width:99px;height:99px;border-radius:50%;background:rgba(255,255,255,0.07)"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:10.8px;color:rgba(240,250,245,0.85)">Headcount</div>
+            <div style="font-family:'Manrope',sans-serif;font-weight:800;font-size:11.7px;letter-spacing:0.9px;color:rgba(240,250,245,0.9)">ACTIVE</div>
+          </div>
+          <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:25.2px;color:#fff;margin-top:18px">8 employees</div>
+          <div style="font-size:10.8px;color:rgba(240,250,245,0.75);margin-top:1.8px">3 departments</div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:16.2px">
+            <div style="font-size:12.6px;letter-spacing:0.45px;color:rgba(240,250,245,0.95)">6 payroll runs completed</div>
+            <div style="font-size:9.9px;color:rgba(240,250,245,0.7)">since Feb 2026</div>
+          </div>
+        </div>
+        <div style="position:relative;border-radius:18px;background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);padding:19.8px;overflow:hidden;min-height:171px">
+          <div style="position:absolute;top:-45px;right:-36px;width:153px;height:153px;border-radius:50%;background:rgba(139,124,246,0.12)"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:10.8px;color:#9db3aa">Monthly payroll</div>
+            <div style="font-family:'Manrope',sans-serif;font-weight:800;font-size:11.7px;letter-spacing:0.9px;color:#9db3aa">ENCRYPTED</div>
+          </div>
+          <div onClick="{{ toggleMonthly }}" style="display:flex;align-items:center;gap:8.1px;font-family:'Manrope',sans-serif;font-weight:700;font-size:25.2px;color:#f2f7f4;margin-top:18px;cursor:pointer">
+            <span>{{ monthlyEl }} cUSDd</span>
+          </div>
+          <div style="font-size:10.8px;color:#9db3aa;margin-top:1.8px">8 salaries · encrypted on-chain</div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:16.2px">
+            <div style="font-size:12.6px;letter-spacing:0.45px;color:#cfdcd6">Next payout · Jul 31</div>
+            <div style="font-size:9.9px;color:#9db3aa">in 26 days</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:21.6px;padding:19.8px 23.4px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-family:'Manrope',sans-serif;font-weight:400;font-size:17.1px">Employees</div>
+          <div style="font-size:10.8px;color:#9db3aa">{{ rosterCount }}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5.4px;margin:10.8px -12.6px 0 -12.6px;padding:0 12.6px;max-height:273.6px;overflow-y:auto;overflow-x:hidden">
+          <sc-for list="{{ roster }}" as="emp" hint-placeholder-count="8">
+            <div onClick="{{ emp.onOpen }}" style="display:flex;align-items:center;gap:11.7px;padding:7.2px 12.6px;border-radius:999px;cursor:pointer;transition:background .15s" style-hover="background:rgba(95,230,175,0.1)">
+              <div style="width:36px;height:36px;border-radius:50%;background:rgba(59,191,142,0.18);border:0.9px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-family:'Manrope',sans-serif;font-weight:800;font-size:11.7px;color:#d3ecdd">{{ emp.initials }}</div>
+              <div>
+                <div style="font-size:13.5px;font-weight:600;color:#eef4f1">{{ emp.name }}</div>
+                <div style="font-size:10.35px;color:#9db3aa;margin-top:0.9px">{{ emp.sub }}</div>
+              </div>
+              <div style="margin-left:auto;display:flex;align-items:center;gap:9px">
+                <div style="background:rgba(0,0,0,0);border:0.9px solid rgba(95,230,175,0.55);color:#78e9c0;font-size:10.8px;font-weight:400;border-radius:899.1px;padding:4px 13px">Active</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isNav2 }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Insights" style="font-family:'Manrope',sans-serif;font-weight:500;font-size:37.8px;color:#f2f7f4;letter-spacing:0.45px">Insights</div>
+      <div style="background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:21.6px;padding:19.8px 23.4px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-family:'Manrope',sans-serif;font-weight:400;font-size:17.1px">Payroll health</div>
+          <div style="display:flex;align-items:center;gap:14.4px">
+            <div style="display:flex;align-items:center;gap:6.3px"><div style="width:8.1px;height:8.1px;border-radius:50%;background:#3bbf8e"></div><div style="font-size:10.8px;color:#9db3aa">Employees paid</div></div>
+            <div style="display:flex;align-items:center;gap:6.3px"><div style="width:8.1px;height:8.1px;border-radius:50%;background:#8b7cf6"></div><div style="font-size:10.8px;color:#9db3aa">Gas (ETH)</div></div>
+          </div>
+        </div>
+        <div style="position:relative;height:252px;margin-top:14.4px">
+          <canvas ref="{{ statsRef }}"></canvas>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:19.8px">
+        <div style="background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:21.6px;padding:18px 21.6px">
+          <div style="font-family:'Manrope',sans-serif;font-weight:400;font-size:16.2px">Payroll runway</div>
+          <div onClick="{{ toggleRunway }}" style="display:flex;align-items:center;gap:8.1px;font-family:'Manrope',sans-serif;font-weight:700;font-size:27px;margin-top:7.2px;cursor:pointer">
+            <div>
+              <div>{{ runwayEl }}</div>
+              <div style="font-weight:700">runs left</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:5.4px">
+            <div style="font-size:10.8px;color:#9db3aa">at 4.5K / run · {{ runwayHint }}</div>
+            <div style="display:flex;align-items:center;gap:4.5px;background:rgba(0,0,0,0);border:0.9px solid rgba(95,230,175,0.55);color:#78e9c0;font-size:9.9px;font-weight:400;border-radius:899.1px;padding:4.5px 10.8px"><svg width="9.9" height="9.9" viewBox="0 0 100 100" fill="currentColor"><path d="M75.745 37.602v-9.31c0-14.186-11.59-25.792-25.793-25.792S24.144 14.106 24.144 28.292v9.31c-6.998.602-12.397 6.397-12.397 13.601v32.601A13.65 13.65 0 0 0 25.442 97.5h49.116a13.65 13.65 0 0 0 13.695-13.696v-32.6c0-7.205-5.51-13-12.508-13.602zM54.861 72.12v4.374c0 1.3-1.054 2.355-2.355 2.355h-5.012a2.355 2.355 0 0 1-2.355-2.355V72.12a8.821 8.821 0 0 1-4.021-7.426c0-4.892 3.974-8.882 8.882-8.882s8.882 3.99 8.882 8.882c0 3.12-1.599 5.859-4.021 7.426zm7.79-34.722H37.254v-9.105c0-6.998 5.7-12.698 12.698-12.698 6.999 0 12.699 5.7 12.699 12.698v9.105z"></path></svg><span>Employer-only</span></div>
+          </div>
+        </div>
+        <div style="background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:21.6px;padding:18px 21.6px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-family:'Manrope',sans-serif;font-weight:400;font-size:16.2px">Privacy scorecard</div>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:6.3px;margin-top:7.2px">
+            <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:27px">48</div>
+            <div style="font-size:12.6px;color:#9db3aa">amounts encrypted</div>
+          </div>
+          <div style="display:flex;gap:14.4px;margin-top:12.6px;padding-top:12.6px;border-top:0.9px solid rgba(255,255,255,0.08)">
+            <div style="flex:1">
+              <div style="font-size:9.9px;font-weight:600;letter-spacing:0.2px;color:#9db3aa">Public</div>
+              <div style="font-size:10.35px;color:#c2d0c9;margin-top:3.6px;line-height:1.4">Transactions · recipients · timing</div>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:9.9px;font-weight:600;letter-spacing:0.2px;color:#78e9c0">Private</div>
+              <div style="font-size:10.35px;color:#c2d0c9;margin-top:3.6px;line-height:1.4">Every amount</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isNavEmp }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Employee view" style="font-family:'Manrope',sans-serif;font-weight:500;font-size:37.8px;color:#f2f7f4;letter-spacing:0.45px">{{ empTitle }}</div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12.6px">
+        <div style="display:flex;align-items:center;gap:7.2px;background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);color:#9db3aa;font-weight:400;font-size:12.6px;border-radius:899.1px;padding:9.9px 21.6px;user-select:none">
+          <div style="width:6.3px;height:6.3px;border-radius:50%;background:#34d399"></div>
+          <span>Connected · {{ empWallet }}</span>
+        </div>
+        <div onClick="{{ backToTeam }}" style="display:flex;align-items:center;gap:6.3px;background:rgba(0,0,0,0);border:0.9px solid rgba(255,255,255,0.14);color:#b8c6bf;font-family:'Manrope',sans-serif;font-weight:500;font-size:12.6px;border-radius:899.1px;padding:9px 18px;cursor:pointer;transition:background .2s, color .2s;user-select:none" style-hover="background:rgba(255,255,255,0.06);color:#e8f0ec"><svg width="12.6" height="12.6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg><span>Back</span></div>
+      </div>
+
+      <!-- Salary hero -->
+      <div style="position:relative;border-radius:18px;background:linear-gradient(135deg,#41b091 0%,#2e9478 50%,#26826a 100%);padding:19.8px;overflow:hidden;min-height:171px">
+        <div style="position:absolute;top:-45px;right:-36px;width:153px;height:153px;border-radius:50%;background:rgba(255,255,255,0.10)"></div>
+        <div style="position:absolute;top:-14.4px;right:50.4px;width:99px;height:99px;border-radius:50%;background:rgba(255,255,255,0.07)"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1">
+          <div style="font-size:25.2px;color:rgba(240,250,245,0.85)">Salary</div>
+          <div onClick="{{ empRevealToggle }}" style="display:flex;align-items:center;gap:5.4px;background:#f5f8f6;color:#14503b;font-family:'Manrope',sans-serif;font-weight:700;font-size:11.7px;border-radius:899.1px;padding:9px 18px;cursor:pointer;transition:transform .15s;user-select:none;white-space:nowrap;flex-shrink:0" style-hover="transform:scale(1.05)" style-active="transform:scale(0.95)"><svg width="11.7" height="11.7" viewBox="0 0 100 100" fill="#14503b"><path d="M75.745 37.602v-9.31c0-14.186-11.59-25.792-25.793-25.792S24.144 14.106 24.144 28.292v9.31c-6.998.602-12.397 6.397-12.397 13.601v32.601A13.65 13.65 0 0 0 25.442 97.5h49.116a13.65 13.65 0 0 0 13.695-13.696v-32.6c0-7.205-5.51-13-12.508-13.602zM54.861 72.12v4.374c0 1.3-1.054 2.355-2.355 2.355h-5.012a2.355 2.355 0 0 1-2.355-2.355V72.12a8.821 8.821 0 0 1-4.021-7.426c0-4.892 3.974-8.882 8.882-8.882s8.882 3.99 8.882 8.882c0 3.12-1.599 5.859-4.021 7.426zm7.79-34.722H37.254v-9.105c0-6.998 5.7-12.698 12.698-12.698 6.999 0 12.699 5.7 12.699 12.698v9.105z"></path></svg><span>{{ empRevealLabel }}</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;font-family:'Manrope',sans-serif;font-weight:700;font-size:25.2px;color:#fff;margin-top:12.6px">
+          <span>{{ empSalaryEl }}{{ empSalaryRest }}</span>
+        </div>
+        <div style="font-size:10.8px;color:rgba(240,250,245,0.75);margin-top:3.6px">Decrypted locally with your wallet signature. Only you and your employer can see this.</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:16.2px">
+          <div style="font-size:12.6px;letter-spacing:0.9px;color:rgba(240,250,245,0.95)">{{ empWallet }}</div>
+          <div style="font-size:9.9px;color:rgba(240,250,245,0.7)">cUSDd · Sepolia</div>
+        </div>
+      </div>
+
+      <!-- Payment history -->
+      <div style="background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:21.6px;padding:19.8px 23.4px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-family:'Manrope',sans-serif;font-weight:400;font-size:17.1px">Payment history</div>
+          <div style="font-size:10.8px;color:#9db3aa">{{ empPayCount }} payments</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5.4px;margin:10.8px -12.6px 0 -12.6px;padding:0 12.6px;max-height:270.9px;overflow-y:auto;overflow-x:hidden">
+          <sc-for list="{{ empHistory }}" as="pay" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:11.7px;padding:7.2px 12.6px;border-radius:999px;transition:background .15s" style-hover="background:rgba(95,230,175,0.1)">
+              <div style="width:36px;height:36px;border-radius:50%;background:rgba(59,191,142,0.18);border:0.9px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center">
+                <svg width="17" height="17" viewBox="1 1 22 22" fill="#cfe5d8"><path d="M17 22.75A5.75 5.75 0 1 1 22.75 17 5.757 5.757 0 0 1 17 22.75zm0-10A4.25 4.25 0 1 0 21.25 17 4.255 4.255 0 0 0 17 12.75z"></path><path d="M16 22.75H4A2.752 2.752 0 0 1 1.25 20V4A2.752 2.752 0 0 1 4 1.25h12A2.752 2.752 0 0 1 18.75 4v8.1a.75.75 0 1 1-1.5 0V4A1.252 1.252 0 0 0 16 2.75H4A1.252 1.252 0 0 0 2.75 4v16A1.252 1.252 0 0 0 4 21.25h12a.948.948 0 0 0 .229-.021.764.764 0 0 1 .926.731.746.746 0 0 1-.643.743 2.521 2.521 0 0 1-.512.047z"></path><path d="M13 7.75H6a.75.75 0 0 1 0-1.5h7a.75.75 0 0 1 0 1.5zM11 11.75H6a.75.75 0 0 1 0-1.5h5a.75.75 0 0 1 0 1.5zM16.5 18.75a.744.744 0 0 1-.53-.22l-1-1a.75.75 0 1 1 1.06-1.06l.47.469 1.47-1.469a.75.75 0 1 1 1.06 1.06l-2 2a.744.744 0 0 1-.53.22z"></path></svg>
+              </div>
+              <div>
+                <div style="font-size:13.5px;font-weight:600;color:#eef4f1">{{ pay.date }}</div>
+                <div style="font-size:10.35px;color:#9db3aa;margin-top:0.9px;white-space:nowrap">{{ pay.tx }} · <span style="color:#4ecba0;cursor:pointer" style-hover="text-decoration:underline">Etherscan</span></div>
+              </div>
+              <div style="margin-left:auto;display:flex;align-items:center;gap:9px">
+                <div style="display:flex;align-items:center;gap:5.4px"><div onClick="{{ pay.onToggle }}" style="font-size:13.5px;font-weight:700;color:#eef4f1;cursor:pointer">{{ pay.amountEl }} cUSDd</div></div>
+                <div style="display:flex;align-items:center;gap:3.6px;background:rgba(0,0,0,0);border:0.9px solid rgba(95,230,175,0.55);color:#78e9c0;font-size:9px;font-weight:400;border-radius:899.1px;padding:2.7px 9px"><svg width="9.9" height="9.9" viewBox="0 0 32 32" fill="currentColor"><path d="M16 1C7.72 1 1 7.72 1 16s6.72 15 15 15 15-6.72 15-15S24.28 1 16 1zm7.5 12.32-7 8c-.39.45-.94.68-1.5.68-.44 0-.88-.14-1.25-.44l-5-4a2.001 2.001 0 0 1-.079-3.055c.742-.666 1.889-.617 2.667.005l3.044 2.436a.493.493 0 0 0 .678-.06l5.44-6.206c.72-.83 1.99-.91 2.82-.18.83.72.91 1.99.18 2.82z"></path></svg><span>Verified</span></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="font-size:10.8px;color:#9db3aa;line-height:1.6">Amounts are encrypted on-chain. Etherscan proves each payment happened; the amount itself stays private.</div>
+      </sc-if>
+    </div>
+
+    <!-- Right column -->
+    <sc-if value="{{ isEmployerView }}" hint-placeholder-val="{{ true }}">
+    <div style="background:rgba(110,196,186,0.07);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:25.2px 25.2px 42.3px 42.3px;padding:19.8px 19.8px 18px 19.8px;display:flex;flex-direction:column;gap:0">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-family:'Manrope',sans-serif;font-weight:500;font-size:18px">Payroll Wallet</div>
+      </div>
+
+      <!-- Stacked card -->
+      <div style="position: relative; margin-top: 43px; height: 156.6px; margin-left: 1.35px; margin-right: 1.35px">
+        <div style="position:absolute;top:0;left:21.6px;right:21.6px;height:36px;border-radius:14.4px 14.4px 0 0;background:rgba(94,190,158,0.28);border:0.9px solid rgba(170,235,210,0.14)"></div>
+        <div style="position:absolute;top:10.8px;left:10.8px;right:10.8px;height:36px;border-radius:14.4px 14.4px 0 0;background:rgba(94,190,158,0.46);border:0.9px solid rgba(170,235,210,0.20)"></div>
+        <div style="position:absolute;top:23.4px;left:0;right:0;height:183.6px;border-radius:18px;background:linear-gradient(135deg,#41b091 0%,#2e9478 50%,#26826a 100%);padding:18px 19.8px;overflow:hidden">
+          <div style="position:absolute;top:-36px;right:-27px;width:144px;height:144px;border-radius:50%;background:rgba(255,255,255,0.10)"></div>
+          <div style="position:absolute;top:-9px;right:54px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.07)"></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="display:flex;align-items:center;gap:7.2px;font-size:10.8px;color:rgba(240,250,245,0.85);margin-top:12.6px">
+                <span>Available balance</span>
+                <div onClick="{{ toggleBalance }}" style="cursor:pointer;opacity:0.85;display:flex;transition:opacity .15s" style-hover="opacity:1">
+                  <svg width="12.6" height="12.6" viewBox="0 0 24 24" fill="none" stroke="rgba(240,250,245,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px;margin-top:1.8px">
+                <div style="font-family:'Manrope',sans-serif;font-weight:400;font-size:23.4px;color:#fff;line-height:1.15;min-width:118.8px">{{ balanceEl }}<div style="font-weight:700">cUSDd</div></div>
+              </div>
+            </div>
+            <div title="Fund" onClick="{{ fundClick }}" style="width:39.6px;height:39.6px;border-radius:50%;background:#f5f8f6;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;cursor:pointer;transition:transform .15s;flex-shrink:0" style-hover="transform:scale(1.08)" style-active="transform:scale(0.94)">
+              <svg width="16.2" height="16.2" viewBox="0 0 24 24" fill="none" stroke="#14503b" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent activity glass panel (overlaps card) -->
+      <div style="position: relative; z-index: 1; margin-top: -16px; margin-left: -19.8px; margin-right: -19.8px; margin-bottom: -18px; border: 0.9px solid rgba(255,255,255,0.05); border-radius: 42.3px; box-shadow: 0px 0px 23.4px -7.2px #00000000; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); padding: 14.4px 19.8px 22px 19.8px; overflow: hidden; background-color: #21212145">
+        <div style="position:absolute;top:-54px;left:10.8px;right:10.8px;height:171px;border-radius:19.8px;background:linear-gradient(135deg,#41b091 0%,#2e9478 55%,#26826a 100%);filter:blur(27px);opacity:0.55;pointer-events:none"></div>
+        <div style="position:absolute;top:0;left:54px;right:9px;height:1.35px;border-radius:1.8px;background:linear-gradient(90deg, rgba(235,255,246,0) 0%, rgba(235,255,246,0.10) 40%, rgba(235,255,246,0.45) 78%, rgba(235,255,246,0.22) 100%);pointer-events:none"></div>
+        <div style="position:absolute;top:9px;right:0;height:44%;width:1.35px;border-radius:1.8px;background:linear-gradient(180deg, rgba(235,255,246,0.30) 0%, rgba(235,255,246,0.42) 12%, rgba(235,255,246,0.10) 60%, rgba(235,255,246,0) 100%);pointer-events:none"></div>
+        
+        <div style="position:relative">
+        <div style="font-size:12.6px;letter-spacing:0.9px;color:#ffffff;padding-left:21.15px">0x3F9e4A21D8f2…9bC83Fc3</div>
+        <div style="font-size:9.9px;color:rgba(240,250,245,0.85);margin-top:2.7px;padding-left:21.15px">Sepolia</div>
+        <div style="height: 0.63px; background: rgba(255,255,255,0.10); margin: 14.4px -19.8px 0 -19.8px"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px">
+          <div style="font-family:'Manrope',sans-serif;font-weight:400;font-size:17.1px">Recent activity</div>
+          <div style="display:flex;align-items:center;gap:3.6px;font-size:10.8px;color:#9db3aa;cursor:pointer;transition:color .2s" style-hover="color:#e8f0ec">View All
+            <svg width="10.8" height="10.8" viewBox="0 0 24 24" fill="none" stroke="#9db3aa" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:22px;margin-top:20px">
+          <sc-for list="{{ newActivity }}" as="na" hint-placeholder-count="0">
+            <a href="{{ na.url }}" target="_blank" data-newact style="text-decoration:none;display:flex;align-items:center;gap:11.7px;padding:9px 7.2px;margin:-5.4px -7.2px;border-radius:999px;cursor:pointer;transition:background .15s" style-hover="background:rgba(95,230,175,0.1)">
+              <div style="width: 36px; height: 36px; border-radius: 50%; border: 0.9px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; background-color: #3FAC8D5A;flex-shrink:0">
+                <svg width="17" height="17" viewBox="1 1 22 22" fill="#cfe5d8"><path d="M17 22.75A5.75 5.75 0 1 1 22.75 17 5.757 5.757 0 0 1 17 22.75zm0-10A4.25 4.25 0 1 0 21.25 17 4.255 4.255 0 0 0 17 12.75z"></path><path d="M16 22.75H4A2.752 2.752 0 0 1 1.25 20V4A2.752 2.752 0 0 1 4 1.25h12A2.752 2.752 0 0 1 18.75 4v8.1a.75.75 0 1 1-1.5 0V4A1.252 1.252 0 0 0 16 2.75H4A1.252 1.252 0 0 0 2.75 4v16A1.252 1.252 0 0 0 4 21.25h12a.948.948 0 0 0 .229-.021.764.764 0 0 1 .926.731.746.746 0 0 1-.643.743 2.521 2.521 0 0 1-.512.047z"></path><path d="M13 7.75H6a.75.75 0 0 1 0-1.5h7a.75.75 0 0 1 0 1.5zM11 11.75H6a.75.75 0 0 1 0-1.5h5a.75.75 0 0 1 0 1.5zM16.5 18.75a.744.744 0 0 1-.53-.22l-1-1a.75.75 0 1 1 1.06-1.06l.47.469 1.47-1.469a.75.75 0 1 1 1.06 1.06l-2 2a.744.744 0 0 1-.53.22z"></path></svg>
+              </div>
+              <div>
+                <div style="font-size:13.5px;font-weight:600;color:#eef4f1">Payroll run</div>
+                <div style="font-size:10.35px;color:#9eada5;margin-top:0.9px">{{ na.date }} · {{ na.sub }}</div>
+              </div>
+              <div style="margin-left:auto;display:flex;align-items:center;gap:3.6px;background:rgba(0,0,0,0);border:0.9px solid rgba(95,230,175,0.55);color:#78e9c0;font-size:9px;font-weight:400;border-radius:899.1px;padding:4.5px 9px"><svg width="9.9" height="9.9" viewBox="0 0 32 32" fill="currentColor"><path d="M16 1C7.72 1 1 7.72 1 16s6.72 15 15 15 15-6.72 15-15S24.28 1 16 1zm7.5 12.32-7 8c-.39.45-.94.68-1.5.68-.44 0-.88-.14-1.25-.44l-5-4a2.001 2.001 0 0 1-.079-3.055c.742-.666 1.889-.617 2.667.005l3.044 2.436a.493.493 0 0 0 .678-.06l5.44-6.206c.72-.83 1.99-.91 2.82-.18.83.72.91 1.99.18 2.82z"></path></svg><span>Verified</span></div>
+            </a>
+          </sc-for>
+          <sc-if value="{{ showBase0 }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;gap:11.7px;padding:9px 7.2px;margin:-5.4px -7.2px;border-radius:999px;cursor:pointer;transition:background .15s" style-hover="background:rgba(95,230,175,0.1)">
+            <div style="width: 36px; height: 36px; border-radius: 50%; border: 0.9px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; background-color: #3FAC8D5A">
+              <svg width="17" height="17" viewBox="1 1 22 22" fill="#cfe5d8"><path d="M17 22.75A5.75 5.75 0 1 1 22.75 17 5.757 5.757 0 0 1 17 22.75zm0-10A4.25 4.25 0 1 0 21.25 17 4.255 4.255 0 0 0 17 12.75z"></path><path d="M16 22.75H4A2.752 2.752 0 0 1 1.25 20V4A2.752 2.752 0 0 1 4 1.25h12A2.752 2.752 0 0 1 18.75 4v8.1a.75.75 0 1 1-1.5 0V4A1.252 1.252 0 0 0 16 2.75H4A1.252 1.252 0 0 0 2.75 4v16A1.252 1.252 0 0 0 4 21.25h12a.948.948 0 0 0 .229-.021.764.764 0 0 1 .926.731.746.746 0 0 1-.643.743 2.521 2.521 0 0 1-.512.047z"></path><path d="M13 7.75H6a.75.75 0 0 1 0-1.5h7a.75.75 0 0 1 0 1.5zM11 11.75H6a.75.75 0 0 1 0-1.5h5a.75.75 0 0 1 0 1.5zM16.5 18.75a.744.744 0 0 1-.53-.22l-1-1a.75.75 0 1 1 1.06-1.06l.47.469 1.47-1.469a.75.75 0 1 1 1.06 1.06l-2 2a.744.744 0 0 1-.53.22z"></path></svg>
+            </div>
+            <div>
+              <div style="font-size:13.5px;font-weight:600;color:#eef4f1">Payroll run</div>
+              <div style="font-size:10.35px;color:#9eada5;margin-top:0.9px">Jul 5 · 8 paid · 4,500.5 cUSDd</div>
+            </div>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:3.6px;background:rgba(0,0,0,0);border:0.9px solid rgba(95,230,175,0.55);color:#78e9c0;font-size:9px;font-weight:400;border-radius:899.1px;padding:4.5px 9px"><svg width="9.9" height="9.9" viewBox="0 0 32 32" fill="currentColor"><path d="M16 1C7.72 1 1 7.72 1 16s6.72 15 15 15 15-6.72 15-15S24.28 1 16 1zm7.5 12.32-7 8c-.39.45-.94.68-1.5.68-.44 0-.88-.14-1.25-.44l-5-4a2.001 2.001 0 0 1-.079-3.055c.742-.666 1.889-.617 2.667.005l3.044 2.436a.493.493 0 0 0 .678-.06l5.44-6.206c.72-.83 1.99-.91 2.82-.18.83.72.91 1.99.18 2.82z"></path></svg><span>Verified</span></div>
+          </div>
+          </sc-if>
+          <sc-if value="{{ showBase1 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:11.7px;padding:9px 7.2px;margin:-5.4px -7.2px;border-radius:999px;cursor:pointer;transition:background .15s" style-hover="background:rgba(95,230,175,0.1)">
+            <div style="width: 36px; height: 36px; border-radius: 50%; border: 0.9px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; background-color: #3FAC8D5A">
+              <svg width="16.2" height="16.2" viewBox="0 0 24 24" fill="none" stroke="#cfe5d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+            </div>
+            <div>
+              <div style="font-size:13.5px;font-weight:600;color:#eef4f1">Employee added</div>
+              <div style="font-size:10.35px;color:#9eada5;margin-top:0.9px">Priya Sharma · Engineering</div>
+            </div>
+            <div style="margin-left:auto;background:rgba(0,0,0,0);border:0.9px solid rgba(95,230,175,0.55);color:#78e9c0;font-size:9px;font-weight:400;border-radius:899.1px;padding:4.5px 9px">Active</div>
+          </div>
+          </sc-if>
+          <sc-if value="{{ showBase2 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:11.7px;padding:9px 7.2px;margin:-5.4px -7.2px;border-radius:999px;cursor:pointer;transition:background .15s" style-hover="background:rgba(95,230,175,0.1)">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: #3FAC8D5A; border: 0.9px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center">
+              <svg width="16.2" height="16.2" viewBox="0 0 24 24" fill="none" stroke="#cfe5d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+            </div>
+            <div>
+              <div style="font-size:13.5px;font-weight:600;color:#eef4f1">Operator authorized</div>
+              <div style="font-size:10.35px;color:#9eada5;margin-top:0.9px">expires in 1 h</div>
+            </div>
+            <div style="margin-left:auto;background:rgba(0,0,0,0);border:0.9px solid rgba(224,178,95,0.6);color:#e6c082;font-size:9px;font-weight:400;border-radius:899.1px;padding:4.5px 9px">Pending</div>
+          </div>
+          </sc-if>
+          <sc-if value="{{ showBase3 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:11.7px;padding:9px 7.2px;margin:-5.4px -7.2px;border-radius:999px;cursor:pointer;transition:background .15s" style-hover="background:rgba(95,230,175,0.1)">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: #3FAC8D5A; border: 0.9px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center">
+              <svg width="17" height="17" viewBox="0 0 32 32" fill="#cfe5d8"><path fill-rule="evenodd" d="M25 19h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-5a3 3 0 0 1 3-3h2V5a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3zM7 21H5a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h22a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1h-2v2h1a1 1 0 0 1 0 2H6a1 1 0 1 1 0-2h1zm16 2V5a1 1 0 0 0-1-1H10a1 1 0 0 0-1 1v18zm-7.555-2.167-3-2.001a1 1 0 0 1 1.11-1.664l1.445.963V13a1 1 0 0 1 2 0v5.131l1.445-.963a1.001 1.001 0 0 1 1.11 1.663l-3 2.001c-.164.108-.356.168-.555.168s-.391-.06-.555-.168z"></path></svg>
+            </div>
+            <div>
+              <div style="font-size:13.5px;font-weight:600;color:#eef4f1">Funds deposited</div>
+              <div style="font-size:10.35px;color:#9eada5;margin-top:0.9px">Jul 3 · 5,000 cUSDd</div>
+            </div>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:3.6px;background:rgba(0,0,0,0);border:0.9px solid rgba(95,230,175,0.55);color:#78e9c0;font-size:9px;font-weight:400;border-radius:899.1px;padding:4.5px 9px"><svg width="9.9" height="9.9" viewBox="0 0 32 32" fill="currentColor"><path d="M16 1C7.72 1 1 7.72 1 16s6.72 15 15 15 15-6.72 15-15S24.28 1 16 1zm7.5 12.32-7 8c-.39.45-.94.68-1.5.68-.44 0-.88-.14-1.25-.44l-5-4a2.001 2.001 0 0 1-.079-3.055c.742-.666 1.889-.617 2.667.005l3.044 2.436a.493.493 0 0 0 .678-.06l5.44-6.206c.72-.83 1.99-.91 2.82-.18.83.72.91 1.99.18 2.82z"></path></svg><span>Verified</span></div>
+          </div>
+          </sc-if>
+        </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isNavEmp }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:19.8px">
+    <div style="background:rgba(110,196,186,0.07);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:25.2px 25.2px 42.3px 42.3px;padding:19.8px 19.8px 18px 19.8px;display:flex;flex-direction:column;gap:0">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-family:'Manrope',sans-serif;font-weight:400;font-size:18px">Next payout</div>
+      </div>
+
+      <!-- Stacked card -->
+      <div style="position:relative;margin-top:16.2px;height:156.6px;margin-left:1.35px;margin-right:1.35px">
+        <div style="position:absolute;top:0;left:21.6px;right:21.6px;height:36px;border-radius:14.4px 14.4px 0 0;background:rgba(94,190,158,0.28);border:0.9px solid rgba(170,235,210,0.14)"></div>
+        <div style="position:absolute;top:10.8px;left:10.8px;right:10.8px;height:36px;border-radius:14.4px 14.4px 0 0;background:rgba(94,190,158,0.46);border:0.9px solid rgba(170,235,210,0.20)"></div>
+        <div style="position:absolute;top:23.4px;left:0;right:0;height:216px;border-radius:18px;box-shadow:0 9px 32.4px -3.6px rgba(64,185,150,0.35), 0 0 63px -7.2px rgba(64,185,150,0.22);background:linear-gradient(135deg,#41b091 0%,#2e9478 50%,#26826a 100%);padding:18px 19.8px;overflow:hidden">
+          <div style="position:absolute;top:-36px;right:-27px;width:144px;height:144px;border-radius:50%;background:rgba(255,255,255,0.10)"></div>
+          <div style="position:absolute;top:-9px;right:54px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.07)"></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-size:10.8px;color:rgba(240,250,245,0.85);margin-top:12.6px">Scheduled payroll</div>
+              <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:28.8px;color:#fff;margin-top:1.8px">Jul 31</div>
+            </div>
+            <div title="Remind me" onClick="{{ remindClick }}" style="width:39.6px;height:39.6px;border-radius:50%;background:#f5f8f6;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;cursor:pointer;transition:transform .15s;flex-shrink:0" style-hover="transform:scale(1.08)" style-active="transform:scale(0.94)">
+              <svg width="15.3" height="15.3" viewBox="0 0 24 24" fill="none" stroke="#14503b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+              <sc-if value="{{ isReminderSet }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:0.9px;right:0.9px;width:9px;height:9px;border-radius:50%;background:#3bbf8e;border:1.8px solid #f5f8f6"></div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wallet details glass panel (overlaps card) -->
+      <div style="position:relative;z-index:1;margin-top:-21.6px;margin-left:-19.8px;margin-right:-19.8px;margin-bottom:-18px;border:0.9px solid rgba(255,255,255,0.05);border-radius:42.3px;background:rgba(13,22,18,0.21);backdrop-filter:blur(6.3px);-webkit-backdrop-filter:blur(6.3px);padding:14.4px 19.8px 18px 19.8px;overflow:hidden">
+        <div style="position:absolute;top:-54px;left:10.8px;right:10.8px;height:171px;border-radius:19.8px;background:linear-gradient(135deg,#41b091 0%,#2e9478 55%,#26826a 100%);filter:blur(27px);opacity:0.55;pointer-events:none"></div>
+        <div style="position:absolute;top:0;left:54px;right:9px;height:1.35px;border-radius:1.8px;background:linear-gradient(90deg, rgba(235,255,246,0) 0%, rgba(235,255,246,0.10) 40%, rgba(235,255,246,0.45) 78%, rgba(235,255,246,0.22) 100%);pointer-events:none"></div>
+        <div style="position:absolute;top:9px;right:0;height:44%;width:1.35px;border-radius:1.8px;background:linear-gradient(180deg, rgba(235,255,246,0.30) 0%, rgba(235,255,246,0.42) 12%, rgba(235,255,246,0.10) 60%, rgba(235,255,246,0) 100%);pointer-events:none"></div>
+        
+        <div style="position:relative">
+        <div style="font-size:12.6px;letter-spacing:0.9px;color:#ffffff;padding-left:21.15px">{{ empWallet }}</div>
+        <div style="font-size:9.9px;color:rgba(240,250,245,0.85);margin-top:2.7px;padding-left:21.15px">Sepolia</div>
+        <div style="height:0.9px;background:rgba(255,255,255,0.10);margin:14.4px -19.8px 0 -19.8px"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16.2px">
+          <div style="font-family:'Manrope',sans-serif;font-weight:400;font-size:17.1px">Wallet details</div>
+        </div>
+        <div style="display:flex;flex-direction:column;margin-top:7.2px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0">
+            <div style="font-size:11.7px;color:#e8f0ec">Token</div>
+            <div style="font-size:10.8px;color:#9db3aa">cUSDd</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0">
+            <div style="font-size:11.7px;color:#e8f0ec">Network</div>
+            <div style="font-size:10.8px;color:#9db3aa">Sepolia Testnet</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0">
+            <div style="font-size:11.7px;color:#e8f0ec">Frequency</div>
+            <div style="font-size:10.8px;color:#9db3aa">Monthly</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0">
+            <div style="font-size:11.7px;color:#e8f0ec">Joined</div>
+            <div style="font-size:10.8px;color:#9db3aa">{{ empJoined }}</div>
+          </div>
+        </div>
+
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:19.8px">
+      <div style="background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:21.6px;padding:18px 21.6px">
+        <div style="font-size:10.8px;color:#9db3aa">Payments received</div>
+        <div style="font-family:'Manrope',sans-serif;font-weight:500;font-size:18px;margin-top:5.4px">{{ empPayCountPadded }}</div>
+      </div>
+      <div style="background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:21.6px;padding:18px 21.6px">
+        <div style="font-size:10.8px;color:#9db3aa">Team</div>
+        <div style="font-family:'Manrope',sans-serif;font-weight:500;font-size:18px;margin-top:5.4px">{{ empDept }}</div>
+      </div>
+      <div style="grid-column:1 / -1;background:rgba(110,196,186,0.16);box-shadow:inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026);border-radius:21.6px;padding:18px 21.6px">
+        <div style="font-size:10.8px;color:#9db3aa">Role</div>
+        <div style="font-family:'Manrope',sans-serif;font-weight:500;font-size:18px;margin-top:5.4px">{{ empRole }}</div>
+      </div>
+    </div>
+    </div>
+    </sc-if>
+    </div>
+    <div style="text-align: center; font-size: 9.9px; color: #6f8577; padding: 16.2px 0 9px 0; padding-top: 35px">SealedPay · Powered by DisperseKit · TokenOps disperse · Zama FHE</div>
+    </div>
+  </div>
+
+  <sc-if value="{{ isPopupOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closePopup }}" class="dcov" style="position:fixed;inset:0;z-index:3;background:#0D1411F2"></div>
+  </sc-if>
+
+  <sc-if value="{{ isRemindOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ remindCancel }}" class="dcov" style="position:fixed;inset:0;z-index:70;background:#0D1411F2;display:flex;align-items:center;justify-content:center">
+      <div onClick="{{ stopProp }}" data-screen-label="Payout reminder modal" class="dcpop" style="position: relative; width: 342px; border-radius: 23.4px; border: 1px solid rgba(255,255,255,0.11); background: #0D1411F2; padding: 25.2px; cursor: auto; overflow: hidden">
+        <div style="position:relative">
+        <div style="width:43.2px;height:43.2px;border-radius:50%;background:rgba(255,255,255,0.06);border:0.9px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e8f0ec" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+        </div>
+        <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:19.8px;color:#f2f7f4;margin-top:14.4px">Payout reminder</div>
+        <div style="font-size:11.7px;color:#9db3aa;margin-top:5.4px;line-height:1.5">{{ remindBody }}</div>
+        <div style="display:flex;gap:10.8px;margin-top:21.6px">
+          <div onClick="{{ remindCancel }}" style="flex:1;text-align:center;background:rgba(255,255,255,0.06);border:0.9px solid rgba(255,255,255,0.09);color:#e8f0ec;font-size:12.6px;font-weight:600;border-radius:899.1px;padding:10.8px 0;cursor:pointer;transition:background .2s" style-hover="background:rgba(95,230,175,0.1)">Cancel</div>
+          <div onClick="{{ remindConfirm }}" style="flex:1;text-align:center;background:#f5f8f6;color:#14503b;font-size:12.6px;font-weight:700;border-radius:899.1px;padding:10.8px 0;cursor:pointer;transition:transform .15s" style-hover="transform:scale(1.03)">{{ remindPrimaryLabel }}</div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isPayrollOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closePayroll }}" class="dcov" style="position:fixed;inset:0;z-index:72;background:#0D1411F2;display:flex;align-items:center;justify-content:center;padding:24px">
+      <div onClick="{{ stopProp }}" data-screen-label="Run payroll modal" class="dcpop" style="position:relative;width:468px;max-width:100%;border-radius:27px;border:0.9px solid rgba(255,255,255,0.11);background-color:#121D1AE6;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);box-shadow:0 30px 80px -30px rgba(0,0,0,0.6);padding:26px 24px 22px 24px;cursor:auto;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:6px;background:rgba(255,255,255,0.06);overflow:hidden;border-radius:27px 27px 0 0">
+          <div style="height:100%;width:{{ payStepFill }};background:linear-gradient(90deg,#3bbf8e,#78e9c0);transition:width .45s cubic-bezier(.22,1,.36,1)"></div>
+        </div>
+
+        <!-- STEP 0: SELECT & REVIEW -->
+        <sc-if value="{{ payStep0 }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+            <div>
+              <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:19.8px;color:#f2f7f4">Run payroll</div>
+              <div style="font-size:11.7px;color:#9db3aa;margin-top:3.6px">Review who gets paid this run.</div>
+            </div>
+            <div onClick="{{ toggleSelectAll }}" style="font-size:11.7px;color:#78e9c0;cursor:pointer;user-select:none" style-hover="text-decoration:underline">{{ payAllChecked }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;margin-top:14px;max-height:268px;overflow-y:auto;margin-left:-6px;margin-right:-6px;padding:0 6px">
+            <sc-for list="{{ payEmployees }}" as="pe" hint-placeholder-count="8">
+              <div onClick="{{ pe.onToggle }}" style="display:flex;align-items:center;gap:12px;padding:8px 8px;border-radius:14px;cursor:pointer;transition:background .15s" style-hover="background:rgba(95,230,175,0.1)">
+                <div style="width:19.8px;height:19.8px;border-radius:50%;background:{{ pe.boxBg }};border:{{ pe.boxBorder }};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .18s">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0b1512" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:{{ pe.checkOpacity }};transition:opacity .18s"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <div style="width:34.2px;height:34.2px;border-radius:50%;background:rgba(59,191,142,0.18);border:0.9px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-family:'Manrope',sans-serif;font-weight:800;font-size:11.7px;color:#d3ecdd;flex-shrink:0">{{ pe.initials }}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13.5px;font-weight:600;color:#eef4f1">{{ pe.name }}</div>
+                  <div style="font-size:10.35px;color:#9db3aa;margin-top:0.9px">{{ pe.sub }}</div>
+                </div>
+                <div style="font-size:13.5px;font-weight:700;color:#eef4f1">{{ pe.salaryEl }} cUSDd</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:0.9px solid rgba(255,255,255,0.09)">
+            <div>
+              <div style="font-size:10.35px;color:#9db3aa">Total to disperse · <span onClick="{{ togglePayReveal }}" style="color:#78e9c0;cursor:pointer">{{ payRevealLabel }}</span></div>
+              <div style="display:flex;align-items:baseline;gap:6px;margin-top:2.7px"><div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:19.8px;color:#f2f7f4">{{ payTotalEl }}</div><div style="font-size:11.7px;color:#9db3aa">cUSDd</div></div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:19.8px;color:#f2f7f4">{{ paySelCountPadded }}</div>
+              <div style="font-size:10.35px;color:#9db3aa;margin-top:2.7px">recipients</div>
+            </div>
+          </div>
+          <div onClick="{{ payContinue }}" style="margin-top:16px;text-align:center;background:{{ accentColor }};color:#0b1512;font-size:13.5px;font-weight:600;border-radius:899.1px;padding:12.6px 0;cursor:pointer;transition:transform .15s" style-hover="transform:scale(1.02)" style-active="transform:scale(0.98)">Continue</div>
+        </sc-if>
+
+        <!-- STEP 1: ENCRYPTING -->
+        <sc-if value="{{ payStep1 }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:10px">
+            <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:19.8px;color:#f2f7f4">Encrypting {{ paySelCount }} salaries in your browser</div>
+            <div style="font-size:11.7px;color:#9db3aa;margin-top:3.6px">Amounts are sealed locally before anything is sent.</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px">
+            <sc-for list="{{ encRows }}" as="er" hint-placeholder-count="8">
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:13px;background:rgba(255,255,255,0.03);border:0.9px solid rgba(255,255,255,0.05);min-width:0">
+                <div style="width:29px;height:29px;border-radius:50%;background:rgba(59,191,142,0.18);border:0.9px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-family:'Manrope',sans-serif;font-weight:800;font-size:10.35px;color:#d3ecdd;flex-shrink:0">{{ er.initials }}</div>
+                <div style="flex:1;min-width:0;font-size:12.15px;font-weight:600;color:#eef4f1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ er.name }}</div>
+                <div style="font-size:12.15px;font-weight:600;color:#cfe0d8;flex-shrink:0">{{ er.el }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:9px;margin-top:16px;font-size:11.7px;color:#9db3aa"><div style="width:15px;height:15px;border-radius:50%;border:2.2px solid rgba(120,233,192,0.25);border-top-color:#78e9c0;animation:dcSpin .7s linear infinite"></div><span>Sealing amounts</span></div>
+        </sc-if>
+
+        <!-- STEP 2: AUTHORIZE -->
+        <sc-if value="{{ payStep2 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:14px 6px 6px 6px;margin-top:8px">
+            <div style="position:relative;width:66px;height:66px;display:flex;align-items:center;justify-content:center;margin-bottom:6px">
+              <div style="position:absolute;inset:0;border-radius:50%;background:rgba(95,230,175,0.14);animation:dcPulse 2.2s ease-in-out infinite"></div>
+              <svg width="30" height="30" viewBox="1 1 22 22" fill="#78e9c0" fill-rule="evenodd"><circle cx="11.5" cy="6.744" r="5.5"></circle><path d="M11.25 21.756v-2.055c0-.465.184-.91.513-1.238l1.99-1.99a4.991 4.991 0 0 1 .908-3.106 18.9 18.9 0 0 0-3.161-.261c-3.322 0-6.263.831-8.089 2.076-1.393.95-2.161 2.157-2.161 3.424v1.45a1.697 1.697 0 0 0 1.7 1.7z"></path><path d="M18.152 20.208a4.003 4.003 0 1 0-2.233-6.786 3.997 3.997 0 0 0-1.127 3.427L12.47 19.17a.75.75 0 0 0-.22.531V22c0 .414.336.75.75.75h2.299a.75.75 0 0 0 .531-.22zm-.17-3.19a1.085 1.085 0 1 1 1.535-1.533 1.085 1.085 0 0 1-1.535 1.533z"></path></svg>
+            </div>
+            <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:19.8px;color:#f2f7f4;margin-top:10px">Authorize SealedPay</div>
+            <div style="font-size:12.6px;color:#9db3aa;margin-top:8px;line-height:1.55;max-width:330px">Allow SealedPay to disperse cUSDd on your behalf · one signature · expires in 24h.</div>
+          </div>
+          <sc-if value="{{ authIdle }}" hint-placeholder-val="{{ true }}">
+            <div onClick="{{ runAuthorize }}" style="margin-top:14px;text-align:center;background:#f5f8f6;color:#14503b;font-size:13.5px;font-weight:600;border-radius:899.1px;padding:12.6px 0;cursor:pointer;transition:transform .15s" style-hover="transform:scale(1.02)" style-active="transform:scale(0.98)">Authorize</div>
+          </sc-if>
+          <sc-if value="{{ authSigning }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:14px;text-align:center;background:rgba(255,255,255,0.05);border:0.9px solid rgba(255,255,255,0.1);color:#cfdcd6;font-size:13.5px;font-weight:600;border-radius:899.1px;padding:12.6px 0;display:flex;align-items:center;justify-content:center;gap:9px"><div style="width:15px;height:15px;border-radius:50%;border:2.2px solid rgba(120,233,192,0.25);border-top-color:#78e9c0;animation:dcSpin .7s linear infinite"></div><span>Confirm in your wallet</span></div>
+          </sc-if>
+          <sc-if value="{{ authDone }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:14px;text-align:center;background:rgba(59,191,142,0.16);border:0.9px solid rgba(95,230,175,0.4);color:#78e9c0;font-size:13.5px;font-weight:600;border-radius:899.1px;padding:12.6px 0;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="15" height="15" viewBox="0 0 32 32" fill="currentColor"><path d="M16 1C7.72 1 1 7.72 1 16s6.72 15 15 15 15-6.72 15-15S24.28 1 16 1zm7.5 12.32-7 8c-.39.45-.94.68-1.5.68-.44 0-.88-.14-1.25-.44l-5-4a2.001 2.001 0 0 1-.079-3.055c.742-.666 1.889-.617 2.667.005l3.044 2.436a.493.493 0 0 0 .678-.06l5.44-6.206c.72-.83 1.99-.91 2.82-.18.83.72.91 1.99.18 2.82z"></path></svg><span>Authorized</span></div>
+          </sc-if>
+        </sc-if>
+
+        <!-- STEP 3: DISPERSE & VERIFY -->
+        <sc-if value="{{ payStep3 }}" hint-placeholder-val="{{ false }}">
+          <div data-payfinale style="margin-top:10px;border-radius:18px;position:relative">
+            <sc-if value="{{ dispIdle }}" hint-placeholder-val="{{ true }}">
+              <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:19.8px;color:#f2f7f4">Pay all {{ paySelCount }} in one transaction</div>
+              <div style="font-size:11.7px;color:#9db3aa;margin-top:3.6px">One disperse call settles every salary at once.</div>
+              <div onClick="{{ runDisperse }}" style="margin-top:20px;text-align:center;background:{{ accentColor }};color:#0b1512;font-size:13.5px;font-weight:600;border-radius:899.1px;padding:12.6px 0;cursor:pointer;transition:transform .15s" style-hover="transform:scale(1.02)" style-active="transform:scale(0.98)">Confirm &amp; pay</div>
+              <div onClick="{{ simulateFailure }}" style="margin-top:10px;text-align:center;font-size:10.35px;color:#6f8577;cursor:pointer;user-select:none" style-hover="color:#e07a6a">Simulate failure (demo)</div>
+            </sc-if>
+            <sc-if value="{{ dispActive }}" hint-placeholder-val="{{ false }}">
+              <div ref="{{ dispHeadRef }}" style="font-family:'Manrope',sans-serif;font-weight:700;font-size:19.8px;color:#f2f7f4">{{ dispHeadline }}</div>
+              <div style="font-size:11.7px;color:#9db3aa;margin-top:3.6px">One disperse call settles every salary at once.</div>
+              <div style="position:relative;height:7px;border-radius:999px;background:rgba(255,255,255,0.06);overflow:hidden;margin-top:18px">
+                <div style="position:absolute;top:0;left:0;bottom:0;width:{{ dispProgress }};background:linear-gradient(90deg,#2f9d74,#78e9c0);border-radius:999px;transition:width .5s cubic-bezier(.22,1,.36,1);animation:dcBarPulse 1.6s ease-in-out infinite">
+                  <div style="position:absolute;inset:0;background:linear-gradient(100deg,rgba(255,255,255,0) 30%,rgba(255,255,255,0.5) 50%,rgba(255,255,255,0) 70%);background-size:220% 100%;animation:dcSheen 1.15s linear infinite;pointer-events:none"></div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+                <div style="display:flex;align-items:center;gap:9px;font-size:12.6px">
+                  <sc-if value="{{ dispS1done }}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 32 32" fill="#78e9c0" style="flex-shrink:0;animation:dcCheckPop .45s cubic-bezier(.22,1,.36,1) both"><path d="M16 1C7.72 1 1 7.72 1 16s6.72 15 15 15 15-6.72 15-15S24.28 1 16 1zm7.5 12.32-7 8c-.39.45-.94.68-1.5.68-.44 0-.88-.14-1.25-.44l-5-4a2.001 2.001 0 0 1-.079-3.055c.742-.666 1.889-.617 2.667.005l3.044 2.436a.493.493 0 0 0 .678-.06l5.44-6.206c.72-.83 1.99-.91 2.82-.18.83.72.91 1.99.18 2.82z"></path></svg></sc-if>
+                  <sc-if value="{{ dispS1pending }}" hint-placeholder-val="{{ true }}"><div style="width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0"><div style="width:7.2px;height:7.2px;border-radius:50%;background:#78e9c0;animation:dcBarPulse 1.2s ease-in-out infinite"></div></div></sc-if>
+                  <span style="color:#cfe0d8">Dispersing on Sepolia</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:9px;font-size:12.6px">
+                  <sc-if value="{{ dispS3done }}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 32 32" fill="#78e9c0" style="flex-shrink:0;animation:dcCheckPop .45s cubic-bezier(.22,1,.36,1) both"><path d="M16 1C7.72 1 1 7.72 1 16s6.72 15 15 15 15-6.72 15-15S24.28 1 16 1zm7.5 12.32-7 8c-.39.45-.94.68-1.5.68-.44 0-.88-.14-1.25-.44l-5-4a2.001 2.001 0 0 1-.079-3.055c.742-.666 1.889-.617 2.667.005l3.044 2.436a.493.493 0 0 0 .678-.06l5.44-6.206c.72-.83 1.99-.91 2.82-.18.83.72.91 1.99.18 2.82z"></path></svg></sc-if>
+                  <sc-if value="{{ dispVerifyActive }}" hint-placeholder-val="{{ false }}"><div style="width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0"><div style="width:7.2px;height:7.2px;border-radius:50%;background:#78e9c0;animation:dcBarPulse 1.2s ease-in-out infinite"></div></div></sc-if>
+                  <sc-if value="{{ dispVerifyPending }}" hint-placeholder-val="{{ true }}"><div style="width:15px;height:15px;border-radius:50%;border:1.8px solid rgba(255,255,255,0.14);flex-shrink:0"></div></sc-if>
+                  <span style="color:#9db3aa">Verifying delivery · {{ deliveredLabel }}</span>
+                </div>
+              </div>
+              <sc-if value="{{ dispVerifyActive }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:2px;margin-top:14px;max-height:150px;overflow-y:auto;margin-left:-6px;margin-right:-6px;padding:0 6px">
+                  <sc-for list="{{ disperseRows }}" as="dr" hint-placeholder-count="8">
+                    <div style="display:flex;align-items:center;gap:11px;padding:6px">
+                      <div style="width:29px;height:29px;border-radius:50%;background:rgba(59,191,142,0.18);border:0.9px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-family:'Manrope',sans-serif;font-weight:800;font-size:10.35px;color:#d3ecdd;flex-shrink:0">{{ dr.initials }}</div>
+                      <div style="flex:1;min-width:0;font-size:12.6px;font-weight:600;color:#eef4f1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ dr.name }}</div>
+                      <sc-if value="{{ dr.delivered }}" hint-placeholder-val="{{ false }}">
+                        <div style="display:flex;align-items:center;gap:5px;color:#78e9c0;font-size:10.35px;animation:dcCheckPop .4s cubic-bezier(.22,1,.36,1) both"><svg width="13" height="13" viewBox="0 0 32 32" fill="currentColor"><path d="M16 1C7.72 1 1 7.72 1 16s6.72 15 15 15 15-6.72 15-15S24.28 1 16 1zm7.5 12.32-7 8c-.39.45-.94.68-1.5.68-.44 0-.88-.14-1.25-.44l-5-4a2.001 2.001 0 0 1-.079-3.055c.742-.666 1.889-.617 2.667.005l3.044 2.436a.493.493 0 0 0 .678-.06l5.44-6.206c.72-.83 1.99-.91 2.82-.18.83.72.91 1.99.18 2.82z"></path></svg><span>Paid</span></div>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </sc-if>
+            <sc-if value="{{ dispDone }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:12px 6px 4px 6px">
+                <div style="position:relative;width:78px;height:78px;display:flex;align-items:center;justify-content:center">
+                  <div style="position:absolute;inset:-12px;border-radius:50%;background:radial-gradient(circle, rgba(95,230,175,0.2), rgba(0,0,0,0) 72%);animation:dcBloom 1.1s ease-out both;pointer-events:none"></div>
+                  <svg width="56" height="56" viewBox="0 0 64 64" fill="#3bbf8e" style="animation:dcCheckPop .55s cubic-bezier(.22,1,.36,1) both"><path d="M43 25.25c-9.787 0-17.75 7.962-17.75 17.75S33.213 60.75 43 60.75 60.75 52.788 60.75 43 52.787 25.25 43 25.25zm9.723 12.623L42.116 48.48c-.34.341-.789.512-1.237.512s-.896-.17-1.237-.512l-6.365-6.364a.75.75 0 1 1 1.06-1.06l6.365 6.363a.25.25 0 0 0 .354 0l10.606-10.606a.75.75 0 1 1 1.06 1.06zm.148-33.647a1.735 1.735 0 0 0-1.755.006l-3.119 1.825a.25.25 0 0 1-.253 0l-4.12-2.41a1.749 1.749 0 0 0-1.767 0l-4.12 2.41a.256.256 0 0 1-.253 0L33.375 3.65a1.75 1.75 0 0 0-1.77 0l-4.109 2.408a.252.252 0 0 1-.253 0l-4.11-2.409a1.753 1.753 0 0 0-1.767 0l-4.119 2.41a.255.255 0 0 1-.253 0l-3.11-1.823a1.734 1.734 0 0 0-1.754-.009c-.55.316-.88.884-.88 1.52V57.5c0 1.26-.501 2.399-1.304 3.25h25.61a19.352 19.352 0 0 1-10.574-11H18.5a.75.75 0 0 1 0-1.5h5.99a19.165 19.165 0 0 1-.74-5.25c0-.084.012-.166.013-.25H18.5a.75.75 0 0 1 0-1.5h5.339c.175-1.93.636-3.776 1.34-5.5h-6.68a.75.75 0 0 1 0-1.5h7.376a19.335 19.335 0 0 1 4.229-5.5H18.5a.75.75 0 0 1 0-1.5h13.467A19.126 19.126 0 0 1 43 23.75a19.14 19.14 0 0 1 10.75 3.289V5.743a1.73 1.73 0 0 0-.879-1.517zM46.5 21.75h-28a.75.75 0 0 1 0-1.5h28a.75.75 0 0 1 0 1.5zm0-7h-28a.75.75 0 0 1 0-1.5h28a.75.75 0 0 1 0 1.5zM9.75 57.5a3.25 3.25 0 0 1-6.5 0V43.25h6.5z"></path></svg>
+                </div>
+                <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:22px;color:#f2f7f4;margin-top:14px">Payroll delivered</div>
+                <div style="font-size:12.6px;color:#9db3aa;margin-top:6px">{{ verifiedLabel }}</div>
+                <div onClick="{{ toggleResultReveal }}" style="display:flex;align-items:baseline;gap:6px;margin-top:18px;background:rgba(0,0,0,0.2);border-radius:14px;padding:11px 18px;cursor:pointer"><span style="font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;color:#f2f7f4">{{ resultTotalEl }}</span><span style="font-size:11.7px;color:#9db3aa">cUSDd</span></div>
+                <div onClick="{{ toggleResultReveal }}" style="font-size:10.35px;color:#78e9c0;margin-top:9px;cursor:pointer;user-select:none" style-hover="text-decoration:underline">{{ resultRevealLabel }}</div>
+                <a href="{{ payRunUrl }}" target="_blank" style="font-size:11.7px;color:#9db3aa;margin-top:14px;text-decoration:none" style-hover="color:#e8f0ec">View on Etherscan</a>
+                <div onClick="{{ closePayroll }}" style="margin-top:18px;width:100%;text-align:center;background:{{ accentColor }};color:#0b1512;font-size:13.5px;font-weight:600;border-radius:899.1px;padding:12.6px 0;cursor:pointer;transition:transform .15s" style-hover="transform:scale(1.02)" style-active="transform:scale(0.98)">Done</div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isPermPrompt }}" hint-placeholder-val="{{ false }}">
+    <div class="dcpop" data-screen-label="Notif permission" style="position:fixed;top:74px;right:28px;z-index:80;width:308px;border-radius:20px;border:0.9px solid rgba(255,255,255,0.11);background:rgba(52,92,72,0.28);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);box-shadow:0 24px 60px -24px rgba(0,0,0,0.6);padding:18px">
+      <div style="display:flex;align-items:flex-start;gap:11px">
+        <div style="width:34px;height:34px;border-radius:50%;background:rgba(95,230,175,0.14);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg></div>
+        <div><div style="font-size:13.5px;font-weight:600;color:#f2f7f4">Enable notifications?</div><div style="font-size:11.25px;color:#9db3aa;margin-top:3px;line-height:1.45">Get alerts when payroll is delivered or needs attention.</div></div>
+      </div>
+      <div style="display:flex;gap:9px;margin-top:14px">
+        <div onClick="{{ dismissPerm }}" style="flex:1;text-align:center;background:rgba(255,255,255,0.06);border:0.9px solid rgba(255,255,255,0.09);color:#cfdcd6;font-size:11.7px;font-weight:500;border-radius:899.1px;padding:8.5px 0;cursor:pointer;transition:background .2s" style-hover="background:rgba(255,255,255,0.1)">Not now</div>
+        <div onClick="{{ enableNotifs }}" style="flex:1;text-align:center;background:{{ accentColor }};color:#0b1512;font-size:11.7px;font-weight:600;border-radius:899.1px;padding:8.5px 0;cursor:pointer;transition:transform .15s" style-hover="transform:scale(1.03)">Enable</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div data-toast onClick="{{ dismissToast }}" class="dctoast" style="position:fixed;top:22px;left:50%;transform:translateX(-50%);z-index:90;display:flex;align-items:center;gap:10px;border-radius:899.1px;padding:11px 20px;cursor:pointer;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 18px 44px -16px rgba(0,0,0,0.55);border:0.9px solid {{ toastBorder }};background:{{ toastBg }}">
+      <sc-if value="{{ toastOk }}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 32 32" fill="#3bbf8e" style="flex-shrink:0"><path d="M16 1C7.72 1 1 7.72 1 16s6.72 15 15 15 15-6.72 15-15S24.28 1 16 1zm7.5 12.32-7 8c-.39.45-.94.68-1.5.68-.44 0-.88-.14-1.25-.44l-5-4a2.001 2.001 0 0 1-.079-3.055c.742-.666 1.889-.617 2.667.005l3.044 2.436a.493.493 0 0 0 .678-.06l5.44-6.206c.72-.83 1.99-.91 2.82-.18.83.72.91 1.99.18 2.82z"></path></svg></sc-if><sc-if value="{{ toastErr }}" hint-placeholder-val="{{ false }}"><div style="width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:{{ toastIconBg }}"><span style="font-size:11px;font-weight:700;color:#3a1a15">!</span></div></sc-if>
+      <div style="font-size:12.6px;font-weight:600;color:#f2f7f4">{{ toastMsg }}</div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isAddOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ addCancel }}" style="position: fixed; inset: 0; z-index: 70; background: #0D1411F2; display: flex; align-items: center; justify-content: center">
+      <div onClick="{{ stopProp }}" data-screen-label="Add employee modal" class="dcpop" style="position: relative; width: 387px; border-radius: 23.4px; border: 0.9px solid rgba(255,255,255,0.11); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); padding: 25.2px; cursor: auto; overflow: hidden; background-color: #121D1AE6">
+        <div style="position:relative">
+        <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:19.8px;color:#f2f7f4">Add employee</div>
+        <div style="font-size:11.7px;color:#9db3aa;margin-top:5.4px;line-height:1.5">They get a claim link to view their salary privately.</div>
+        <div style="display:flex;flex-direction:column;gap:12.6px;margin-top:19.8px">
+          <div>
+            <div style="font-size:9.9px;color:#9db3aa;margin-bottom:5.4px">Full name</div>
+            <input value="{{ addName }}" onChange="{{ onAddName }}" placeholder="Jane Cooper" style="width:100%;background:rgba(255,255,255,0.05);border:0.9px solid rgba(255,255,255,0.09);border-radius:10.8px;padding:9.9px 12.6px;color:#e8f0ec;font-size:11.7px;font-family:'Manrope',sans-serif;outline:none">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10.8px">
+            <div>
+              <div style="font-size:9.9px;color:#9db3aa;margin-bottom:5.4px">Role</div>
+              <input value="{{ addRole }}" onChange="{{ onAddRole }}" placeholder="Engineer" style="width:100%;background:rgba(255,255,255,0.05);border:0.9px solid rgba(255,255,255,0.09);border-radius:10.8px;padding:9.9px 12.6px;color:#e8f0ec;font-size:11.7px;font-family:'Manrope',sans-serif;outline:none">
+            </div>
+            <div>
+              <div style="font-size:9.9px;color:#9db3aa;margin-bottom:5.4px">Monthly salary (cUSDd)</div>
+              <input value="{{ addSalary }}" onChange="{{ onAddSalary }}" placeholder="850" style="width:100%;background:rgba(255,255,255,0.05);border:0.9px solid rgba(255,255,255,0.09);border-radius:10.8px;padding:9.9px 12.6px;color:#e8f0ec;font-size:11.7px;font-family:'Manrope',sans-serif;outline:none">
+            </div>
+          </div>
+          <div>
+            <div style="font-size:9.9px;color:#9db3aa;margin-bottom:5.4px">Team</div>
+            <div style="display:flex;gap:7.2px">
+              <sc-for list="{{ addDeptChips }}" as="chip" hint-placeholder-count="3">
+                <div onClick="{{ chip.onClick }}" style="background:{{ chip.bg }};color:{{ chip.color }};font-size:10.8px;border-radius:899.1px;padding:7.2px 14.4px;cursor:pointer;transition:background .15s, color .15s;user-select:none">{{ chip.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:9.9px;color:#9db3aa;margin-bottom:5.4px">Wallet address</div>
+            <input value="{{ addWallet }}" onChange="{{ onAddWallet }}" placeholder="0x71C0…8a4E" style="width:100%;background:rgba(255,255,255,0.05);border:0.9px solid rgba(255,255,255,0.09);border-radius:10.8px;padding:9.9px 12.6px;color:#e8f0ec;font-size:11.7px;font-family:'Manrope',sans-serif;outline:none">
+          </div>
+        </div>
+        <div style="display:flex;gap:10.8px;margin-top:23.4px">
+          <div onClick="{{ addCancel }}" style="flex:1;text-align:center;background:rgba(255,255,255,0.06);border:0.9px solid rgba(255,255,255,0.09);color:#e8f0ec;font-size:12.6px;font-weight:500;border-radius:899.1px;padding:10.8px 0;cursor:pointer;transition:background .2s" style-hover="background:rgba(95,230,175,0.1)">Cancel</div>
+          <div onClick="{{ addConfirm }}" style="flex:1;text-align:center;background:#f5f8f6;color:#14503b;font-size:12.6px;font-weight:600;border-radius:899.1px;padding:10.8px 0;cursor:pointer;transition:transform .15s;opacity:{{ addBtnOpacity }}" style-hover="transform:scale(1.03)">Add employee</div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isProfileOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeProfile }}" class="dcov" style="position:fixed;inset:0;z-index:70;background:#0D1411F2;display:flex;align-items:center;justify-content:center">
+      <div onClick="{{ stopProp }}" data-screen-label="Profile popup" class="dcpop" style="position: relative; width: 342px; border-radius: 35px; border: 1px solid rgba(255,255,255,0.11); padding: 35px; cursor: auto; overflow: hidden; text-align: center; background-color: #0D1411E6">
+        <div style="position:relative;display:flex;flex-direction:column;align-items:center">
+          <img ref="{{ modalAvatarRef }}" src="avatars/avatar-profile.svg" alt="Profile" style="width: 250px; height: 250px; border-radius: 50%; object-fit: cover; background: transparent; cursor: pointer; transition: transform .3s cubic-bezier(.22,1,.36,1), filter .3s ease" style-hover="transform: scale(1.06) rotate(-2.5deg); filter: drop-shadow(0 10px 24px rgba(52,211,153,0.35))">
+          <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:34.2px;color:#f2f7f4;margin-top:18px;letter-spacing:0.3px">{{ profileName }}</div>
+          <div style="font-size:12.6px;color:#9db3aa;margin-top:5.4px">Payroll administrator</div>
+          <div style="display:flex;align-items:center;gap:6.3px;background:rgba(0,0,0,0);border:0.9px solid rgba(95,230,175,0.55);color:#78e9c0;font-size:10.8px;border-radius:899.1px;padding:5.4px 12.6px;margin-top:14.4px"><div style="width:6.3px;height:6.3px;border-radius:50%;background:#34d399"></div><span>0x3F9e4A21…9bC83Fc3</span></div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isFundOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ fundCancel }}" class="dcov" style="position:fixed;inset:0;z-index:70;background:#0D1411F2;display:flex;align-items:center;justify-content:center">
+      <div onClick="{{ stopProp }}" data-screen-label="Fund wallet modal" class="dcpop" style="position: relative; width: 387px; border-radius: 27px; border: 1px solid rgba(255,255,255,0.11); background: #121D1AE6; padding: 27px; cursor: auto; overflow: hidden">
+        <div style="position:relative">
+        <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:19.8px;color:#f2f7f4">Fund wallet</div>
+        <div style="font-size:11.7px;color:#9db3aa;margin-top:5.4px;line-height:1.5">Top up the payroll wallet so the next run has enough cUSDd.</div>
+        <div style="margin-top:19.8px">
+          <div style="font-size:9.9px;color:#9db3aa;margin-bottom:5.4px">Amount (cUSDd)</div>
+          <input value="{{ fundAmount }}" onChange="{{ onFundAmount }}" placeholder="5,000" style="width:100%;background:rgba(255,255,255,0.05);border:0.9px solid rgba(255,255,255,0.09);border-radius:10.8px;padding:9.9px 12.6px;color:#e8f0ec;font-size:11.7px;font-family:'Manrope',sans-serif;outline:none">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14.4px;background:rgba(255,255,255,0.04);border-radius:12.6px;padding:10.8px 12.6px">
+          <div style="font-size:11.7px;color:#e8f0ec">To</div>
+          <div style="font-size:11.7px;color:#9db3aa">0x3F9e4A21…9bC83Fc3</div>
+        </div>
+        <div style="display:flex;gap:10.8px;margin-top:23.4px">
+          <div onClick="{{ fundCancel }}" style="flex:1;text-align:center;background:rgba(255,255,255,0.06);border:0.9px solid rgba(255,255,255,0.09);color:#e8f0ec;font-size:12.6px;font-weight:600;border-radius:899.1px;padding:10.8px 0;cursor:pointer;transition:background .2s" style-hover="background:rgba(95,230,175,0.1)">Cancel</div>
+          <div onClick="{{ fundConfirm }}" style="flex:1;text-align:center;background:#f5f8f6;color:#14503b;font-size:12.6px;font-weight:700;border-radius:899.1px;padding:10.8px 0;cursor:pointer;transition:transform .15s;opacity:{{ fundBtnOpacity }}" style-hover="transform:scale(1.03)">Fund wallet</div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isLogoutOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ cancelLogout }}" class="dcov" style="position:fixed;inset:0;z-index:70;background:#0D1411F2;display:flex;align-items:center;justify-content:center">
+      <div onClick="{{ stopProp }}" data-screen-label="Logout modal" class="dcpop" style="position: relative; width: 342px; border-radius: 23.4px; border: 1px solid rgba(255,255,255,0.11); padding: 25.2px; cursor: auto; overflow: hidden; background-color: #121D1AE6">
+        <div style="position:relative">
+        <div style="width:43.2px;height:43.2px;border-radius:50%;background:rgba(255,255,255,0.06);border:0.9px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" viewBox="0 0 512 512" fill="#e8f0ec"><path d="M511.9 228.01s-.01-.08-.02-.12c-.06-.59-.15-1.18-.27-1.76 0-.04-.02-.08-.03-.13-.73-3.49-2.44-6.82-5.15-9.53l-68.06-68.06c-3.71-3.71-8.57-5.57-13.44-5.57s-9.72 1.85-13.43 5.56c-7.42 7.42-7.42 19.45 0 26.87l35.66 35.66H316.09c-10.49 0-19 8.51-19 19s8.51 19 19 19h130.99l-35.64 35.64c-7.42 7.42-7.42 19.45 0 26.87 3.71 3.71 8.57 5.57 13.43 5.57s9.72-1.85 13.43-5.57l67.68-67.68c2.42-2.28 4.24-5.17 5.21-8.45v-.02c.17-.57.31-1.15.43-1.74.02-.08.02-.17.04-.25.09-.51.17-1.02.22-1.54.04-.39.04-.77.06-1.16 0-.22.03-.43.03-.66v-.04c0-.63-.03-1.26-.1-1.89z"></path><path d="M274.74 53.09c22.78 5.09 46.04 26.19 55.35 50.22 2.92 7.53 10.1 12.14 17.72 12.14 2.28 0 4.61-.42 6.86-1.29 9.78-3.79 14.64-14.8 10.85-24.58-14.02-36.18-47.25-65.77-82.68-73.61l-.24-.05c-29.27-6.08-59.57-9.07-92.62-9.13-33.07.06-63.37 3.04-92.69 9.13l-.25.05c-18.62 4.12-36.44 14.21-51.2 27.88-3.82 2.81-7.25 6.44-10.32 10.72-.5.59-.98 1.2-1.43 1.82C21.84 71.23 12.94 88.74 9.41 106.9 4.81 130.02-.4 189.94.02 229.93c-.23 21.46 1.17 48.66 3.22 72.83 1.1 15.5 2.35 28.98 3.56 37.66 5.91 43.73 32.8 92.23 62.56 112.84l.17.12c20.9 14.08 42.5 25.43 66.1 34.71 23.54 9.14 45.15 14.68 66.05 16.94l.17.02c1.32.12 2.65.18 3.96.18 26.52 0 50.05-23.74 57.41-57.72v-.01c6.51-1.04 12.96-2.21 19.36-3.54l.24-.05c35.43-7.84 68.66-37.43 82.68-73.61 3.79-9.78-1.07-20.79-10.85-24.58-2.26-.88-4.58-1.29-6.86-1.29-7.62 0-14.8 4.61-17.72 12.14-9.31 24.02-32.57 45.12-55.35 50.22-2.3.48-4.61.92-6.91 1.36 1.98-25.72 3.48-58.61 3.29-83.98.3-38.76-3.41-98.45-6.7-122.2-5.91-43.73-32.8-92.23-62.56-112.84l-.17-.12c-20.88-14.07-42.49-25.42-66.1-34.71-4.15-1.61-8.24-3.11-12.28-4.5h-.03c21.17-3.35 42.78-4.96 66.7-5 30.33.05 58.08 2.77 84.76 8.31zm-94.43 67.33c9.52 6.63 19.92 19.33 28.54 34.88 9.31 16.79 15.67 35.17 17.91 51.75 0 .04.01.08.02.12 3.09 22.32 6.62 80.55 6.34 116.69v.59c.17 22.14-1.05 53.1-3.18 80.79l-.06.86c-.46 8.39-1.88 24.82-3.74 33.13-.02.08-.03.15-.05.23-3.93 18.12-14.3 27.77-20.28 27.77-.14 0-.28 0-.42-.01-17.42-1.92-35.72-6.67-55.93-14.51-20.91-8.23-40.08-18.29-58.6-30.76-9.51-6.64-19.89-19.33-28.5-34.85-9.31-16.79-15.67-35.17-17.91-51.75 0-.04-.01-.08-.02-.12-1.05-7.55-2.25-20.36-3.29-35.14-.01-.18-.03-.35-.04-.53-2.16-25.41-3.28-50.64-3.09-69.22v-.8c-.41-39.54 4.89-96.26 8.66-115.2.01-.06.02-.12.03-.17 2.3-11.8 8.6-24.19 17.75-34.87.41-.47.8-.96 1.19-1.45.85-.1 2.1-.19 3.83-.19 14.55 0 34.85 5.83 41.48 8.08 3.6 1.24 7.23 2.57 10.8 3.96 20.91 8.23 40.06 18.28 58.55 30.73z"></path></svg>
+        </div>
+        <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:19.8px;color:#f2f7f4;margin-top:14.4px">Log out?</div>
+        <div style="font-size:11.7px;color:#9db3aa;margin-top:5.4px;line-height:1.5">You'll be signed out of SealedPay on this device.</div>
+        <div style="display:flex;gap:10.8px;margin-top:21.6px">
+          <div onClick="{{ cancelLogout }}" style="flex:1;text-align:center;background:rgba(255,255,255,0.06);border:0.9px solid rgba(255,255,255,0.09);color:#e8f0ec;font-size:12.6px;font-weight:600;border-radius:899.1px;padding:10.8px 0;cursor:pointer;transition:background .2s" style-hover="background:rgba(95,230,175,0.1)">Cancel</div>
+          <div onClick="{{ confirmLogout }}" style="flex:1;text-align:center;background:rgba(224,110,98,0.1);border:0.9px solid rgba(224,110,98,0.5);color:#eb8f85;font-size:12.6px;font-weight:600;border-radius:899.1px;padding:10.8px 0;cursor:pointer;transition:transform .15s" style-hover="transform:scale(1.03)">Log out</div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isLoggedOut }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Logged out" style="position:fixed;inset:0;z-index:80;background:radial-gradient(810px 540px at 70% 20%, rgba(52,148,106,0.40), rgba(0,0,0,0) 62%), linear-gradient(135deg, #0b1210 0%, #0d1714 50%, #0a100e 100%);display:flex;align-items:center;justify-content:center">
+      <div style="display:flex;flex-direction:column;align-items:center;text-align:center">
+        <div style="display:flex;align-items:center;justify-content:center">
+          <svg width="50.4" height="50.4" viewBox="0 0 512 512" fill="none"><path fill="#c9bfa8" d="M38.992 42.84a7.723 7.723 0 0 1-7.265-5.107 7.722 7.722 0 0 1 4.647-9.883L68.03 16.444a7.723 7.723 0 0 1 5.236 14.53L41.609 42.381a7.692 7.692 0 0 1-2.617.459zM62.581 76.511a7.721 7.721 0 0 1-6.503-11.876l19.135-29.994a7.722 7.722 0 1 1 13.02 8.307L69.098 72.942a7.715 7.715 0 0 1-6.517 3.569z"></path><path fill="#e3dcc9" d="M121.948 276.016s27.637 72.5.756 91.11c-13.597 9.414-43.483 24.888-54.647 35.966-7.168 7.113-2.134 19.34 7.964 19.365l53.628.132c18.325.045 36.415-4.212 52.738-12.542 26.58-13.563 62.419-39.576 76.033-85.008z"></path><path fill="#e3dcc9" d="M480.697 354.34c.625-21.492-6.902-42.495-21.194-58.56-54.344-63.219-185.243-40.515-231.495-114.791-40.411-50.987-1.287-107.243-32.058-149.643C180.634 13.92 170.808.396 108.174.396 99.716 1.899 66.59-4.1 61.796 6.212a13.06 13.06 0 0 0 .339 14.974c63.066 76.152 10.821 60.009 7.713 144.573-5.159 56.561-.686 87.609 21.009 140.13 42.59 114.409 164.866 85.865 261.538 87.593 8.02.143 11.06 10.736 4.251 14.976l-.166.103c-27.992 18.259-62.495 19.128-94.316 12.415-19.662-.15-6.349 31.567 4.419 41.622 2.7 2.58 3.492 6.569 1.93 9.96-6.352 12.954-7.239 47.959 11.899 37.53 22.129-18.871 48.269-43.172 78.175-47.431 61.074-4.576 115.323-16.059 121.561-89.683l.012-.005c.255-4.833.34-13.681.537-18.629z"></path><path fill="#c9bfa8" d="M459.503 295.78c-54.344-63.219-185.243-40.515-231.495-114.791-40.411-50.987-1.287-107.243-32.058-149.643C181.073 14.42 171.371 1.176 113.429.43c21.457 5.639 29.112 15.806 39.094 27.713 30.771 44.45-8.353 115.782 32.058 169.235 46.252 77.867 177.151 54.065 231.495 120.341 14.292 16.841 21.819 38.86 21.194 61.391-.197 5.187-.282 14.463-.538 19.529l-.012.005c-1.91 23.627-8.324 41.141-18.051 54.22 33.193-10.542 57.432-32.149 61.478-79.893l.012-.005c.256-4.832.341-13.68.538-18.628.625-21.49-6.902-42.494-21.194-58.558z"></path><path fill="#c9bfa8" d="M124.11 46.385a7.722 7.722 0 0 1-7.722-7.722v-6.067c0-4.265 3.457-7.722 7.722-7.722s7.722 3.457 7.722 7.722v6.067a7.722 7.722 0 0 1-7.722 7.722z"></path></svg>
+        </div>
+        <div style="font-family:'Manrope',sans-serif;font-weight:700;font-size:25.2px;color:#f2f7f4;margin-top:18px">You've been logged out</div>
+        <div style="font-size:12.6px;color:#9db3aa;margin-top:7.2px">See you soon, Santo.</div>
+        <div onClick="{{ signIn }}" style="margin-top:23.4px;background:{{ accentColor }};color:#0b1512;font-size:12.6px;font-weight:700;border-radius:899.1px;padding:11.7px 30.6px;cursor:pointer;transition:transform .15s" style-hover="transform:scale(1.04)">Sign back in</div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#3bbf8e&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#3bbf8e&quot;,&quot;#5fe3ab&quot;,&quot;#2f7d5e&quot;]},&quot;barColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#8fd7c0&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#8fd7c0&quot;,&quot;#dff2ea&quot;,&quot;#6fc3e0&quot;,&quot;#8b7cf6&quot;]}}">
+function RevealAmount(props){
+  var R = window.React;
+  var value = String(props.value==null?'':props.value);
+  var revealed = !!props.revealed;
+  var accent = props.accent||'#78e9c0';
+  var keepLock = props.keepLock===true;
+  var maskCount = props.maskCount||3;
+  var stC=R.useState(revealed?value.split(''):null), chars=stC[0], setChars=stC[1];
+  var stM=R.useState(!revealed), masked=stM[0], setMasked=stM[1];
+  var contRef=R.useRef(null), spanRefs=R.useRef([]), lockRef=R.useRef(null), rafRef=R.useRef(0);
+  var prevRev=R.useRef(revealed), prevVal=R.useRef(value), reduce=R.useRef(false);
+  R.useEffect(function(){ reduce.current=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches); },[]);
+  R.useEffect(function(){
+    var changed = revealed!==prevRev.current || (revealed && value!==prevVal.current);
+    prevRev.current=revealed; prevVal.current=value;
+    if(!changed) return;
+    if(rafRef.current) cancelAnimationFrame(rafRef.current);
+    if(revealed) doReveal(); else doHide();
+  });
+  function rgba(h,a){ h=h.replace('#',''); if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2]; var n=parseInt(h,16); return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')'; }
+  function pop(i){ var el=spanRefs.current[i]; if(el&&el.animate) el.animate([{transform:'scale(1)'},{transform:'scale(1.42)'},{transform:'scale(0.92)'},{transform:'scale(1)'}],{duration:340,easing:'cubic-bezier(.22,1,.36,1)'}); }
+  function glow(){ var el=contRef.current; if(el&&el.animate) el.animate([{filter:'drop-shadow(0 0 0 '+rgba(accent,0)+')'},{filter:'drop-shadow(0 0 7px '+rgba(accent,0.85)+')'},{filter:'drop-shadow(0 0 0 '+rgba(accent,0)+')'}],{duration:640,easing:'ease-out'}); }
+  function unlock(dur){ var l=lockRef.current; if(l&&l.animate) l.animate([{transform:'rotate(-16deg) translateX(0)',opacity:0.85},{transform:'rotate(8deg) translateX(12px)',opacity:0}],{duration:dur||420,easing:'cubic-bezier(.3,0,.4,1)',fill:'forwards'}); }
+  function relock(){ var l=lockRef.current; if(l&&l.animate) l.animate([{transform:'rotate(8deg) translateX(12px)',opacity:0},{transform:'rotate(-16deg) translateX(0)',opacity:0.85}],{duration:260,easing:'ease-out',fill:'forwards'}); }
+  function doReveal(){
+    var v=value.split(''); var di=[]; v.forEach(function(c,i){ if(/\d/.test(c)) di.push(i); });
+    setMasked(false);
+    if(keepLock && !reduce.current) unlock(Math.max(360, di.length*60+240));
+    if(reduce.current||!di.length){ setChars(v); glow(); return; }
+    setChars(v.map(function(c){ return /\d/.test(c)?String((Math.random()*10)|0):c; }));
+    var start=performance.now(), stagger=60, randMs=40, lastRand=0, settled=0;
+    function tick(now){
+      var settledN=Math.min(di.length, Math.floor((now-start)/stagger));
+      if(now-lastRand>=randMs || settledN>settled){ lastRand=now;
+        setChars(function(){ var d=v.slice(); for(var k=0;k<di.length;k++){ var p=di[k]; d[p]= k<settledN? v[p] : String((Math.random()*10)|0);} return d; }); }
+      while(settled<settledN){ settled++; pop(di[settled-1]); }
+      if(settledN<di.length){ rafRef.current=requestAnimationFrame(tick); }
+      else { setChars(v); glow(); }
+    }
+    rafRef.current=requestAnimationFrame(tick);
+  }
+  function doHide(){
+    var done=function(){ setChars(null); setMasked(true); if(keepLock) relock(); if(props.sealGlow) glow(); };
+    if(reduce.current){ done(); return; }
+    var el=contRef.current;
+    var doBlur=function(){ if(el&&el.animate){ var a=el.animate([{filter:'blur(0)',opacity:1},{filter:'blur(5px)',opacity:0}],{duration:230,easing:'cubic-bezier(.4,0,1,1)'}); a.onfinish=function(){ done(); if(el&&el.animate) el.animate([{filter:'blur(4px)',opacity:0.3},{filter:'blur(0)',opacity:1}],{duration:200,easing:'ease-out'}); }; a.oncancel=done; } else done(); };
+    var v=value.split(''); var di=[]; v.forEach(function(c,i){ if(/\d/.test(c)) di.push(i); });
+    if(!di.length){ doBlur(); return; }
+    var start=performance.now(), dur=(props.hideMs||300);
+    var scr=function(now){ if(now-start<dur){ setChars(v.map(function(c){ return /\d/.test(c)?String((Math.random()*10)|0):c; })); rafRef.current=requestAnimationFrame(scr); } else { doBlur(); } };
+    rafRef.current=requestAnimationFrame(scr);
+  }
+  function lockEl(hidden){ return R.createElement('span',{key:'lk',ref:lockRef,style:{display:'inline-flex',marginLeft:'0.12em',marginRight:'0.34em',opacity:hidden?0:0.85,transform:hidden?'rotate(8deg) translateX(12px)':'rotate(-16deg)',transformOrigin:'50% 60%'}}, R.createElement('svg',{width:'0.6em',height:'0.6em',viewBox:'0 0 100 100',fill:'currentColor'}, R.createElement('path',{d:'M75.745 37.602v-9.31c0-14.186-11.59-25.792-25.793-25.792S24.144 14.106 24.144 28.292v9.31c-6.998.602-12.397 6.397-12.397 13.601v32.601A13.65 13.65 0 0 0 25.442 97.5h49.116a13.65 13.65 0 0 0 13.695-13.696v-32.6c0-7.205-5.51-13-12.508-13.602zM54.861 72.12v4.374c0 1.3-1.054 2.355-2.355 2.355h-5.012a2.355 2.355 0 0 1-2.355-2.355V72.12a8.821 8.821 0 0 1-4.021-7.426c0-4.892 3.974-8.882 8.882-8.882s8.882 3.99 8.882 8.882c0 3.12-1.599 5.859-4.021 7.426zm7.79-34.722H37.254v-9.105c0-6.998 5.7-12.698 12.698-12.698 6.999 0 12.699 5.7 12.699 12.698v9.105z'}))); }
+  var base={fontVariantNumeric:'tabular-nums',fontFeatureSettings:'"tnum"',display:'inline-flex',alignItems:'center',justifyContent:'flex-start',whiteSpace:'nowrap',minWidth:(props.reserve===false?0:Math.max(3,value.length)+'ch')};
+  var kids=[];
+  if(masked){ kids.push(R.createElement('span',{key:'m',style:{letterSpacing:'0.08em',fontWeight:400}}, Array(maskCount+1).join('*'))); if(keepLock) kids.push(lockEl(false)); }
+  else { var arr=chars||value.split(''); arr.forEach(function(c,i){ kids.push(R.createElement('span',{key:'c'+i,ref:function(el){spanRefs.current[i]=el;},style:{display:'inline-block'}}, c)); }); if(keepLock) kids.push(lockEl(true)); }
+  return R.createElement('span',{ref:contRef,style:base},kids);
+}
+
+class Component extends DCLogic {
+  state = { scrolled: false, tip: null, revealRunway: false, searchOpen: false, searchMounted: false, searchQ: '', remindOpen: false, reminderSet: false, addOpen: false, addName: '', addRole: '', addSalary: '', addWallet: '', addDept: 'Engineering', extra: [], tab: 'All', bar: 'May', nav: 0, empIndex: 0, popup: null, logoutOpen: false, loggedOut: false, maskDefault: true, reminders: true, autoverify: true, revealMonthly: false, revealTotal: false, revealBalance: false, empReveal: false, empRows: {}, notifs: [ {id:1,title:'Payroll delivered',sub:'8 employees paid · verified · Just now',color:'#3bbf8e',read:false,tone:'ok'}, {id:2,title:'Authorization expiring',sub:'operator access ends in 45 min · 1 h ago',color:'#e3b25f',read:false,tone:'warn'}, {id:3,title:'Upcoming payout',sub:'Jul 31 · 8 employees scheduled · Yesterday',color:'#9db3aa',read:false,tone:'info'} ], _nid: 4, profileOpen: false, fundOpen: false, fundAmount: '', payrollOpen:false, payStep:0, encIdx:0, paySel:{}, payReveal:false, authState:'idle', dispState:'idle', deliveredN:0, resultReveal:false, runs:[], toast:null, permPrompt:false, notifPerm:'default' };
+  donutRef = React.createRef();
+  fadeRef = React.createRef();
+  searchBarRef = React.createRef();
+  searchOverlayRef = React.createRef();
+  searchPopupRef = React.createRef();
+  statsRef = React.createRef();
+  topAvatarRef = React.createRef();
+  modalAvatarRef = React.createRef();
+  gasRef = React.createRef();
+  payStepBarRef = React.createRef();
+  dispHeadRef = React.createRef();
+
+  EMPLOYEES = [
+    { name: 'Priya Sharma', role: 'Engineer', dept: 'Engineering', wallet: '0x83A1…9AF2', salary: 850, start: 0, joined: 'Feb 2026' },
+    { name: 'Arjun Mehta', role: 'Engineer', dept: 'Engineering', wallet: '0x91B2…B3E1', salary: 780, start: 0, joined: 'Feb 2026' },
+    { name: 'Mei Lin', role: 'Backend Engineer', dept: 'Engineering', wallet: '0xA4C3…C4F2', salary: 720, start: 0, joined: 'Feb 2026' },
+    { name: 'Daniel Okafor', role: 'Platform Engineer', dept: 'Engineering', wallet: '0xB5D4…D5A3', salary: 650, start: 2, joined: 'Apr 2026' },
+    { name: 'Sofia Reyes', role: 'Product Designer', dept: 'Design', wallet: '0xC6E5…E6B4', salary: 560.5, start: 0, joined: 'Feb 2026' },
+    { name: 'Elena Petrova', role: 'Brand Designer', dept: 'Design', wallet: '0xD7F6…F7C5', salary: 420, start: 3, joined: 'May 2026' },
+    { name: 'Rohan Gupta', role: 'Operations Lead', dept: 'Operations', wallet: '0xE8A7…A8D6', salary: 320, start: 0, joined: 'Feb 2026' },
+    { name: 'Marcus Chen', role: 'Community Manager', dept: 'Operations', wallet: '0xF9B8…B9E7', salary: 200, start: 4, joined: 'Jun 2026' }
+  ];
+  HISTORY = [
+    { month: 'Feb', date: 'Feb 28, 2026', paid: 6, total: 3750.5, masked: true, tx: '0x8b99…5206' },
+    { month: 'Mar', date: 'Mar 31, 2026', paid: 6, total: 3750.5, masked: true, tx: '0x1c2d…88aa' },
+    { month: 'Apr', date: 'Apr 30, 2026', paid: 7, total: 4400.5, masked: true, tx: '0x9e0f…41bc' },
+    { month: 'May', date: 'May 31, 2026', paid: 7, total: 4400.5, masked: true, tx: '0x77ab…c3d9' },
+    { month: 'Jun', date: 'Jun 30, 2026', paid: 8, total: 4500.5, masked: true, tx: '0x42d0…720f' },
+    { month: 'Jul', date: 'Jul 5, 2026', paid: 8, total: 4500.5, masked: false, tx: '0xc396…e025' }
+  ];
+
+  avatarSrc() { try { return localStorage.getItem('sealedpay_avatar') || 'avatars/avatar-profile.svg'; } catch (e) { return 'avatars/avatar-profile.svg'; } }
+  syncAvatars() {
+    const src = this.avatarSrc();
+    [this.topAvatarRef.current, this.modalAvatarRef.current].forEach((el) => {
+      if (el && el.getAttribute('src') !== src) el.setAttribute('src', src);
+    });
+  }
+
+  componentDidMount() {
+    this.initDonut();
+    this.initGas();
+    this._escH = (e) => { if (e.key === 'Escape' && this.state.searchMounted) { this.animateSearchOut(() => this.setState({ searchOpen:false, searchMounted:false })); } };
+    window.addEventListener('keydown', this._escH);
+    this.syncAvatars();
+    this._permT = setTimeout(() => { if (this.state.notifPerm === 'default') this.setState({ permPrompt: true }); }, 900);
+    this._healT = setTimeout(() => {
+      const el = this.donutRef.current;
+      if (el && window.Chart && !window.Chart.getChart(el)) this.initDonut();
+      const g = this.gasRef.current;
+      if (g && window.Chart && !window.Chart.getChart(g)) this.initGas();
+    }, 450);
+  }
+
+  componentDidUpdate() {
+    if (this.state.searchMounted && this.state.searchOpen && !this._sOpen) { this._sOpen = true; this.animateSearchIn(); }
+    if (!this.state.searchOpen && this._sOpen) { this._sOpen = false; }
+    if (this.state.addOpen && !this._addOpen) { this._addOpen = true; this.staggerModal('Add employee modal'); }
+    if (!this.state.addOpen && this._addOpen) { this._addOpen = false; }
+    if (this.state.fundOpen && !this._fundOpen) { this._fundOpen = true; this.staggerModal('Fund wallet modal'); }
+    if (!this.state.fundOpen && this._fundOpen) { this._fundOpen = false; }
+    if (this.state.payrollOpen && !this._payOpen) { this._payOpen = true; this.staggerModal('Run payroll modal'); }
+    if (!this.state.payrollOpen && this._payOpen) { this._payOpen = false; }
+    if (this.state.payStep !== this._lastStep) { this._lastStep = this.state.payStep; if (this.state.payrollOpen) this.staggerModal('Run payroll modal'); }
+    if (this.state.dispState !== this._lastDisp) { this._lastDisp = this.state.dispState; var dh=this.dispHeadRef.current; if(dh && dh.animate){ dh.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'translateY(0)'}],{duration:340,easing:'cubic-bezier(.22,1,.36,1)'}); } }
+    if (this.state.runs.length !== this._runN) { this._runN = this.state.runs.length; var newest = this.state.runs[0]; if (newest) { var cap = document.querySelector('[data-cap="'+newest.id+'"]'); if (cap && cap.animate && !cap._grew) { cap._grew = true; cap.animate([{transform:'scaleY(0)',opacity:0.4},{transform:'scaleY(1)',opacity:1}],{duration:520,easing:'cubic-bezier(.22,1,.36,1)'}); } } }
+    const donutEl = this.donutRef.current;
+    if (donutEl) {
+      if (!this.chart || this.chart.canvas !== donutEl || (window.Chart && !window.Chart.getChart(donutEl))) this.initDonut();
+    } else if (this.chart) { this.chart.destroy(); this.chart = null; }
+    const statsEl = this.statsRef.current;
+    if (statsEl) {
+      if (!this.statsChart || this.statsChart.canvas !== statsEl || (window.Chart && !window.Chart.getChart(statsEl))) this.initStats();
+    } else if (this.statsChart) { this.statsChart.destroy(); this.statsChart = null; }
+    const gasEl = this.gasRef.current;
+    if (gasEl) {
+      if (!this.gasChart || this.gasChart.canvas !== gasEl || (window.Chart && !window.Chart.getChart(gasEl))) this.initGas();
+    } else if (this.gasChart) { this.gasChart.destroy(); this.gasChart = null; }
+    const lockScroll = this.state.addOpen || this.state.remindOpen || this.state.logoutOpen || this.state.searchOpen;
+    document.body.style.overflow = lockScroll ? 'hidden' : '';
+    this.syncAvatars();
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this._healT);
+    if (this.chart && (!this.chart.canvas || !this.chart.canvas.isConnected)) this.chart.destroy();
+    this.chart = null;
+    if (this.statsChart && (!this.statsChart.canvas || !this.statsChart.canvas.isConnected)) this.statsChart.destroy();
+    this.statsChart = null;
+    if (this.gasChart && (!this.gasChart.canvas || !this.gasChart.canvas.isConnected)) this.gasChart.destroy();
+    this.gasChart = null;
+  }
+
+  initGas() {
+    const el = this.gasRef.current;
+    if (!el) return;
+    if (!window.Chart) { setTimeout(() => this.initGas(), 150); return; }
+    if (this.gasChart) { this.gasChart.destroy(); this.gasChart = null; }
+    const existingGas = window.Chart.getChart(el);
+    if (existingGas) existingGas.destroy();
+    this.gasChart = new window.Chart(el.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: this.HISTORY.map((h) => h.month),
+        datasets: [{
+          data: [0.0013, 0.0026, 0.004, 0.0054, 0.0069, 0.0089],
+          borderColor: (c) => {
+            const area = c.chart.chartArea;
+            if (!area) return '#5fe3ab';
+            const g = c.chart.ctx.createLinearGradient(area.left, 0, area.right, 0);
+            g.addColorStop(0, '#2f7d5e');
+            g.addColorStop(1, '#5fe3ab');
+            return g;
+          },
+          borderWidth: 4,
+          borderCapStyle: 'round',
+          borderJoinStyle: 'round',
+          cubicInterpolationMode: 'monotone',
+          tension: 0.45,
+          pointRadius: 0,
+          fill: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: 4 },
+        events: [],
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: { x: { display: false }, y: { display: false } }
+      }
+    });
+  }
+
+  initStats() {
+    const el = this.statsRef.current;
+    if (!el) return;
+    if (!window.Chart) { setTimeout(() => this.initStats(), 150); return; }
+    if (this.statsChart) { this.statsChart.destroy(); this.statsChart = null; }
+    const existingStats = window.Chart.getChart(el);
+    if (existingStats) existingStats.destroy();
+    this.statsChart = new window.Chart(el.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: this.HISTORY.map((h) => h.month),
+        datasets: [
+          { label: 'Employees paid', yAxisID: 'y', data: this.HISTORY.map((h) => h.paid), borderColor: '#3bbf8e', backgroundColor: 'rgba(59,191,142,0.10)', fill: true, tension: 0.45, borderWidth: 3, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#3bbf8e' },
+          { label: 'Gas (ETH)', yAxisID: 'y1', data: [0.0013, 0.0013, 0.0014, 0.0014, 0.0015, 0.0015], borderColor: '#8b7cf6', backgroundColor: 'rgba(139,124,246,0.08)', fill: true, tension: 0.45, borderWidth: 3, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#8b7cf6' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(236,244,240,0.96)',
+            titleColor: '#20302a',
+            bodyColor: '#20302a',
+            titleFont: { family: 'Manrope', weight: '700' },
+            bodyFont: { family: 'Manrope', weight: '600' },
+            displayColors: false,
+            padding: 10,
+            cornerRadius: 10,
+            callbacks: { label: (c) => c.dataset.yAxisID === 'y' ? ' ' + c.parsed.y + ' paid' : ' ' + c.parsed.y.toFixed(4) + ' ETH' }
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8ba297', font: { family: 'Manrope', size: 11 } } },
+          y: { min: 0, max: 10, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { stepSize: 2, color: '#8ba297', font: { family: 'Manrope', size: 11 } } },
+          y1: { position: 'right', min: 0, max: 0.002, grid: { drawOnChartArea: false }, ticks: { color: '#8ba297', font: { family: 'Manrope', size: 11 }, callback: (v) => v === 0 ? '0' : v.toFixed(4) } }
+        }
+      }
+    });
+  }
+
+  initDonut() {
+    const el = this.donutRef.current;
+    if (!el) return;
+    if (!window.Chart) { setTimeout(() => this.initDonut(), 150); return; }
+    if (this.chart) { this.chart.destroy(); this.chart = null; }
+    const existingDonut = window.Chart.getChart(el);
+    if (existingDonut) existingDonut.destroy();
+    this.chart = new window.Chart(el.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Engineering', 'Design', 'Operations'],
+        datasets: [{
+          data: [4, 2, 2],
+          backgroundColor: ['#8b7cf6', '#d7ee59', '#3bbf8e'],
+          borderWidth: 0,
+          borderRadius: 16,
+          spacing: 5,
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        rotation: 253,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(236,244,240,0.96)',
+            titleColor: '#20302a',
+            bodyColor: '#20302a',
+            titleFont: { family: 'Manrope', weight: '700' },
+            bodyFont: { family: 'Manrope', weight: '600' },
+            displayColors: false,
+            padding: 10,
+            cornerRadius: 10,
+            callbacks: { label: (c) => ' ' + [4, 2, 2][c.dataIndex] + ' people' }
+          }
+        }
+      }
+    });
+  }
+
+  fmtAmount(v) {
+    return v.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+  }
+
+  animateSearchIn(){
+    var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var ov=this.searchOverlayRef.current, pop=this.searchPopupRef.current, bar=this.searchBarRef.current;
+    if(ov&&ov.animate) ov.animate([{opacity:0},{opacity:1}],{duration:200,easing:'ease-out',fill:'both'});
+    if(bar&&bar.animate&&!reduce) bar.animate([{transform:'scale(1)',filter:'drop-shadow(0 0 0 rgba(120,233,192,0))'},{transform:'scale(1.02)',filter:'drop-shadow(0 0 6px rgba(120,233,192,0.35))'}],{duration:220,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'});
+    if(pop&&pop.animate){
+      pop.style.transformOrigin='top center';
+      if(reduce){ pop.animate([{opacity:0},{opacity:1}],{duration:150,fill:'both'}); return; }
+      pop.animate([{opacity:0,transform:'translateY(-8px) scale(0.98)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:380,delay:80,easing:'cubic-bezier(.2,1.06,.3,1)',fill:'both'});
+      pop.querySelectorAll('[data-srow]').forEach(function(r,i){ r.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'translateY(0)'}],{duration:260,delay:200+i*35,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'}); });
+      pop.querySelectorAll('[data-slabel]').forEach(function(l){ l.animate([{opacity:0},{opacity:1}],{duration:220,delay:180,easing:'ease-out',fill:'both'}); });
+    }
+  }
+  animateSearchOut(done){
+    var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var ov=this.searchOverlayRef.current, pop=this.searchPopupRef.current, bar=this.searchBarRef.current;
+    if(bar&&bar.animate) bar.animate([{transform:'scale(1.02)',filter:'drop-shadow(0 0 6px rgba(120,233,192,0.35))'},{transform:'scale(1)',filter:'drop-shadow(0 0 0 rgba(120,233,192,0))'}],{duration:180,easing:'ease-out',fill:'forwards'});
+    if(ov&&ov.animate) ov.animate([{opacity:1},{opacity:0}],{duration:180,easing:'ease-in',fill:'forwards'});
+    if(pop&&pop.animate){ var a=pop.animate(reduce?[{opacity:1},{opacity:0}]:[{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:'translateY(-8px) scale(0.98)'}],{duration:reduce?120:190,easing:'cubic-bezier(.4,0,1,1)',fill:'both'}); a.onfinish=done; a.oncancel=done; }
+    else if(done) done();
+  }
+  closeAnim(label, then){
+    var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var card = document.querySelector('[data-screen-label="'+label+'"]');
+    var ov = document.querySelector('.dcov');
+    if(!card || !card.animate){ then(); return; }
+    if(ov && ov.animate) ov.animate([{opacity:1},{opacity:0}],{duration:150,easing:'ease-in',fill:'forwards'});
+    var kf = reduce ? [{opacity:1},{opacity:0}] : [{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:'translateY(-6px) scale(0.97)'}];
+    var a = card.animate(kf,{duration:170,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
+    a.onfinish = then; a.oncancel = then;
+  }
+  staggerModal(label){
+    var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if(reduce) return;
+    requestAnimationFrame(function(){
+      var card=document.querySelector('[data-screen-label="'+label+'"]');
+      if(!card) return;
+      var inner=card.querySelector(':scope > div') || card;
+      var items=[];
+      Array.prototype.forEach.call(inner.children, function(ch){
+        var st=ch.getAttribute('style')||'';
+        if(st.indexOf('flex-direction:column')>=0 && st.indexOf('gap:')>=0){ Array.prototype.forEach.call(ch.children, function(f){ items.push(f); }); }
+        else items.push(ch);
+      });
+      items.forEach(function(el,i){ if(el.animate) el.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'translateY(0)'}],{duration:300,delay:110+i*42,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'}); });
+    });
+  }
+  addNotif(n){ this.setState((s) => ({ notifs: [{ id: s._nid, read:false, ...n }, ...s.notifs], _nid: s._nid + 1 })); }
+  showToast(kind, msg){ this.setState({ toast: { kind: kind, msg: msg, id: Date.now() } }); clearTimeout(this._toastT); this._toastT = setTimeout(() => this.dismissToast(), 4200); }
+  dismissToast(){ var el = document.querySelector('[data-toast]'); var self=this; if(el && el.animate){ var a = el.animate([{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:'translateY(-14px) scale(0.96)'}],{duration:200,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'}); a.onfinish=function(){ self.setState({toast:null}); }; a.oncancel=function(){ self.setState({toast:null}); }; } else this.setState({toast:null}); }
+  openPayroll(){ this.setState({ payrollOpen:true, payStep:0, paySel:{}, payReveal:false, authState:'idle', dispState:'idle', deliveredN:0, resultReveal:false, popup:null }); }
+  closePayroll(){ clearTimeout(this._encT); clearInterval(this._encI); clearTimeout(this._authT); clearInterval(this._dispI); clearTimeout(this._dispT); clearTimeout(this._dispT2); this.closeAnim('Run payroll modal', () => this.setState({ payrollOpen:false })); }
+  payToggle(i){ this.setState((s) => { var m = Object.assign({}, s.paySel); m[i] = m[i] === false ? true : false; return { paySel: m }; }); }
+  paySelectAll(all){ this.setState((s) => { var m = {}; if(!all){ this.EMPLOYEES.concat(s.extra).forEach(function(e,i){ m[i]=false; }); } return { paySel: m }; }); }
+  selectedList(){ var all = this.EMPLOYEES.concat(this.state.extra); var sel=this.state.paySel||{}; return all.map(function(e,i){return {e:e,i:i};}).filter(function(o){ return sel[o.i] !== false; }); }
+  payContinue(){
+    var step = this.state.payStep;
+    if(step === 0){ if(this.selectedList().length === 0) return; this.setState({ payStep:1 }); this.runEncrypt(); }
+    else if(step === 1){ this.setState({ payStep:2 }); }
+    else if(step === 2){ this.runAuthorize(); }
+    else if(step === 3){ this.runDisperse(); }
+  }
+  runEncrypt(){ var self=this; var n=this.selectedList().length; this.setState({ encIdx:0 }); clearInterval(this._encI); clearTimeout(this._encT); var k=0; this._encI=setInterval(function(){ k++; self.setState({ encIdx:k }); if(k>n){ clearInterval(self._encI); self._encT=setTimeout(function(){ self.setState({ payStep:2 }); }, 900); } }, 720); }
+  runAuthorize(){ var self=this; if(this.state.authState==='signing'||this.state.authState==='done') return; this.setState({ authState:'signing' }); clearTimeout(this._authT); this._authT = setTimeout(function(){ self.setState({ authState:'done' }); setTimeout(function(){ self.setState({ payStep:3 }); }, 850); }, 1500); }
+  runDisperse(){
+    var self=this; if(this.state.dispState!=='idle') return;
+    var n = this.selectedList().length;
+    this.setState({ dispState:'sending', deliveredN:0 });
+    clearTimeout(this._dispT); clearTimeout(this._dispT2); clearInterval(this._dispI);
+    this._dispT = setTimeout(function(){
+      self.setState({ dispState:'confirmed' });
+      self._dispT2 = setTimeout(function(){
+        self.setState({ dispState:'verifying' });
+        var k=0; clearInterval(self._dispI);
+        self._dispI = setInterval(function(){ k++; self.setState({ deliveredN:k }); if(k>=n){ clearInterval(self._dispI); self.setState({ dispState:'done' }); self.onPayrollSuccess(); } }, 140);
+      }, 750);
+    }, 1400);
+  }
+  onPayrollSuccess(){
+    var sel = this.selectedList(); var n = sel.length;
+    var total = sel.reduce(function(a,o){ return a + o.e.salary; }, 0);
+    var day = 8 + this.state.runs.length;
+    var run = { id:'r'+Date.now(), date:'Jul '+day, dateFull:'Jul '+day+', 2026', month:'Jul', paid:n, total:total, tx:'0x'+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0')+'…e025', url:'https://sepolia.etherscan.io/tx/0x'+Math.floor(Math.random()*0xffffffff).toString(16), selIdx: sel.map(function(o){return o.i;}) };
+    this.setState(function(s){ return { runs: [run, ...s.runs] }; });
+    this.addNotif({ title:'Payroll delivered', sub:n+' paid · verified · '+run.date, color:'#3bbf8e', tone:'ok' });
+    this.showToast('ok', 'Payroll delivered · '+n+' paid · verified');
+  }
+  simulateFailure(){
+    clearTimeout(this._dispT); clearInterval(this._dispI);
+    this.setState({ dispState:'idle', deliveredN:0 });
+    this.addNotif({ title:'Payroll failed', sub:'no funds moved · retry', color:'#e07a6a', tone:'err' });
+    this.showToast('err', 'Payroll failed · no funds moved · retry');
+    this.closePayroll();
+  }
+  enableNotifs(){ this.setState({ notifPerm:'granted', permPrompt:false }); this.showToast('ok', 'Notifications enabled'); }
+  dismissPerm(){ this.setState({ notifPerm:'denied', permPrompt:false }); }
+  renderVals() {
+    const accent = this.props.accentColor ?? '#3bbf8e';
+    const barColor = this.props.barColor ?? '#8fd7c0';
+    const hatchMap = { '#8fd7c0': ['#87a69a', '#28382f'], '#dff2ea': ['#9db0a7', '#2e3b35'], '#6fc3e0': ['#84acbf', '#1d3a47'], '#8b7cf6': ['#8388b5', '#252a52'] };
+    const hp = hatchMap[barColor] || hatchMap['#8fd7c0'];
+    const hatch = `repeating-linear-gradient(135deg, ${hp[0]} 0 1.35px, ${hp[1]} 1.35px 5.85px)`;
+    const CH = 111.6, capColor = '#b3ecd5';
+    const runSegs = {}; this.HISTORY.forEach((h) => { runSegs[h.month] = []; });
+    this.state.runs.slice().reverse().forEach((r) => { if (!runSegs[r.month]) runSegs[r.month] = []; runSegs[r.month].push(r); });
+    const monthTotal = (h) => h.total + runSegs[h.month].reduce((a, r) => a + r.total, 0);
+    const monthPaid = (h) => h.paid + runSegs[h.month].reduce((a, r) => a + r.paid, 0);
+    const maxVal = Math.max.apply(null, this.HISTORY.map(monthTotal));
+    let yStep, niceMax;
+    if (maxVal <= 5000) { yStep = 1000; niceMax = 5000; }
+    else { yStep = Math.ceil(maxVal / 5 / 1000) * 1000; niceMax = yStep * 5; }
+    const fmtK = (v) => v === 0 ? '0' : (v % 1000 === 0 ? (v / 1000) + 'k' : (v / 1000).toFixed(1) + 'k');
+    const yLabels = [5, 4, 3, 2, 1, 0].map((i) => fmtK(yStep * i));
+    const bars = this.HISTORY.map((h) => {
+      const active = h.month === this.state.bar;
+      const segs = [{ hpx: Math.max(h.total / niceMax * CH, 3) + 'px', bg: active ? barColor : hatch, radius: '13.86px', cap: '' }];
+      runSegs[h.month].forEach((r) => { segs.push({ hpx: Math.max(r.total / niceMax * CH, 8) + 'px', bg: active ? barColor : hatch, radius: '13.86px', cap: r.id }); });
+      return {
+        month: h.month,
+        active,
+        segments: segs,
+        tooltip: this.fmtAmount(monthTotal(h)) + ' cUSDd · ' + monthPaid(h) + ' paid',
+        onEnter: () => this.setState({ bar: h.month })
+      };
+    });
+    const tabNames = ['All', 'Payouts', 'Verifications', 'Team'];
+    const tabs = tabNames.map((t) => {
+      const active = t === this.state.tab;
+      return {
+        label: t,
+        bg: active ? accent : 'rgba(110,196,186,0.16)',
+        border: 'none',
+        shadow: active ? 'none' : 'inset 0 7.2px 12.6px -7.2px rgba(255,255,255,0.056), inset 8.1px 0 16.2px -10.8px rgba(150,235,255,0.032), inset -8.1px -7.2px 16.2px -10.8px rgba(255,160,225,0.026)',
+        color: active ? '#0b1512' : '#9db3aa',
+        weight: 400,
+        onClick: () => this.setState({ tab: t })
+      };
+    });
+    const navSel = this.state.nav === 3 ? 1 : this.state.nav;
+    const navBg = (i) => navSel === i ? '#f5f8f6' : 'rgba(0,0,0,0)';
+    const navStroke = (i) => navSel === i ? '#568570' : '#9db3aa';
+    const allEmployees = this.EMPLOYEES.concat(this.state.extra);
+    const emp = allEmployees[this.state.empIndex] || allEmployees[0];
+    const empRuns = this.state.runs.filter((r) => r.selIdx.indexOf(this.state.empIndex) >= 0).map((r) => ({ month:r.id, date:r.dateFull, tx:r.tx, url:r.url }));
+    const empHist = empRuns.concat(this.HISTORY.slice(emp.start).slice().reverse());
+    const isEmp = this.state.nav === 3;
+    const showAll = !this.state.maskDefault;
+    const unread = this.state.notifs.filter((n) => !n.read).length;
+    return {
+      accentColor: accent,
+      greeting: 'Hi Santo!',
+      barCount: bars.length,
+      yLabels: yLabels,
+      openPayroll: () => this.openPayroll(),
+      isPayrollOpen: this.state.payrollOpen,
+      payStep: this.state.payStep,
+      payStepBarRef: this.payStepBarRef,
+      payStepFill: ((this.state.payStep + 1) / 4 * 100) + '%',
+      payStep0: this.state.payStep === 0,
+      payStep1: this.state.payStep === 1,
+      payStep2: this.state.payStep === 2,
+      payStep3: this.state.payStep === 3,
+      closePayroll: () => this.closePayroll(),
+      payEmployees: allEmployees.map((e, i) => ({
+        name: e.name,
+        initials: e.name.split(' ').map((w) => w[0]).join(''),
+        sub: e.role,
+        checked: (this.state.paySel[i] !== false),
+        boxBg: (this.state.paySel[i] !== false) ? accent : 'rgba(255,255,255,0.04)',
+        boxBorder: (this.state.paySel[i] !== false) ? '0.9px solid rgba(0,0,0,0)' : '0.9px solid rgba(255,255,255,0.16)',
+        checkOpacity: (this.state.paySel[i] !== false) ? 1 : 0,
+        salaryEl: React.createElement(RevealAmount, { value:this.fmtAmount(e.salary), revealed:this.state.payReveal, accent:'#78e9c0', lock:false }),
+        onToggle: () => this.payToggle(i)
+      })),
+      paySelCount: this.selectedList().length,
+      paySelCountPadded: String(this.selectedList().length).padStart(2, '0'),
+      payAllChecked: this.selectedList().length === allEmployees.length,
+      toggleSelectAll: () => this.paySelectAll(this.selectedList().length !== allEmployees.length),
+      payTotalEl: React.createElement(RevealAmount, { value:this.fmtAmount(this.selectedList().reduce((a,o)=>a+o.e.salary,0)), revealed:this.state.payReveal, accent:'#78e9c0', lock:false, reserve:false }),
+      payReveal: this.state.payReveal,
+      togglePayReveal: () => this.setState((st) => ({ payReveal: !st.payReveal })),
+      payRevealLabel: this.state.payReveal ? 'Hide' : 'Reveal',
+      encRows: this.selectedList().map((o, k) => ({ name:o.e.name, initials:o.e.name.split(' ').map((w)=>w[0]).join(''), el: React.createElement(RevealAmount, { value:this.fmtAmount(o.e.salary), revealed:(this.state.encIdx <= k), keepLock:true, sealGlow:true, reserve:false, accent:'#78e9c0' }) })),
+      authState: this.state.authState,
+      authIdle: this.state.authState === 'idle',
+      authSigning: this.state.authState === 'signing',
+      authDone: this.state.authState === 'done',
+      dispState: this.state.dispState,
+      dispIdle: this.state.dispState === 'idle',
+      dispActive: this.state.dispState !== 'idle' && this.state.dispState !== 'done',
+      dispDone: this.state.dispState === 'done',
+      dispHeadRef: this.dispHeadRef,
+      dispHeadline: (this.state.dispState === 'done') ? 'Payroll delivered' : ((this.state.dispState === 'confirmed' || this.state.dispState === 'verifying') ? 'Confirmed on-chain' : 'Sending payroll'),
+      dispProgress: (function(st,dn,n){ if(st==='sending')return 34; if(st==='confirmed')return 64; if(st==='verifying')return 64+Math.round(34*(dn/n)); if(st==='done')return 100; return 6; })(this.state.dispState, this.state.deliveredN, Math.max(1,this.selectedList().length)) + '%',
+      dispS1done: (this.state.dispState==='confirmed'||this.state.dispState==='verifying'||this.state.dispState==='done'),
+      dispS1pending: !(this.state.dispState==='confirmed'||this.state.dispState==='verifying'||this.state.dispState==='done'),
+      dispVerifyPending: (this.state.dispState==='sending'||this.state.dispState==='confirmed'),
+      dispVerifyActive: this.state.dispState==='verifying',
+      dispS3done: this.state.dispState==='done',
+      disperseRows: this.selectedList().map((o, k) => ({ name:o.e.name, initials:o.e.name.split(' ').map((w)=>w[0]).join(''), delivered: k < this.state.deliveredN })),
+      deliveredLabel: this.state.deliveredN + '/' + this.selectedList().length,
+      verifiedLabel: this.selectedList().length + '/' + this.selectedList().length + ' verified',
+      resultReveal: this.state.resultReveal,
+      toggleResultReveal: () => this.setState((st)=>({ resultReveal: !st.resultReveal })),
+      resultRevealLabel: this.state.resultReveal ? 'Hide total' : 'Reveal total (employer only)',
+      resultTotalEl: React.createElement(RevealAmount, { value:this.fmtAmount(this.selectedList().reduce((a,o)=>a+o.e.salary,0)), revealed:this.state.resultReveal, lock:false, reserve:false, accent:'#78e9c0' }),
+      payDone: this.state.dispState === 'done',
+      payRunUrl: (this.state.runs[0] && this.state.runs[0].url) || 'https://sepolia.etherscan.io',
+      payContinue: () => this.payContinue(),
+      runAuthorize: () => this.runAuthorize(),
+      runDisperse: () => this.runDisperse(),
+      simulateFailure: () => this.simulateFailure(),
+      toast: this.state.toast,
+      hasToast: this.state.toast !== null,
+      toastMsg: this.state.toast ? this.state.toast.msg : '',
+      toastOk: this.state.toast ? this.state.toast.kind === 'ok' : false,
+      toastBg: (this.state.toast && this.state.toast.kind==='ok') ? 'rgba(24,58,44,0.92)' : 'rgba(60,34,30,0.92)',
+      toastBorder: (this.state.toast && this.state.toast.kind==='ok') ? 'rgba(95,230,175,0.45)' : 'rgba(224,122,106,0.5)',
+      toastIconBg: (this.state.toast && this.state.toast.kind==='ok') ? 'rgba(95,230,175,0.9)' : 'rgba(224,122,106,0.9)',
+      toastIcon: (this.state.toast && this.state.toast.kind==='ok') ? '✓' : '!',
+      toastErr: this.state.toast ? this.state.toast.kind !== 'ok' : false,
+      dismissToast: () => this.dismissToast(),
+      isPermPrompt: this.state.permPrompt,
+      enableNotifs: () => this.enableNotifs(),
+      dismissPerm: () => this.dismissPerm(),
+      newActivity: this.state.runs.slice(0, 4).map((r) => ({ date:r.date, sub:r.paid + ' paid · ' + this.fmtAmount(r.total) + ' cUSDd', url:r.url })),
+      showBase0: this.state.runs.length < 4,
+      showBase1: this.state.runs.length < 3,
+      showBase2: this.state.runs.length < 2,
+      showBase3: this.state.runs.length < 1,
+      bars,
+      tabs,
+      nav0Bg: navBg(0), nav1Bg: navBg(1), nav2Bg: navBg(2),
+      nav0Stroke: navStroke(0), nav1Stroke: navStroke(1), nav2Stroke: navStroke(2),
+      nav0Click: () => this.setState({ nav: 0 }),
+      nav1Click: () => this.setState({ nav: 1 }),
+      nav2Click: () => this.setState({ nav: 2 }),
+      donutRef: this.donutRef,
+      fadeRef: this.fadeRef,
+      statsRef: this.statsRef,
+      gasRef: this.gasRef,
+      isNav0: this.state.nav === 0,
+      isNav1: this.state.nav === 1,
+      isNav2: this.state.nav === 2,
+      isNavEmp: isEmp,
+      isEmployerView: !isEmp,
+      isPopupOpen: this.state.popup !== null,
+      isBellOpen: this.state.popup === 'bell',
+      isGearOpen: this.state.popup === 'gear',
+      isLogoutOpen: this.state.logoutOpen,
+      isLoggedOut: this.state.loggedOut,
+      bellClick: (e) => { e.stopPropagation(); this.setState((s) => ({ popup: s.popup === 'bell' ? null : 'bell' })); },
+      gearClick: (e) => { e.stopPropagation(); this.setState((s) => ({ popup: s.popup === 'gear' ? null : 'gear' })); },
+      logoutClick: () => this.setState({ logoutOpen: true, popup: null }),
+      closePopup: () => this.closeAnim(this.state.popup==='bell'?'Notifications popup':'Settings popup', () => this.setState({ popup: null })),
+      stopProp: (e) => e.stopPropagation(),
+      cancelLogout: () => this.closeAnim('Logout modal', () => this.setState({ logoutOpen: false })),
+      confirmLogout: () => this.setState({ logoutOpen: false, loggedOut: true }),
+      signIn: () => this.setState({ loggedOut: false, nav: 0 }),
+      settingsRows: ['maskDefault', 'reminders', 'autoverify'].map((k, i) => {
+        const labels = ['Mask amounts by default', 'Payout reminders', 'Auto-verify after payout'];
+        const on = this.state[k];
+        return {
+          label: labels[i],
+          trackBg: on ? accent : 'rgba(255,255,255,0.14)',
+          knobX: on ? '18px' : '1.8px',
+          onToggle: () => this.setState({ [k]: !on })
+        };
+      }),
+      legend: [
+        { label: 'Engineering', amount: '4 people', color: '#8b7cf6' },
+        { label: 'Design', amount: '2 people', color: '#d7ee59' },
+        { label: 'Operations', amount: '2 people', color: '#3bbf8e' }
+      ],
+      monthlyValue: (showAll || this.state.revealMonthly) ? '4.5K' : '****',
+      monthlyMaskWeight: (showAll || this.state.revealMonthly) ? 700 : 400,
+      totalMaskWeight: (showAll || this.state.revealTotal) ? 700 : 400,
+      toggleMonthly: () => this.setState((s) => ({ revealMonthly: !s.revealMonthly })),
+      showEnc: () => this.setState({ tip: 'enc' }),
+      showVer: () => this.setState({ tip: 'ver' }),
+      hideTip: () => this.setState({ tip: null }),
+      tipEncOpacity: this.state.tip === 'enc' ? 1 : 0,
+      tipVerOpacity: this.state.tip === 'ver' ? 1 : 0,
+      totalPaidValue: (showAll || this.state.revealTotal) ? '25,303' : '****',
+      toggleTotal: () => this.setState((s) => ({ revealTotal: !s.revealTotal })),
+      runwayValue: (showAll || this.state.revealRunway) ? '4' : '****',
+      runwayMaskWeight: (showAll || this.state.revealRunway) ? 700 : 400,
+      toggleRunway: () => this.setState((s) => ({ revealRunway: !s.revealRunway })),
+      balanceValue: (showAll || this.state.revealBalance) ? '22,350.50' : '****',
+      toggleBalance: () => this.setState((s) => ({ revealBalance: !s.revealBalance })),
+      monthlyEl: React.createElement(RevealAmount,{value:'4.5K',revealed:true,accent:'#78e9c0',lock:false,reserve:false}),
+      monthlyHint: (showAll||this.state.revealMonthly)?'tap to hide':'tap to reveal',
+      runwayEl: React.createElement(RevealAmount,{value:'04',revealed:(showAll||this.state.revealRunway),accent:'#78e9c0'}),
+      runwayHint: (showAll||this.state.revealRunway)?'tap to hide':'tap to reveal',
+      balanceEl: React.createElement(RevealAmount,{value:'22,350.50',revealed:(showAll||this.state.revealBalance),accent:'#78e9c0'}),
+      empSalaryEl: React.createElement(RevealAmount,{value:this.fmtAmount(emp.salary),revealed:(showAll||this.state.empReveal),accent:'#bff0d6'}),
+      notifItems: this.state.notifs.map((n) => ({
+        title: n.title,
+        sub: n.sub,
+        dotColor: n.read ? 'rgba(157,179,170,0.35)' : n.color,
+        titleColor: n.read ? '#9db3aa' : '#e8f0ec',
+        onClick: () => this.setState((s) => ({ notifs: s.notifs.map((x) => x.id === n.id ? { ...x, read: true } : x) }))
+      })),
+      notifBadge: unread > 0 ? unread + ' new' : 'All read',
+      hasUnread: unread > 0,
+      markAllRead: () => this.setState((s) => ({ notifs: s.notifs.map((x) => ({ ...x, read: true })) })),
+      isProfileOpen: this.state.profileOpen,
+      topAvatarRef: this.topAvatarRef,
+      modalAvatarRef: this.modalAvatarRef,
+      profileName: (() => { try { return (localStorage.getItem('sealedpay_name') || '').trim() || 'Santo'; } catch (e) { return 'Santo'; } })(),
+      profileAvatarSrc: (() => { try { return localStorage.getItem('sealedpay_avatar') || 'avatars/avatar-profile.svg'; } catch (e) { return 'avatars/avatar-profile.svg'; } })(),
+      profileClick: () => this.setState({ profileOpen: true }),
+      closeProfile: () => this.closeAnim('Profile popup', () => this.setState({ profileOpen: false })),
+      isFundOpen: this.state.fundOpen,
+      fundClick: () => this.setState({ fundOpen: true }),
+      fundCancel: () => this.closeAnim('Fund wallet modal', () => this.setState({ fundOpen: false, fundAmount: '' })),
+      fundAmount: this.state.fundAmount,
+      onFundAmount: (e) => this.setState({ fundAmount: e.target.value }),
+      fundConfirm: () => this.setState({ fundOpen: false, fundAmount: '' }),
+      fundBtnOpacity: this.state.fundAmount.trim() ? 1 : 0.45,
+      rosterCount: allEmployees.length + ' people',
+      onContentScroll: (e) => { if (this.fadeRef.current) this.fadeRef.current.style.opacity = e.target.scrollTop > 6 ? '1' : '0'; },
+      searchQ: this.state.searchQ,
+      isSearchOpen: this.state.searchOpen,
+      isSearchMounted: this.state.searchMounted,
+      searchBarRef: this.searchBarRef,
+      searchOverlayRef: this.searchOverlayRef,
+      searchPopupRef: this.searchPopupRef,
+      onSearchFocus: () => this.setState({ searchOpen: true, searchMounted: true }),
+      onSearchInput: (e) => this.setState({ searchQ: e.target.value, searchOpen: true, searchMounted: true }),
+      closeSearch: () => this.animateSearchOut(() => this.setState({ searchOpen: false, searchMounted: false })),
+      searchEmps: (() => {
+        const q = this.state.searchQ.trim().toLowerCase();
+        return allEmployees.map((e, i) => ({ e, i }))
+          .filter(({ e }) => !q || (e.name + ' ' + e.role + ' ' + e.dept + ' ' + e.wallet).toLowerCase().includes(q))
+          .slice(0, q ? 5 : 4)
+          .map(({ e, i }) => ({
+            name: e.name,
+            initials: e.name.split(' ').map((w) => w[0]).join(''),
+            sub: e.role + ' · ' + e.dept,
+            amountNum: showAll ? this.fmtAmount(e.salary) : '****',
+            amountWeight: showAll ? 700 : 400,
+        amountEl: React.createElement(RevealAmount,{value:this.fmtAmount(e.salary),revealed:showAll,accent:'#78e9c0',lock:false}),
+            onOpen: () => this.setState({ nav: 3, empIndex: i, empReveal: false, empRows: {}, searchOpen: false })
+          }));
+      })(),
+      searchRuns: (() => {
+        const q = this.state.searchQ.trim().toLowerCase();
+        return this.HISTORY.slice().reverse()
+          .filter((h) => !q || (h.month + ' ' + h.date + ' ' + h.tx).toLowerCase().includes(q))
+          .slice(0, q ? 4 : 2)
+          .map((h) => ({
+            date: h.date,
+            sub: h.paid + ' paid · ' + h.tx,
+            onOpen: () => this.setState({ nav: 0, bar: h.month, searchOpen: false })
+          }));
+      })(),
+      hasSearchEmps: (() => { const q = this.state.searchQ.trim().toLowerCase(); return allEmployees.some((e) => !q || (e.name + ' ' + e.role + ' ' + e.dept + ' ' + e.wallet).toLowerCase().includes(q)); })(),
+      hasSearchRuns: (() => { const q = this.state.searchQ.trim().toLowerCase(); return this.HISTORY.some((h) => !q || (h.month + ' ' + h.date + ' ' + h.tx).toLowerCase().includes(q)); })(),
+      searchEmpty: (() => {
+        const q = this.state.searchQ.trim().toLowerCase();
+        const anyE = allEmployees.some((e) => !q || (e.name + ' ' + e.role + ' ' + e.dept + ' ' + e.wallet).toLowerCase().includes(q));
+        const anyR = this.HISTORY.some((h) => !q || (h.month + ' ' + h.date + ' ' + h.tx).toLowerCase().includes(q));
+        return !anyE && !anyR;
+      })(),
+      isRemindOpen: this.state.remindOpen,
+      isReminderSet: this.state.reminderSet,
+      remindClick: () => this.setState({ remindOpen: true }),
+      remindCancel: () => this.closeAnim('Payout reminder modal', () => this.setState({ remindOpen: false })),
+      remindConfirm: () => this.setState((s) => ({ reminderSet: !s.reminderSet, remindOpen: false })),
+      remindBody: this.state.reminderSet ? 'Reminder is on for Jul 29, two days before the Jul 31 run. You can remove it anytime.' : 'Get a nudge on Jul 29, two days before the Jul 31 payroll run.',
+      remindPrimaryLabel: this.state.reminderSet ? 'Remove reminder' : 'Set reminder',
+      isAddOpen: this.state.addOpen,
+      addOpenClick: () => this.setState({ addOpen: true }),
+      addCancel: () => this.closeAnim('Add employee modal', () => this.setState({ addOpen: false })),
+      addName: this.state.addName,
+      addRole: this.state.addRole,
+      addSalary: this.state.addSalary,
+      addWallet: this.state.addWallet,
+      onAddName: (e) => this.setState({ addName: e.target.value }),
+      onAddRole: (e) => this.setState({ addRole: e.target.value }),
+      onAddSalary: (e) => this.setState({ addSalary: e.target.value }),
+      onAddWallet: (e) => this.setState({ addWallet: e.target.value }),
+      addBtnOpacity: (this.state.addName.trim() && this.state.addWallet.trim()) ? 1 : 0.45,
+      addDeptChips: ['Engineering', 'Design', 'Operations'].map((d) => ({
+        label: d,
+        bg: this.state.addDept === d ? accent : 'rgba(255,255,255,0.05)',
+        color: this.state.addDept === d ? '#0b1512' : '#cfdcd6',
+        onClick: () => this.setState({ addDept: d })
+      })),
+      addConfirm: () => {
+        const n = this.state.addName.trim();
+        const wallet = this.state.addWallet.trim();
+        if (!n || !wallet) return;
+        this.setState((s) => ({
+          extra: [...s.extra, { name: n, role: s.addRole.trim() || 'Employee', dept: s.addDept, wallet, salary: parseFloat(s.addSalary) || 0, start: this.HISTORY.length, joined: 'Jul 2026' }],
+          addOpen: false, addName: '', addRole: '', addSalary: '', addWallet: '', addDept: 'Engineering'
+        }));
+      },
+      roster: allEmployees.map((e, i) => ({
+        name: e.name,
+        initials: e.name.split(' ').map((w) => w[0]).join(''),
+        sub: e.role + ' · ' + e.wallet,
+        amountNum: showAll ? this.fmtAmount(e.salary) : '****',
+        amountWeight: showAll ? 700 : 400,
+        amountEl: React.createElement(RevealAmount,{value:this.fmtAmount(e.salary),revealed:showAll,accent:'#78e9c0',lock:false}),
+        onOpen: () => this.setState({ nav: 3, empIndex: i, empReveal: false, empRows: {} })
+      })),
+      backToTeam: () => this.setState({ nav: 1 }),
+      empTitle: emp.name,
+      empWallet: emp.wallet,
+      empRole: emp.role,
+      empDept: emp.dept,
+      empJoined: emp.joined,
+      empPayCount: String(empHist.length),
+      empPayCountPadded: String(empHist.length).padStart(2, '0'),
+      empRevealLabel: this.state.empReveal ? 'Hide' : 'Reveal',
+      empRevealToggle: () => this.setState((s) => ({ empReveal: !s.empReveal })),
+      empSalaryNum: (showAll || this.state.empReveal) ? this.fmtAmount(emp.salary) : '****',
+      empSalaryRest: ' cUSDd / month',
+      empSalaryWeight: (showAll || this.state.empReveal) ? 700 : 400,
+      empHistory: empHist.map((h) => ({
+        date: h.date,
+        tx: h.tx,
+        amountNum: (showAll || this.state.empRows[h.month]) ? this.fmtAmount(emp.salary) : '****',
+        amountWeight: (showAll || this.state.empRows[h.month]) ? 700 : 400,
+        amountEl: React.createElement(RevealAmount,{value:this.fmtAmount(emp.salary),revealed:(showAll||this.state.empRows[h.month]),accent:'#78e9c0',lock:false}),
+        onToggle: () => this.setState((s) => ({ empRows: { ...s.empRows, [h.month]: !s.empRows[h.month] } }))
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
