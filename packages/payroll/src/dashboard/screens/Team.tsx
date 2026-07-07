@@ -13,9 +13,11 @@ import { initials, shortWallet } from "../../lib/seed";
 import type { TeamScreenProps } from "../contracts";
 
 const GRADIENT = "linear-gradient(135deg,#41b091 0%,#2e9478 50%,#26826a 100%)";
+// The org's fixed departments (same set offered in the Add-employee modal).
+const DEPARTMENTS = ["Engineering", "Design", "Operations"] as const;
 
 export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: TeamScreenProps) {
-  const deptCount = useMemo(() => new Set(data.people.map((p) => p.dept)).size, [data.people]);
+  const deptCount = DEPARTMENTS.length;
   const oldest = data.runs[data.runs.length - 1];
   const since = useMemo(() => {
     if (!oldest) return "";
