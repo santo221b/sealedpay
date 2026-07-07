@@ -87,7 +87,7 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
             </span>
           </div>
           <div className="tnum relative z-[1]" style={{ fontSize: 25, fontWeight: 700, color: "#fff", marginTop: 18 }}>
-            {String(data.people.length).padStart(2, "0")} Employees
+            {data.people.length === 0 ? "No Employees" : `${String(data.people.length).padStart(2, "0")} Employees`}
           </div>
           <div className="tnum relative z-[1]" style={{ fontSize: 11, color: "rgba(240,250,245,0.75)", marginTop: 2 }}>
             {deptCount} Departments
