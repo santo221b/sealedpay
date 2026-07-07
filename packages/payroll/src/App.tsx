@@ -60,7 +60,7 @@ import { useHistory } from "./lib/history";
 import { useNotifications } from "./lib/notifications";
 import { savePendingRun, useOrphanRun } from "./lib/orphan";
 import { THEME_COLORS, setThemeColor } from "./lib/themeColor";
-import { clearOnboarded, loadIdentity } from "./lib/prefs";
+import { clearOnboarded, loadIdentity, loadSamplesCleared, setSamplesClearedPref } from "./lib/prefs";
 import { useSettings } from "./lib/prefs";
 import { rosterToRows } from "./lib/roster";
 import { SEEDED_KEY, SEED_EMPLOYEES, fmtAmount, midWallet, shortWallet } from "./lib/seed";
@@ -372,9 +372,24 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   }, [empId]);
 
   /* ── derived views ─────────────────────────────────────────────────────── */
-  const people = useMemo(() => employees.map(toPerson), [employees]);
-  const runsView = useMemo(() => toRunViews(liveRuns, people), [liveRuns, people]);
-  const activity = useMemo(() => activityRows(runsView, people, fundings), [runsView, people, fundings]);
+  // Sample (demo) data is hidden once the employer clears it, leaving only
+  // their real employees, runs, and deposits — so a real transaction never
+  // blends into the seed data.
+  const [samplesCleared, setSamplesCleared] = useState(() => loadSamplesCleared());
+  const clearSamples = () => {
+    setSamplesClearedPref(true);
+    setSamplesCleared(true);
+    setNav(0);
+  };
+  const people = useMemo(() => {
+    const all = employees.map(toPerson);
+    return samplesCleared ? all.filter((p) => !p.sample) : all;
+  }, [employees, samplesCleared]);
+  const runsView = useMemo(() => {
+    const all = toRunViews(liveRuns, people);
+    return samplesCleared ? all.filter((r) => r.live) : all;
+  }, [liveRuns, people, samplesCleared]);
+  const activity = useMemo(() => activityRows(runsView, people, fundings, samplesCleared), [runsView, people, fundings, samplesCleared]);
 
   // Default the highlighted Payout Activity bar to the third-last month, once
   // per page load, so a reload always lands on the same deterministic bar
@@ -556,7 +571,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
           <NotificationsPanel open={popup === "bell"} onClose={() => setPopup(null)} notifs={notifs} onRead={markRead} onMarkAllRead={markAllRead} />
         }
         gearPopover={
-          <SettingsPanel open={popup === "gear"} onClose={() => setPopup(null)} maskDefault={settings.maskDefault} reminders={settings.reminders} autoverify={settings.autoverify} onToggle={(key, value) => setSetting(key, value)} onViewRecipient={requestRecipientView} />
+          <SettingsPanel open={popup === "gear"} onClose={() => setPopup(null)} maskDefault={settings.maskDefault} reminders={settings.reminders} autoverify={settings.autoverify} onToggle={(key, value) => setSetting(key, value)} onViewRecipient={requestRecipientView} onClearSamples={clearSamples} hasSamples={!samplesCleared} />
         }
       />
 

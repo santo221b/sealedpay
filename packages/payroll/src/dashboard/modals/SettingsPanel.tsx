@@ -17,7 +17,7 @@ const TOGGLES: { key: "maskDefault" | "reminders" | "autoverify"; label: string 
   { key: "autoverify", label: "Auto-verify after payout" },
 ];
 
-export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverify, onToggle, onViewRecipient }: SettingsPanelProps) {
+export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverify, onToggle, onViewRecipient, onClearSamples, hasSamples }: SettingsPanelProps) {
   const reduced = useReducedMotion();
   const values = { maskDefault, reminders, autoverify };
 
@@ -98,6 +98,22 @@ export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverif
               </svg>
               View as a recipient
             </button>
+
+            {hasSamples && (
+              <button
+                type="button"
+                onClick={onClearSamples}
+                className="mt-2 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full transition-colors hover:bg-[rgba(255,255,255,0.07)]"
+                style={{ fontSize: 11.5, fontWeight: 500, color: "#cfdcd6", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", padding: "8px 0" }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                </svg>
+                Clear sample data
+              </button>
+            )}
 
             <button
               type="button"

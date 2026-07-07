@@ -29,6 +29,7 @@ export function toPerson(e: Employee): Person {
     wallet: e.address,
     salary: Number.parseFloat(e.salary) || 0,
     joined: seed?.joined ?? "Jul 2026",
+    sample: seed !== undefined,
   };
 }
 
@@ -140,7 +141,7 @@ export interface FundingEvent {
   url: string;
 }
 
-export function activityRows(runs: RunView[], people: Person[], fundings: FundingEvent[] = []): ActivityRow[] {
+export function activityRows(runs: RunView[], people: Person[], fundings: FundingEvent[] = [], samplesCleared = false): ActivityRow[] {
   const liveRuns = runs.filter((r) => r.live).slice(0, 4);
   const rows: ActivityRow[] = liveRuns.map((r) => ({
     key: r.id,
@@ -150,17 +151,22 @@ export function activityRows(runs: RunView[], people: Person[], fundings: Fundin
     pill: r.verified ? "Verified" : "Pending",
     url: r.url,
     icon: "run",
+    sample: false,
   }));
   const n = liveRuns.length;
-  const latestSeed = runs.find((r) => !r.live);
-  const newest = people[people.length - 1];
-  if (n < 4 && latestSeed)
-    rows.push({ key: "base0", title: "Payroll run", sub: `${latestSeed.date} · ${latestSeed.paid} paid · ${fmtAmount(latestSeed.total)} cUSDd`, pill: "Verified", url: latestSeed.url, icon: "run" });
-  if (n < 3 && newest)
-    rows.push({ key: "base1", title: "Employee added", sub: `${newest.name} · ${newest.dept}`, pill: "Active", icon: "person" });
-  if (n < 2) rows.push({ key: "base2", title: "Operator authorized", sub: "expires in 1 h", pill: "Pending", icon: "key" });
-  // The seed "demo faucet" row only stands in until the user makes a real deposit.
-  if (n < 1 && fundings.length === 0) rows.push({ key: "base3", title: "Funds deposited", sub: "demo faucet", pill: "Verified", icon: "deposit" });
+  // Demo filler rows only stand in while sample data is present; once cleared,
+  // the feed shows only real runs + real deposits.
+  if (!samplesCleared) {
+    const latestSeed = runs.find((r) => !r.live);
+    const newest = people[people.length - 1];
+    if (n < 4 && latestSeed)
+      rows.push({ key: "base0", title: "Payroll run", sub: `${latestSeed.date} · ${latestSeed.paid} paid · ${fmtAmount(latestSeed.total)} cUSDd`, pill: "Verified", url: latestSeed.url, icon: "run", sample: true });
+    if (n < 3 && newest)
+      rows.push({ key: "base1", title: "Employee added", sub: `${newest.name} · ${newest.dept}`, pill: "Active", icon: "person", sample: newest.sample });
+    if (n < 2) rows.push({ key: "base2", title: "Operator authorized", sub: "expires in 1 h", pill: "Pending", icon: "key", sample: true });
+    // The seed "demo faucet" row only stands in until the user makes a real deposit.
+    if (n < 1 && fundings.length === 0) rows.push({ key: "base3", title: "Funds deposited", sub: "demo faucet", pill: "Verified", icon: "deposit", sample: true });
+  }
 
   // Real deposits made this session lead the feed (newest first).
   const fundRows: ActivityRow[] = fundings.slice(0, 3).map((f) => ({
@@ -170,6 +176,7 @@ export function activityRows(runs: RunView[], people: Person[], fundings: Fundin
     pill: "Verified",
     url: f.url,
     icon: "deposit",
+    sample: false,
   }));
   return [...fundRows, ...rows].slice(0, 4);
 }

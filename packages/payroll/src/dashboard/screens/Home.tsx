@@ -236,6 +236,23 @@ export function Home({ data, tab, setTab, onAddEmployee }: HomeScreenProps) {
           <ViewAll />
         </div>
 
+        {chart.months.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center" style={{ height: CH + 44, gap: 4 }}>
+            <span className="flex items-center justify-center rounded-full" style={{ width: 44, height: 44, background: "rgba(95,230,175,0.1)", border: "1px solid rgba(95,230,175,0.18)", marginBottom: 6 }}>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M3 3v18h18" />
+                <rect x="7" y="12" width="3" height="5" rx="1" />
+                <rect x="12.5" y="8" width="3" height="9" rx="1" />
+                <rect x="18" y="5" width="3" height="12" rx="1" />
+              </svg>
+            </span>
+            <div style={{ fontSize: 13.5, fontWeight: 500, color: tokens.text.secondary }}>No payouts yet</div>
+            <div style={{ fontSize: 11.5, color: tokens.text.muted, maxWidth: 250, lineHeight: 1.5 }}>
+              Run your first payroll and it will show up here.
+            </div>
+          </div>
+        ) : (
+          <>
         <div className="flex" style={{ gap: 13, marginTop: 16 }}>
           {/* Y axis */}
           <div
@@ -382,6 +399,8 @@ export function Home({ data, tab, setTab, onAddEmployee }: HomeScreenProps) {
             </div>
           ))}
         </div>
+          </>
+        )}
       </GlassCard>
 
       {/* Bottom row */}

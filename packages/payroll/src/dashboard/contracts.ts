@@ -24,6 +24,8 @@ export interface Person {
   /** Monthly salary in cUSDd, numeric (format with fmtAmount()). */
   salary: number;
   joined: string;
+  /** True for a pre-loaded demo employee (not one the user added). */
+  sample?: boolean;
 }
 
 export interface RunView {
@@ -125,6 +127,8 @@ export interface ActivityRow {
   pill: "Verified" | "Active" | "Pending";
   url?: string;
   icon: "run" | "person" | "key" | "deposit";
+  /** Pre-loaded demo row (vs a real, on-chain action this session). */
+  sample?: boolean;
 }
 
 /* ── Modal / panel props (all rendered by the shell) ─────────────────────── */
@@ -146,6 +150,10 @@ export interface SettingsPanelProps {
   onToggle: (key: "maskDefault" | "reminders" | "autoverify", value: boolean) => void;
   /** Testing shortcut: jump to the recipient "My pay" view (via a notice). */
   onViewRecipient: () => void;
+  /** Remove the pre-loaded demo team + history, keeping only real data. */
+  onClearSamples: () => void;
+  /** Whether any sample data is still present (hides the clear button once gone). */
+  hasSamples: boolean;
 }
 
 export interface AddEmployeeModalProps {

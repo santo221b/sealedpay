@@ -18,7 +18,7 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
   const deptCount = useMemo(() => new Set(data.people.map((p) => p.dept)).size, [data.people]);
   const oldest = data.runs[data.runs.length - 1];
   const since = useMemo(() => {
-    if (!oldest) return "since Feb 2026";
+    if (!oldest) return "";
     const [month, , year] = oldest.dateFull.replace(",", "").split(" ");
     return `since ${month} ${year}`;
   }, [oldest]);
@@ -96,7 +96,7 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
             <span className="tnum" style={{ fontSize: 13, letterSpacing: 0.45, color: "rgba(240,250,245,0.95)" }}>
               {data.runs.length} payroll runs completed
             </span>
-            <span style={{ fontSize: 10, color: "rgba(240,250,245,0.7)" }}>{since}</span>
+            {since && <span style={{ fontSize: 10, color: "rgba(240,250,245,0.7)" }}>{since}</span>}
           </div>
         </div>
 
@@ -198,6 +198,14 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
                 </span>
               </span>
               <span className="ml-auto flex items-center" style={{ gap: 9 }}>
+                {p.sample && (
+                  <span
+                    className="inline-flex items-center"
+                    style={{ fontSize: 9.5, fontWeight: 500, padding: "3px 9px", borderRadius: tokens.radius.pill, border: "1px solid rgba(255,255,255,0.14)", color: "#9db3aa", background: "rgba(255,255,255,0.04)" }}
+                  >
+                    Sample
+                  </span>
+                )}
                 <span
                   className="inline-flex items-center"
                   style={{

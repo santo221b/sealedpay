@@ -72,8 +72,19 @@ function ActivityRowView({ row }: { row: ActivityRow }) {
         <Icon />
       </span>
       <span className="min-w-0">
-        <span className="block" style={{ fontSize: 13.5, fontWeight: 600, color: "#eef4f1" }}>
-          {row.title}
+        <span className="flex items-center" style={{ gap: 7 }}>
+          <span className="truncate" style={{ fontSize: 13.5, fontWeight: 600, color: "#eef4f1" }}>
+            {row.title}
+          </span>
+          {row.sample ? (
+            <span className="shrink-0" style={{ fontSize: 8.5, fontWeight: 500, padding: "2px 7px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.14)", color: "#9db3aa", background: "rgba(255,255,255,0.04)" }}>
+              Sample
+            </span>
+          ) : row.url ? (
+            <span className="shrink-0" style={{ fontSize: 8.5, fontWeight: 500, padding: "2px 7px", borderRadius: 999, border: "1px solid rgba(95,230,175,0.4)", color: "#78e9c0", background: "rgba(95,230,175,0.1)" }}>
+              Live
+            </span>
+          ) : null}
         </span>
         <span className="tnum block" style={{ fontSize: 10.5, color: "#9eada5", marginTop: 1 }}>
           {row.sub}

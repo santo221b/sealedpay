@@ -42,6 +42,21 @@ export function clearOnboarded() {
 }
 
 /**
+ * Once the employer clears the pre-loaded demo team + history, the dashboard
+ * shows only their real data. Persisted so it survives reloads.
+ */
+const SAMPLES_CLEARED_KEY = "sealedpay_samples_cleared";
+
+export function loadSamplesCleared(): boolean {
+  return localStorage.getItem(SAMPLES_CLEARED_KEY) === "1";
+}
+
+export function setSamplesClearedPref(value: boolean) {
+  if (value) localStorage.setItem(SAMPLES_CLEARED_KEY, "1");
+  else localStorage.removeItem(SAMPLES_CLEARED_KEY);
+}
+
+/**
  * Wipe all local demo state (identity, settings, employees, history, seed
  * markers) and reload — so a shared URL starts clean for the next visitor and
  * one judge's edits don't leak into the next.
