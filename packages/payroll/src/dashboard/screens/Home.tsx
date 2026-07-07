@@ -326,7 +326,7 @@ export function Home({ data, tab, setTab }: HomeScreenProps) {
                       <>
                         {/* glass tooltip — reflects the hovered block */}
                         <div
-                          className="tnum absolute z-[3] whitespace-nowrap"
+                          className="absolute z-[3] whitespace-nowrap"
                           style={{
                             bottom: "calc(100% + 22px)",
                             left: "50%",
