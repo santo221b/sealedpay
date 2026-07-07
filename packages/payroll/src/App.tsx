@@ -566,7 +566,7 @@ function Dashboard() {
         onEnable={() => {
           localStorage.setItem("sealedpay_notifperm", "granted");
           setPermPrompt(false);
-          showToast("ok", "Notifications enabled");
+          showToast("ok", "In-app alerts on");
         }}
         onDismiss={() => {
           localStorage.setItem("sealedpay_notifperm", "denied");
