@@ -11,6 +11,7 @@ import { formatAmount } from "@dispersekit/widget";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect } from "react";
+import { zeroAddress } from "viem";
 
 import { RevealAmount } from "../../design/RevealAmount";
 import { SealLogo } from "../../design/SealLogo";
@@ -243,7 +244,9 @@ export function MyPay({ onExit }: { onExit: () => void }) {
                         <ReceiptCheckGlyph size={17} />
                       </span>
                       <span className="min-w-0">
-                        <span className="block" style={{ fontSize: 13, fontWeight: 500, color: "#eef4f1" }}>from {shortWallet(p.from)}</span>
+                        <span className="block" style={{ fontSize: 13, fontWeight: 500, color: "#eef4f1" }}>
+                          {p.from === zeroAddress ? "Faucet mint · test funds" : `from ${shortWallet(p.from)}`}
+                        </span>
                         <span className="tnum block whitespace-nowrap" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
                           {p.timestamp ? `${fmtPaymentTime(p.timestamp)} · ` : ""}
                           {shortHash(p.txHash)} ·{" "}
