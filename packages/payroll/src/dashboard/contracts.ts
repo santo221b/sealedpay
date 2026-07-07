@@ -192,8 +192,6 @@ export interface ProfilePopupProps {
   name: string;
   avatar: string;
   employerShort?: string;
-  /** Switch to the recipient "My pay" view. */
-  onViewMyPay: () => void;
 }
 
 export interface ReminderModalProps {
