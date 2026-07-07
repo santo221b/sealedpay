@@ -73,32 +73,33 @@ function ensureRainbowKitPolish() {
   document.head.appendChild(style);
 }
 
-function makeConfig(appName: string, walletConnectProjectId?: string) {
-  const projectId = walletConnectProjectId ?? (import.meta.env?.VITE_WALLETCONNECT_PROJECT_ID as string | undefined);
-  const hasWC = Boolean(projectId);
+// RainbowKit's public demo projectId — enough to render the universal
+// WalletConnect QR out of the box. For production / bounty judging, set
+// VITE_WALLETCONNECT_PROJECT_ID (repo-root .env, or the host's env) to your own
+// free id from https://reown.com so the QR isn't sharing a rate-limited relay.
+const DEMO_WC_PROJECT_ID = "21fef48091f12692cad574a6f7753643";
 
-  // A curated wallet list so the modal is never a dead end — even with NO
-  // extension installed it lists recognizable wallets with real next steps:
-  //   • Coinbase Wallet — works WITHOUT a projectId (own SDK): QR + install
-  //   • Injected        — surfaces any installed extension (MetaMask, Rabby …)
-  //   • MetaMask + WalletConnect — added only WITH a projectId, since both
-  //     build a WalletConnect connector that hard-throws on an empty one.
-  //     With a projectId set, WalletConnect's universal QR lets ANY mobile
-  //     wallet pair even when nothing is installed.
-  const connectors = connectorsForWallets(
-    [
-      {
-        groupName: "Recommended",
-        wallets: [
-          ...(hasWC ? [metaMaskWallet] : []),
-          coinbaseWallet,
-          ...(hasWC ? [walletConnectWallet] : []),
-          injectedWallet,
-        ],
-      },
-    ],
-    { appName, projectId: projectId ?? "" },
-  );
+function makeConfig(appName: string, walletConnectProjectId?: string) {
+  const envId = import.meta.env?.VITE_WALLETCONNECT_PROJECT_ID as string | undefined;
+  const projectId = walletConnectProjectId || envId || DEMO_WC_PROJECT_ID;
+
+  // The modal must never be a dead end for a visitor with NO extension.
+  //   • WalletConnect — the universal QR: scan with ANY mobile wallet, zero
+  //     install. This is the real no-extension path.
+  //   • MetaMask      — branded; connects if installed, else offers its get flow.
+  //   • Injected      — catches any other extension (Rabby, Brave, Frame …).
+  // Coinbase Wallet is intentionally omitted: with no extension it bounces
+  // through keys.coinbase.com, which fails in several browsers. The projectId is
+  // effectively always present (demo fallback), so the Coinbase+injected branch
+  // is only a safety net if someone explicitly blanks the id.
+  const wallets = projectId
+    ? [walletConnectWallet, metaMaskWallet, injectedWallet]
+    : [coinbaseWallet, injectedWallet];
+
+  const connectors = connectorsForWallets([{ groupName: "Recommended", wallets }], {
+    appName,
+    projectId: projectId || "",
+  });
 
   return createConfig({
     chains: [sepolia],
