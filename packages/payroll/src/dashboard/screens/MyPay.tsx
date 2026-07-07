@@ -245,7 +245,7 @@ export function MyPay({ onExit }: { onExit: () => void }) {
                       </span>
                       <span className="min-w-0">
                         <span className="block" style={{ fontSize: 13, fontWeight: 500, color: "#eef4f1" }}>
-                          {p.from === zeroAddress ? "Test funds" : `from ${shortWallet(p.from)}`}
+                          {p.from === zeroAddress ? "Faucet mint · Test funds" : `from ${shortWallet(p.from)}`}
                         </span>
                         <span className="tnum block whitespace-nowrap" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
                           {p.timestamp ? `${fmtPaymentTime(p.timestamp)} · ` : ""}
