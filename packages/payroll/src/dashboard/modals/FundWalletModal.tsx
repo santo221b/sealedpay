@@ -52,7 +52,7 @@ export function FundWalletModal({ open, onClose, employerShort, busy, error, onF
                 outline: "none",
               }}
             />
-            <p style={{ fontSize: 10.5, color: "#7f9a8f", marginTop: 7, lineHeight: 1.45 }}>
+            <p style={{ fontSize: 10.5, color: "#7f9a8f", marginTop: 7, paddingLeft: 5, lineHeight: 1.45 }}>
               A real Sepolia mint, so it needs a little test ETH for gas.{" "}
               <a
                 href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia"
