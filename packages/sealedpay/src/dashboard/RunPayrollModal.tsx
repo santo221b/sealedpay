@@ -900,6 +900,11 @@ function Finale(props: {
   // finale must NOT read as a clean success in that case.
   const mismatch = props.verifiedOk !== undefined && props.verifiedOk < props.n;
   const accent = mismatch ? "#e6c082" : "#5fe3ab";
+  // A verify attempt that came back with an error but no result: either the
+  // wallet signature was declined, or the relayer couldn't be reached. Either
+  // way the payout above already confirmed — this only gates the OPTIONAL
+  // amount check, so it reads as a soft-coral retry, never a payment failure.
+  const verifyDeclined = /cancel|declin|denied|reject/i.test(props.verifyError ?? "");
   return (
     <div className="text-center" style={{ padding: "12px 6px 4px 6px" }}>
       <div className="relative mx-auto flex items-center justify-center" style={{ width: 96, height: 96 }}>
@@ -970,8 +975,8 @@ function Finale(props: {
           href={props.url}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center justify-between transition-colors hover:text-[#e8f0ec]"
-          style={{ fontSize: 12, color: "#9db3aa", textDecoration: "none", padding: "13px 6px 11px" }}
+          className="flex items-center justify-between rounded-[11px] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#e8f0ec]"
+          style={{ fontSize: 12, color: "#9db3aa", textDecoration: "none", margin: "0 -8px", padding: "12px 12px 11px" }}
         >
           View on Etherscan
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -992,12 +997,29 @@ function Finale(props: {
             <span aria-hidden style={{ width: 12, height: 12, borderRadius: "50%", border: "2px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }} />
             Verifying amounts privately
           </div>
-        ) : props.onVerify && (!props.autoverify || Boolean(props.verifyError)) ? (
+        ) : props.onVerify && Boolean(props.verifyError) ? (
+          // Attempted, then the wallet signature was declined (or the relayer
+          // failed). The payout already confirmed above, so this is a soft-coral
+          // actionable retry for the OPTIONAL amount check — not a failure.
           <button
             type="button"
             onClick={props.onVerify}
-            className="mx-auto mt-4 block cursor-pointer transition-colors hover:text-[#8ef0cb]"
-            style={{ fontSize: 12, fontWeight: 500, color: "#78e9c0" }}
+            className="mx-auto mt-4 flex items-center justify-center gap-2 rounded-full transition-colors hover:bg-[rgba(232,150,133,0.17)]"
+            style={{ background: "rgba(232,150,133,0.10)", border: "1px solid rgba(232,150,133,0.40)", color: "#e6a091", fontSize: 12, fontWeight: 600, padding: "9px 17px" }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M3 2v6h6" />
+              <path d="M3 13a9 9 0 1 0 3-7.7L3 8" />
+            </svg>
+            {verifyDeclined ? "Verify signature declined · retry" : "Couldn't verify amounts · retry"}
+          </button>
+        ) : props.onVerify && !props.autoverify ? (
+          // Manual mode, not yet attempted — a neutral actionable chip.
+          <button
+            type="button"
+            onClick={props.onVerify}
+            className="mx-auto mt-4 flex items-center justify-center gap-2 rounded-full transition-colors hover:bg-[rgba(120,233,192,0.15)]"
+            style={{ background: "rgba(120,233,192,0.08)", border: "1px solid rgba(120,233,192,0.32)", color: "#78e9c0", fontSize: 12, fontWeight: 600, padding: "9px 17px" }}
           >
             {props.single ? "Verify the payment was delivered" : "Verify salaries were delivered"}
           </button>
@@ -1006,7 +1028,7 @@ function Finale(props: {
       {/* Recipient handoff (a demo affordance) — demoted to a quiet middot pair
           so it never twins the primary Done button. */}
       {props.single && props.onViewMyPay && (
-        <div className="flex items-center justify-center" style={{ marginTop: 16, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 12 }}>
+        <div className="flex items-center justify-center" style={{ marginTop: 15 }}>
           <button type="button" onClick={props.onViewMyPay} className="cursor-pointer hover:underline" style={{ fontSize: 11.5, fontWeight: 500, color: "#78e9c0" }}>
             View this as the recipient
           </button>

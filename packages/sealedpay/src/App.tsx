@@ -318,6 +318,9 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
     },
     [addRun, orphan, addNotif, showToast, balance],
   );
+  // Mirror the flow phase into a ref so onFlowError (defined before `flow`) can
+  // tell a post-delivery verify failure from a genuine payroll failure.
+  const phaseRef = useRef<string>("input");
   const onFlowError = useCallback(
     (error: Error) => {
       // Post-broadcast confirmation retries are handled inside the modal.
@@ -333,12 +336,23 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
         showToast("err", msg);
         return;
       }
+      // A failure once the payout is already delivered can only be the OPTIONAL
+      // verify step — the funds moved, so never say "Payroll failed · no funds
+      // moved". Surface it as a soft "couldn't verify", matching the finale.
+      if (phaseRef.current === "delivered") {
+        addNotif({ title: "Couldn't verify amounts", sub: "the payment was still delivered", color: "#e3b25f", tone: "warn" });
+        showToast("err", "Couldn't verify amounts · the payment was still delivered");
+        return;
+      }
       addNotif({ title: "Payroll failed", sub: "no funds moved · retry", color: "#e07a6a", tone: "err" });
       showToast("err", "Payroll failed · no funds moved · retry");
     },
     [addNotif, showToast],
   );
   const flow = useDisperseFlow({ token: TOKEN, chainId: SEPOLIA_CHAIN_ID, onDispersed, onError: onFlowError });
+  useEffect(() => {
+    phaseRef.current = flow.phase;
+  }, [flow.phase]);
 
   // A wallet rejection sets flow.error but is NOT routed through onError — give
   // it the same toast + bell the success path gets (deduped by message).
@@ -352,7 +366,13 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
       return;
     }
     if (toastedFlowErr.current === e) return;
-    if (/reject|denied|cancel/i.test(e)) {
+    const cancelled = /reject|denied|cancel/i.test(e);
+    if (cancelled && flow.phase === "delivered") {
+      // A DECLINED post-delivery verify signature — the payout already landed,
+      // so this is NOT a payroll cancellation and must never say "nothing was
+      // sent". The finale carries the (coral) retry affordance; no toast here.
+      toastedFlowErr.current = e;
+    } else if (cancelled) {
       toastedFlowErr.current = e;
       addNotif({ title: "Payroll cancelled", sub: "you declined the request · nothing was sent", color: "#e3b25f", tone: "warn" });
       showToast("err", "Payroll cancelled · nothing was sent");
@@ -363,7 +383,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
     }
     // Genuine on-chain / setup failures are toasted by onFlowError, not here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flow.error]);
+  }, [flow.error, flow.phase]);
 
   // Re-verifying a past payment (tapping a row in EmployeeView) can be rejected;
   // surface it instead of leaving the row silently masked.
