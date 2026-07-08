@@ -87,6 +87,8 @@ export interface HomeScreenProps {
   onAddEmployee: () => void;
   /** Navigate to the Insights screen (the Payout Activity "View All"). */
   onViewInsights: () => void;
+  /** Navigate to the Team screen (the Team card "View All"). */
+  onViewTeam: () => void;
 }
 
 export interface TeamScreenProps {

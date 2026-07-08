@@ -659,7 +659,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
             <main className="min-w-0">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div key={nav === 3 ? `emp-${empId}` : nav} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}>
-                  {nav === 0 && <Home data={data} tab={tab} setTab={setTab} onAddEmployee={() => setAddOpen(true)} onViewInsights={() => { setNav(2); setPopup(null); }} />}
+                  {nav === 0 && <Home data={data} tab={tab} setTab={setTab} onAddEmployee={() => setAddOpen(true)} onViewInsights={() => { setNav(2); setPopup(null); }} onViewTeam={() => { setNav(1); setPopup(null); }} />}
                   {nav === 1 && (
                     <Team data={data} onRunPayroll={() => { setPayrollOnlyId(null); setPayrollOpen(true); }} onAddEmployee={() => setAddOpen(true)} onOpenEmployee={openEmployee} />
                   )}

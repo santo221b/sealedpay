@@ -120,7 +120,7 @@ function ViewAll({ onClick }: { onClick?: () => void }) {
 
 /* ── Screen ─────────────────────────────────────────────────────────────── */
 
-export function Home({ data, tab, setTab, onAddEmployee, onViewInsights }: HomeScreenProps) {
+export function Home({ data, tab, setTab, onAddEmployee, onViewInsights, onViewTeam }: HomeScreenProps) {
   const reduced = useReducedMotion();
 
   // Which stacked block (month + segment id) the cursor is over, so the tooltip
@@ -430,7 +430,7 @@ export function Home({ data, tab, setTab, onAddEmployee, onViewInsights }: HomeS
         <GlassCard dataTour="tour-home-team-donut" className="flex flex-col" style={{ padding: "16px 23px" }}>
           <div className="flex items-center justify-between">
             <div style={{ fontWeight: 400, fontSize: 17 }}>Team</div>
-            <ViewAll />
+            <ViewAll onClick={onViewTeam} />
           </div>
           {data.people.length === 0 ? (
             <div
