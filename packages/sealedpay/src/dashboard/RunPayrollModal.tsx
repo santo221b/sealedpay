@@ -728,7 +728,7 @@ function StepAuthorize({ alreadyAuthorized }: { alreadyAuthorized: boolean }) {
         <motion.div
           className="mt-3.5 flex w-full items-center justify-center gap-2 rounded-full"
           style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#cfdcd6", fontSize: 13.5, fontWeight: 600, padding: "12.6px 0" }}
-          animate={reduced ? undefined : BREATHE}
+          animate={reduced ? undefined : { opacity: [1, 0.72, 1] }}
           transition={BREATHE_TRANSITION}
         >
           <span style={{ width: 15, height: 15, borderRadius: "50%", border: "2.2px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }} />
