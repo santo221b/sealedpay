@@ -2,7 +2,11 @@
 
 **SealedPay — confidential payroll on-chain. Pay your whole team in one transaction; salaries stay encrypted. Built on TokenOps confidential disperse × Zama FHE.**
 
-Two layers live in this repo:
+> **📂 Reviewing this? It's one monorepo — here are the two pieces you're looking for:**
+> the **frontend code** is in **[`packages/sealedpay`](packages/sealedpay)** and the **smart-contract code** is in **[`packages/smart-contracts`](packages/smart-contracts)**.
+> (The shared SDK engine and its docs are in `packages/dispersekit` and `packages/dispersekit-docs` — full breakdown under [Repository layout](#repository-layout).)
+
+The product is built in two layers:
 
 - **SealedPay** — the product: an employer-only payroll dashboard ([`packages/sealedpay`](packages/sealedpay)). Manage a team, click *Run payroll*, and every salary is delivered in a single confidential transaction — encrypted end-to-end, decryptable only by the employer and each individual employee, with delivery *proven* by decryption rather than assumed.
 - **DisperseKit** — the engine: a white-label confidential disperse widget ([`packages/dispersekit`](packages/dispersekit)). One import, one click, a confidential bulk payout. SealedPay is a skin over it; any partner app can be too.
@@ -77,9 +81,9 @@ Proof it works end-to-end on the live network: [this transaction](https://sepoli
 
 Full model: [docs/CONFIDENTIALITY.md](docs/CONFIDENTIALITY.md)
 
-## Repository layout — where to look
+## Repository layout
 
-This is a monorepo. The two pieces the bounty asks for — the **smart contracts** and the **frontend** — plus the SDK they share and its docs:
+Where to look. The two pieces the bounty asks for — the **smart contracts** and the **frontend** — plus the SDK they share and its docs:
 
 | Package | Role | What it is |
 |---|---|---|
