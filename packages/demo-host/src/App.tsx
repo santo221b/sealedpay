@@ -243,10 +243,10 @@ formatAmount(1000000n, 6);    // "1"
 formatAmount(2500500000n, 6); // "2,500.5"`;
 
 const STEPS = [
-  ["Encrypt in the browser", "Amounts are encrypted client-side on Zama FHE before any transaction. Plaintext never leaves the page."],
-  ["Authorize once", "A single operator grant lets the TokenOps disperse contract move the encrypted balance. It is time-boxed, not unlimited."],
-  ["One transaction", "Every recipient is paid in one confidential transfer. One gas payment for the whole run."],
-  ["Recipients verify", "Each recipient decrypts only their own amount with one signature. Nobody else can read it."],
+  ["Encrypt in the browser", "Amounts are encrypted client-side on Zama FHE. Plaintext never leaves the page."],
+  ["Authorize once", "One time-boxed grant lets the disperse contract move the encrypted balance."],
+  ["One transaction", "Every recipient is paid in a single confidential transfer."],
+  ["Recipients verify", "Each recipient decrypts only their own amount, with one signature."],
 ];
 
 const ENGINE_REF: [string, string, string][] = [
@@ -273,7 +273,7 @@ const PARTS_REF: [string, string, string][] = [
 const NAV: { group: string; items: [string, string][] }[] = [
   { group: "Start", items: [["overview", "Overview"], ["architecture", "Architecture"], ["install", "Install"], ["quickstart", "Quick start"]] },
   { group: "Guides", items: [["providers", "Providers & setup"], ["recipients", "Parse recipients"], ["token", "Token metadata"], ["disperse", "Run a disperse"], ["decrypt", "Recipient decryption"], ["format", "Format amounts"]] },
-  { group: "Reference", items: [["confidential", "Confidentiality"], ["api", "API reference"], ["parts", "Ready-made parts"], ["casestudy", "Case study"]] },
+  { group: "Reference", items: [["confidential", "Confidentiality"], ["api", "API reference"], ["casestudy", "Case study"]] },
 ];
 const ALL_IDS = NAV.flatMap((g) => g.items.map((i) => i[0]));
 
@@ -395,10 +395,7 @@ export function App() {
             <h1 style={{ fontSize: 42, fontWeight: 700, letterSpacing: -1, lineHeight: 1.06, marginTop: 12, maxWidth: 640, color: T.heading }}>
               Pay everyone in one transaction, with amounts nobody can see.
             </h1>
-            <Lead>
-              DisperseKit is the SDK for confidential token disperse. It puts Zama's FHE encryption and TokenOps'
-              confidential transfers behind a few hooks, so you build your own UI and never touch the cryptography.
-            </Lead>
+            <Lead>The SDK for confidential token disperse. Zama FHE encryption and TokenOps transfers behind a few hooks, so you build the UI and never touch the cryptography.</Lead>
             <div className="flex flex-wrap items-center" style={{ gap: 9, marginTop: 18 }}>
               <span style={{ fontSize: 12, fontWeight: 500, color: T.dim }}>Built on</span>
               {["Zama FHE", "TokenOps"].map((l) => (
@@ -417,11 +414,11 @@ export function App() {
           {/* Architecture */}
           <Reveal id="architecture">
             <H2>Architecture</H2>
-            <Lead>The SDK is a thin, ergonomic layer over two foundations. You call hooks. They do the hard part.</Lead>
-            <div className="grid gap-5 md:grid-cols-2" style={{ marginTop: 20 }}>
+            <Lead>A thin layer over two foundations. You call hooks, they do the hard part.</Lead>
+            <div className="grid gap-5 md:grid-cols-2" style={{ marginTop: 16 }}>
               {[
-                { name: "Zama FHE", role: "Encryption layer", desc: "Amounts are encrypted with Zama's FHEVM, fully homomorphic encryption that keeps values secret on-chain. The SDK wraps the fhevm instance, the encryption, and user-decryption, so you never touch the cryptography.", tags: ["getFhevmInstance", "encryptAmounts", "userDecryptHandles"] },
-                { name: "TokenOps", role: "Transfer layer", desc: "Payouts settle as TokenOps confidential transfers, ERC-7984 tokens dispersed to every recipient in a single transaction. The SDK ships the ABIs and the batch-disperse flow ready to call.", tags: ["disperseAbi", "erc7984Abi", "useDisperseFlow"] },
+                { name: "Zama FHE", role: "Encryption layer", desc: "Amounts are encrypted with Zama's FHEVM. The SDK wraps the instance, the encryption, and user-decryption.", tags: ["getFhevmInstance", "encryptAmounts", "userDecryptHandles"] },
+                { name: "TokenOps", role: "Transfer layer", desc: "ERC-7984 confidential transfers, dispersed to every recipient in one transaction. ABIs and flow included.", tags: ["disperseAbi", "erc7984Abi", "useDisperseFlow"] },
               ].map((f) => (
                 <Card key={f.name} style={{ padding: 22, height: "100%" }}>
                   <div style={{ fontSize: 16, fontWeight: 700, color: T.heading }}>{f.name}</div>
@@ -440,69 +437,64 @@ export function App() {
           {/* Install */}
           <Reveal id="install">
             <H2>Install</H2>
-            <Lead>One package. It carries the engine, the ready-made parts, and its own wallet stack. Sepolia today.</Lead>
+            <Lead>One package, wallet stack included. Sepolia today.</Lead>
             <Code lang="bash" code={`npm install @dispersekit/widget`} />
           </Reveal>
 
           {/* Quick start */}
           <Reveal id="quickstart">
             <H2>Quick start</H2>
-            <Lead>Wrap your app in the provider, then drive a confidential disperse from your own component. Two files, start to finish.</Lead>
+            <Lead>Wrap your app, then run a disperse from your own component.</Lead>
             <Code code={SNIP_SETUP} />
             <Code code={SNIP_QUICKSTART} />
-            <Note>Everything after this is the same six calls, explained one at a time.</Note>
           </Reveal>
 
           {/* Providers */}
           <Reveal id="providers">
             <H2>Providers & setup</H2>
-            <Lead>DisperseProviders is the one thing you must wrap around your app. It wires up wagmi, RainbowKit, and React Query for Sepolia, and themes the connect modal to match you.</Lead>
+            <Lead>The one wrapper you need. It brings wagmi, RainbowKit, and React Query, wired for Sepolia.</Lead>
             <Code code={SNIP_PROVIDERS} />
             <PropsTable rows={[
-              ["theme", "DisperseTheme?", "White-label colors, radius, and font. Merged over the default theme."],
-              ["appName", "string?", "Shown to wallets while pairing. Defaults to DisperseKit."],
-              ["walletConnectProjectId", "string?", "Your WalletConnect id from reown.com, for mobile pairing."],
+              ["theme", "DisperseTheme?", "White-label colors, radius, and font."],
+              ["appName", "string?", "Shown to wallets while pairing."],
+              ["walletConnectProjectId", "string?", "Your WalletConnect id from reown.com."],
             ]} />
-            <Note>One provider per app. It creates a single wagmi config and query client per mount, and only supports Sepolia (11155111) today.</Note>
           </Reveal>
 
           {/* Recipients */}
           <Reveal id="recipients">
             <H2>Parse recipients</H2>
-            <Lead>Funnel every payout list through parseRecipients. It is the one validated path from text to typed rows, so the same guards apply whether input comes from a form, a CSV, or a roster.</Lead>
+            <Lead>The one validated path from text to typed rows. Checksums, ranges, and duplicates are caught here.</Lead>
             <Code code={SNIP_RECIPIENTS} />
-            <Lead>It returns rows (typed RecipientRow with a bigint amount), issues (fatal, with a line number and problem), warnings (non-fatal, like duplicates), and total. It enforces EIP-55 checksums, plain decimals only, and the euint64 range (0 to 2^64-1).</Lead>
           </Reveal>
 
           {/* Token metadata */}
           <Reveal id="token">
             <H2>Token metadata</H2>
-            <Lead>useTokenMeta reads an ERC-7984 token's symbol and decimals. Balances are a different animal: confidentialBalanceOf returns a ciphertext handle, never a plaintext number.</Lead>
+            <Lead>Read symbol and decimals. A confidential balance comes back as a ciphertext handle, not a number.</Lead>
             <Code code={SNIP_TOKEN} />
-            <Note>decimals is undefined until the read lands. Gate parsing and encryption on it, so amounts are never scaled at a guessed precision.</Note>
+            <Note>decimals is undefined until it loads. Gate parsing and encryption on it.</Note>
           </Reveal>
 
           {/* Run a disperse */}
           <Reveal id="disperse">
             <H2>Run a disperse</H2>
-            <Lead>useDisperseFlow is the engine. One hook owns the whole state machine, from encrypting in the browser to on-chain confirmation. You drive it with two calls and render everything else off flow.phase.</Lead>
+            <Lead>One hook owns the whole state machine. Drive it with two calls, render the rest off flow.phase.</Lead>
             <Code code={SNIP_DISPERSE} />
-            <Lead>The phases run input → review → encrypting → authorizing → dispersing → confirming → delivered. StatusTimeline renders the in-flight ones for free.</Lead>
-            <Note>A confidential transfer moves an encrypted zero when the sender is short, silently. flow.verifyDelivery decrypts both the requested and the transferred handles and flags any per-recipient mismatch, so a short payout can never pass unnoticed.</Note>
+            <Note>A short transfer moves an encrypted zero, silently. flow.verifyDelivery decrypts requested against transferred to catch it.</Note>
           </Reveal>
 
           {/* Recipient decryption */}
           <Reveal id="decrypt">
             <H2>Recipient decryption</H2>
-            <Lead>A recipient reveals only their own amounts, with no server and no employer in the loop. Scan for transfers indexed to them, then decrypt those handles with a single signature.</Lead>
+            <Lead>A recipient reveals only their own amounts, with one signature and no server in the loop.</Lead>
             <Code code={SNIP_DECRYPT} />
-            <Note>getFhevmInstance loads the Zama runtime once and caches it. userDecryptHandles verifies each handle against the on-chain ACL, so a signature only ever unlocks what that account is allowed to read.</Note>
           </Reveal>
 
           {/* Format */}
           <Reveal id="format">
             <H2>Format amounts</H2>
-            <Lead>Once a handle is decrypted you hold a bigint in base units. formatAmount turns it into a display string with thousands separators and trimmed trailing zeros.</Lead>
+            <Lead>Turn a decrypted bigint in base units into a display string.</Lead>
             <Code code={SNIP_FORMAT} />
           </Reveal>
 
@@ -524,7 +516,7 @@ export function App() {
           {/* API reference */}
           <Reveal id="api">
             <H2>API reference</H2>
-            <Lead>The full public surface of @dispersekit/widget, grouped by layer.</Lead>
+            <Lead>The full public surface, grouped by layer.</Lead>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", color: T.dim, marginTop: 20 }}>The engine</div>
             <Card style={{ padding: "6px 20px 16px", marginTop: 10 }}>
               {ENGINE_REF.map(([name, sig, desc]) => (
@@ -551,18 +543,6 @@ export function App() {
             </Card>
           </Reveal>
 
-          {/* Ready-made parts note */}
-          <Reveal id="parts">
-            <H2>Ready-made parts</H2>
-            <Lead>If you would rather not build every screen, the SDK ships the presentational pieces its own products use. Drop them in and keep the confidential moments identical everywhere.</Lead>
-            <PropsTable rows={[
-              ["DisperseProviders", "wrapper", "The wallet + query + theme stack. Required around anything else."],
-              ["StatusTimeline", "in-flight", "Encrypt, authorize, disperse, confirm, as an animated timeline driven by flow.phase."],
-              ["DeliveredPanel", "result", "The finale: tx link, recipient table, and per-recipient verify against the ciphertext handles."],
-              ["PrivacyBadge", "explainer", "A lock button that spells out what is encrypted and what is public. Copy is rebrandable."],
-            ]} />
-          </Reveal>
-
           {/* Case study */}
           <Reveal id="casestudy">
             <Card style={{ padding: "26px 28px", position: "relative", overflow: "hidden" }}>
@@ -571,9 +551,8 @@ export function App() {
                 <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.4, color: T.accentText }}>Case study</div>
                 <div style={{ fontSize: 20, fontWeight: 700, color: T.heading, marginTop: 7 }}>SealedPay, built entirely on the SDK</div>
                 <p style={{ fontSize: 13.5, color: T.muted, lineHeight: 1.62, marginTop: 9, maxWidth: 640 }}>
-                  A full confidential payroll dashboard: onboarding, an employee roster, encrypted balances, one-click
-                  payroll runs, and a recipient view where each employee decrypts only their own pay. Its own design, the
-                  same calls documented above, zero re-implementation of a single on-chain or cryptographic step.
+                  A full confidential payroll dashboard, built on the same calls above. Its own design, zero
+                  re-implementation of a single on-chain or cryptographic step.
                 </p>
                 <a href="https://sealedpay.vercel.app" target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center hover:underline" style={{ gap: 5, fontSize: 12.5, fontWeight: 600, color: T.accentText }}>
                   Open SealedPay
