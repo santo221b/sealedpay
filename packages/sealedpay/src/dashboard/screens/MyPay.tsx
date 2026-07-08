@@ -189,6 +189,7 @@ export function MyPay({ onExit }: { onExit: () => void }) {
                   revealed={pay.balance !== undefined && pay.decimals !== undefined}
                   pending={pay.phase === "revealing"}
                   label="balance"
+                  tabular={false}
                 />
                 <span style={{ fontSize: 15 }}>{sym}</span>
               </div>
