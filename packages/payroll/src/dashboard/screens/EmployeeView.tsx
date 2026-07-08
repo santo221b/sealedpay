@@ -123,6 +123,7 @@ export function EmployeeView({
             </span>
             <motion.button
               type="button"
+              data-tour="tour-employee-pay"
               onClick={onPay}
               whileHover={reduced ? undefined : { scale: 1.05 }}
               whileTap={reduced ? undefined : { scale: 0.95 }}

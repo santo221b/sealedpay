@@ -35,7 +35,7 @@ import { useAccount, useDisconnect } from "wagmi";
 import type { DashboardData, NavIndex, PopupKind, Person, ToastState } from "./dashboard/contracts";
 import { Rail } from "./dashboard/Rail";
 import { RunPayrollModal } from "./dashboard/RunPayrollModal";
-import { TourOverlay, TOUR_STEPS, TOUR_DEFAULT_ON } from "./dashboard/TourOverlay";
+import { TourOverlay, TOUR_STEPS, TOUR_DEFAULT_ON, type TourStep } from "./dashboard/TourOverlay";
 import { TopBar } from "./dashboard/TopBar";
 import { WalletControl } from "./dashboard/WalletControl";
 import { EmployeeSidebar } from "./dashboard/EmployeeSidebar";
@@ -190,14 +190,26 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [tourRipple, setTourRipple] = useState<{ x: number; y: number; key: number } | null>(null);
   const tourRippleId = useRef(0);
-  // A translucent click pulse on a rail nav icon, so the tour's auto-navigation
-  // reads as a deliberate click before the page transitions.
-  const pulseNav = (navIdx: number) => {
-    const el = document.querySelector(`[data-tour="tour-rail-nav-${navIdx}"]`);
+  // A translucent click pulse centered on a data-tour element, so the tour's
+  // auto-clicks read as deliberate before a screen or popover transition.
+  const pulseAnchor = (anchor: string) => {
+    const el = document.querySelector(`[data-tour="${anchor}"]`);
     if (!el) return;
     const r = el.getBoundingClientRect();
     tourRippleId.current += 1;
     setTourRipple({ x: r.left + r.width / 2, y: r.top + r.height / 2, key: tourRippleId.current });
+  };
+  // Put the app into the state a step needs (screen, opened employee, Settings
+  // popover), rippling the element the step "clicks" when moving forward.
+  const applyStepContext = (s: TourStep, doRipple: boolean) => {
+    if (doRipple && s.clickAnchor) pulseAnchor(s.clickAnchor);
+    if (s.openEmployee) {
+      const first = data.people[0]; // the same row the ripple lands on
+      if (first) openEmployee(first.id);
+    } else if (s.nav !== undefined) {
+      setNav(s.nav as NavIndex);
+    }
+    setPopup(s.openSettings ? "gear" : null);
   };
   useEffect(() => {
     let forced = false;
@@ -208,9 +220,9 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
     }
     if (!(forced || TOUR_DEFAULT_ON)) return;
     if (!forced && loadTourSeen()) return;
-    setNav(0);
-    setPopup(null);
+    applyStepContext(TOUR_STEPS[0], false);
     setTourStep(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const advanceTour = (dir: 1 | -1) => {
     if (tourStep === null) return;
@@ -219,19 +231,16 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
     if (next >= TOUR_STEPS.length) {
       setTourSeenPref(true);
       setTourStep(null);
+      setPopup(null);
       return;
     }
-    const nextNav = TOUR_STEPS[next].nav;
-    if (nextNav !== undefined && nextNav !== nav) {
-      pulseNav(nextNav); // ripple the rail icon, then navigate
-      setNav(nextNav as NavIndex);
-      setPopup(null);
-    }
+    applyStepContext(TOUR_STEPS[next], dir === 1);
     setTourStep(next);
   };
   const closeTour = () => {
     setTourSeenPref(true);
     setTourStep(null);
+    setPopup(null);
   };
 
   const identity = loadIdentity();

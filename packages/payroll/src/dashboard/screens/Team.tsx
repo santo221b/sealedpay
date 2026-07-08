@@ -171,10 +171,11 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
             className="slim-scroll flex flex-col overflow-y-auto overflow-x-hidden"
             style={{ gap: 5, margin: "11px -13px 0 -13px", padding: "0 13px", maxHeight: 274 }}
           >
-            {data.people.map((p) => (
+            {data.people.map((p, i) => (
             <button
               key={p.id}
               type="button"
+              data-tour={i === 0 ? "tour-team-employee" : undefined}
               onClick={() => onOpenEmployee(p.id)}
               className="flex w-full cursor-pointer items-center text-left transition-colors hover:bg-[rgba(95,230,175,0.1)]"
               style={{ gap: 12, padding: "7px 13px", borderRadius: 999 }}

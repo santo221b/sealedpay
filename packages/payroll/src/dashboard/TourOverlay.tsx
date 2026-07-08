@@ -1,10 +1,11 @@
 /**
  * First-run guided tour — a spotlight coachmark walkthrough.
  *
- * Dims the app, rings one element at a time, and floats a tooltip beside it.
- * Steps span Home and Team (the tour drives `nav` between them) and cover the
- * demo's whole story: sample data, funding, the org at a glance, running
- * payroll, one-off payments + recipient decryption, and clearing the samples.
+ * Dims the app, haloes one element at a time, and floats a tooltip beside it.
+ * The tour drives the app through the real flows: it navigates between screens,
+ * opens an employee's card, and opens Settings, rippling a click on the element
+ * it activates first (so the auto-navigation reads as a deliberate click) and
+ * then highlighting the real destination.
  *
  * Gated: `TOUR_DEFAULT_ON` is false, so it stays dormant in the live app. It is
  * previewable at any time with the `?tour=1` query param (see Dashboard). Flip
@@ -18,10 +19,16 @@ import { tokens, motionTokens } from "../design/tokens";
 export const TOUR_DEFAULT_ON = false;
 
 export interface TourStep {
-  /** data-tour value of the element to spotlight. Omit for a centered card. */
-  target?: string;
   /** Switch to this screen (0 = Home, 1 = Team) before the step shows. */
   nav?: number;
+  /** Open the first employee's card (EmployeeView) before the step shows. */
+  openEmployee?: boolean;
+  /** Open the Settings popover before the step shows. */
+  openSettings?: boolean;
+  /** data-tour of the element the tour "clicks" (ripples) entering this step. */
+  clickAnchor?: string;
+  /** data-tour of the element to spotlight. Omit for a centered card. */
+  target?: string;
   title: string;
   body: string;
 }
@@ -52,21 +59,38 @@ export const TOUR_STEPS: TourStep[] = [
   },
   {
     nav: 1,
+    clickAnchor: "tour-rail-nav-1",
     target: "tour-team-run-payroll",
     title: "Run payroll",
-    body: "Pay everyone at once in a single confidential transfer. Amounts are encrypted in the browser before they ever touch the chain.",
+    body: "Over on the Team page, this pays everyone at once in a single confidential transfer. Amounts are encrypted in the browser before they ever touch the chain.",
   },
   {
     nav: 1,
     target: "tour-team-roster",
-    title: "Or pay one person",
-    body: "Tap anyone to open their card and send a one-off payment, handy for a quick test. Each recipient signs once to reveal only their own pay.",
+    title: "Your team",
+    body: "Your roster lives here. To pay one person on their own, open their card.",
+  },
+  {
+    openEmployee: true,
+    clickAnchor: "tour-team-employee",
+    target: "tour-employee-pay",
+    title: "Pay one person",
+    body: "From an employee's card you can send a one-off payment, handy for a quick test. They sign once to reveal only their own pay.",
   },
   {
     nav: 0,
+    clickAnchor: "tour-rail-nav-0",
     target: "tour-rail-settings",
+    title: "Settings",
+    body: "Back on the dashboard, everything else lives in Settings.",
+  },
+  {
+    nav: 0,
+    openSettings: true,
+    clickAnchor: "tour-rail-settings",
+    target: "tour-settings-clear",
     title: "Clear the samples",
-    body: "When you want only your own data, open Settings and clear the sample team and history.",
+    body: "When you want only your own data, clear the sample team and history from right here.",
   },
   {
     nav: 0,
@@ -75,10 +99,10 @@ export const TOUR_STEPS: TourStep[] = [
   },
 ];
 
-const SCRIM = "rgba(6,12,10,0.74)";
+const SCRIM = "rgba(6,12,10,0.79)";
 const RING_SPRING = { type: "spring", stiffness: 240, damping: 30 } as const;
 const TIP_SPRING = { type: "spring", stiffness: 300, damping: 32 } as const;
-const PAD = 10;
+const PAD = 3;
 const GAP = 14;
 const TIP_W = 320;
 
@@ -104,6 +128,7 @@ export function TourOverlay({
   onClose: () => void;
 }) {
   const [rect, setRect] = useState<Rect>(null);
+  const [radius, setRadius] = useState(16);
   const tipRef = useRef<HTMLDivElement>(null);
   const [tipH, setTipH] = useState(170);
 
@@ -130,8 +155,9 @@ export function TourOverlay({
       const el = document.querySelector(`[data-tour="${step.target}"]`);
       if (el) {
         el.scrollIntoView({ block: "center", behavior: "smooth" });
+        setRadius(parseFloat(getComputedStyle(el).borderRadius) || 14);
         remeasure();
-      } else if (tries < 60) {
+      } else if (tries < 90) {
         tries += 1;
         raf = requestAnimationFrame(start);
       } else {
@@ -173,11 +199,15 @@ export function TourOverlay({
     else top = clamp(belowTop, 12, vh - tipH - 12);
   }
 
+  // Halo hugs the target (tiny PAD) and matches its corner radius, so the
+  // element itself reads as gently glowing rather than boxed.
+  const haloRadius = rect ? Math.min(radius + PAD, (rect.height + PAD * 2) / 2) : 18;
+
   const tipStyle: CSSProperties = {
     position: "absolute",
     width: TIP_W,
     maxWidth: "calc(100vw - 32px)",
-    background: "rgba(16,30,24,0.94)",
+    background: "rgba(16,30,24,0.95)",
     border: "1px solid rgba(255,255,255,0.12)",
     borderRadius: 18,
     boxShadow: "0 24px 60px -20px rgba(0,0,0,0.75)",
@@ -191,14 +221,14 @@ export function TourOverlay({
       {/* Click blocker — the tour cannot be skipped, only stepped through. */}
       <div className="absolute inset-0" onMouseDown={(e) => e.preventDefault()} />
 
-      {/* Dim + subtle ring over the target, or a full scrim for centered steps. */}
+      {/* Dim + subtle halo hugging the target, or a full scrim for centered steps. */}
       {rect ? (
         <motion.div
           className="pointer-events-none absolute"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, top: rect.top - PAD, left: rect.left - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }}
           transition={RING_SPRING}
-          style={{ borderRadius: 20, boxShadow: `0 0 34px 7px rgba(95,230,175,0.3), 0 0 0 9999px ${SCRIM}` }}
+          style={{ borderRadius: haloRadius, boxShadow: `0 0 26px 1px rgba(95,230,175,0.42), 0 0 0 9999px ${SCRIM}` }}
         />
       ) : (
         <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28 }} style={{ background: SCRIM }} />

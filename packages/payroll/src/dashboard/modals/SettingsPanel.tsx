@@ -102,6 +102,7 @@ export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverif
             {hasSamples && (
               <button
                 type="button"
+                data-tour="tour-settings-clear"
                 onClick={onClearSamples}
                 className="mt-2 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full transition-colors hover:bg-[rgba(255,255,255,0.07)]"
                 style={{ fontSize: 11.5, fontWeight: 500, color: "#cfdcd6", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", padding: "8px 0" }}
