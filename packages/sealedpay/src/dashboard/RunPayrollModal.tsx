@@ -981,27 +981,27 @@ function Finale(props: {
         </a>
       </div>
 
-      {/* Verification is a NON-BLOCKING sub-state — the payment above is already
-          confirmed. While it runs, a quiet spinner; if it can't reach the
-          relayer, a retry. It never gates the Done button. */}
-      {props.verifiedOk === undefined && props.verifying && (
-        <div className="mx-auto mt-3.5 flex items-center justify-center gap-2" style={{ fontSize: 12.5, color: "#9db3aa" }}>
-          <span aria-hidden style={{ width: 13, height: 13, borderRadius: "50%", border: "2px solid rgba(120,233,192,0.28)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }} />
-          Verifying amounts privately
-        </div>
-      )}
-      {/* With auto-verify on, the button only appears as a RETRY after a failure —
-          otherwise the auto-run's spinner covers it (no one-frame button flash). */}
-      {props.onVerify && props.verifiedOk === undefined && !props.verifying && (!props.autoverify || Boolean(props.verifyError)) && (
-        <button type="button" onClick={props.onVerify} className="mx-auto mt-3.5 block w-full rounded-full font-medium" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
-          {props.verifyError ? "Retry verification" : props.single ? "Verify the payment was delivered" : "Verify salaries were delivered"}
-        </button>
-      )}
-      {props.verifyError && props.verifiedOk === undefined && !props.verifying && (
-        <p className="mx-auto mt-2" style={{ fontSize: 11, color: "#9db3aa", lineHeight: 1.5, maxWidth: 322 }}>
-          {props.verifyError}
-        </p>
-      )}
+      {/* Verification is OPTIONAL and secondary — the payout above already
+          confirmed on-chain. Keep it a single quiet line (spinner while it runs,
+          a plain link to run/retry it) so Done stays the sole primary button.
+          A real relayer failure already surfaces as a toast, so no error block
+          clutters the finale; a declined signature just leaves the link. */}
+      {props.verifiedOk === undefined &&
+        (props.verifying ? (
+          <div className="mx-auto mt-4 flex items-center justify-center gap-2" style={{ fontSize: 12, color: "#8fa39b" }}>
+            <span aria-hidden style={{ width: 12, height: 12, borderRadius: "50%", border: "2px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }} />
+            Verifying amounts privately
+          </div>
+        ) : props.onVerify && (!props.autoverify || Boolean(props.verifyError)) ? (
+          <button
+            type="button"
+            onClick={props.onVerify}
+            className="mx-auto mt-4 block cursor-pointer transition-colors hover:text-[#8ef0cb]"
+            style={{ fontSize: 12, fontWeight: 500, color: "#78e9c0" }}
+          >
+            {props.single ? "Verify the payment was delivered" : "Verify salaries were delivered"}
+          </button>
+        ) : null)}
 
       {/* Recipient handoff (a demo affordance) — demoted to a quiet middot pair
           so it never twins the primary Done button. */}
