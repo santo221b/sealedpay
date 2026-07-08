@@ -188,6 +188,17 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
 
   /* ── first-run guided tour (dormant unless TOUR_DEFAULT_ON or ?tour=1) ──── */
   const [tourStep, setTourStep] = useState<number | null>(null);
+  const [tourRipple, setTourRipple] = useState<{ x: number; y: number; key: number } | null>(null);
+  const tourRippleId = useRef(0);
+  // A translucent click pulse on a rail nav icon, so the tour's auto-navigation
+  // reads as a deliberate click before the page transitions.
+  const pulseNav = (navIdx: number) => {
+    const el = document.querySelector(`[data-tour="tour-rail-nav-${navIdx}"]`);
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    tourRippleId.current += 1;
+    setTourRipple({ x: r.left + r.width / 2, y: r.top + r.height / 2, key: tourRippleId.current });
+  };
   useEffect(() => {
     let forced = false;
     try {
@@ -211,7 +222,8 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
       return;
     }
     const nextNav = TOUR_STEPS[next].nav;
-    if (nextNav !== undefined) {
+    if (nextNav !== undefined && nextNav !== nav) {
+      pulseNav(nextNav); // ripple the rail icon, then navigate
       setNav(nextNav as NavIndex);
       setPopup(null);
     }
@@ -774,6 +786,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
           step={TOUR_STEPS[tourStep]}
           index={tourStep}
           total={TOUR_STEPS.length}
+          ripple={tourRipple}
           onNext={() => advanceTour(1)}
           onBack={() => advanceTour(-1)}
           onClose={closeTour}

@@ -83,6 +83,7 @@ export function Rail({
               type="button"
               aria-label={label}
               aria-current={selected ? "page" : undefined}
+              data-tour={`tour-rail-nav-${i}`}
               onClick={() => onNav(i as 0 | 1 | 2)}
               className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full"
               style={{ background: selected ? "#f5f8f6" : "transparent", transition: "background .2s" }}

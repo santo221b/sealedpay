@@ -78,7 +78,7 @@ export const TOUR_STEPS: TourStep[] = [
 const SCRIM = "rgba(6,12,10,0.74)";
 const RING_SPRING = { type: "spring", stiffness: 240, damping: 30 } as const;
 const TIP_SPRING = { type: "spring", stiffness: 300, damping: 32 } as const;
-const PAD = 7;
+const PAD = 10;
 const GAP = 14;
 const TIP_W = 320;
 
@@ -89,6 +89,7 @@ export function TourOverlay({
   step,
   index,
   total,
+  ripple,
   onNext,
   onBack,
   onClose,
@@ -96,6 +97,8 @@ export function TourOverlay({
   step: TourStep;
   index: number;
   total: number;
+  /** A translucent click ripple, retriggered by its `key` (e.g. on nav). */
+  ripple?: { x: number; y: number; key: number } | null;
   onNext: () => void;
   onBack: () => void;
   onClose: () => void;
@@ -195,10 +198,22 @@ export function TourOverlay({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, top: rect.top - PAD, left: rect.left - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }}
           transition={RING_SPRING}
-          style={{ borderRadius: 16, boxShadow: `0 0 0 1.5px rgba(120,233,192,0.4), 0 0 0 9999px ${SCRIM}` }}
+          style={{ borderRadius: 20, boxShadow: `0 0 34px 7px rgba(95,230,175,0.3), 0 0 0 9999px ${SCRIM}` }}
         />
       ) : (
         <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28 }} style={{ background: SCRIM }} />
+      )}
+
+      {/* Click ripple — a translucent expanding circle where the tour "clicks". */}
+      {ripple && (
+        <motion.span
+          key={ripple.key}
+          initial={{ scale: 0, opacity: 0.55 }}
+          animate={{ scale: 1, opacity: 0 }}
+          transition={{ duration: 0.65, ease: motionTokens.easeEnter }}
+          className="pointer-events-none absolute"
+          style={{ left: ripple.x - 34, top: ripple.y - 34, width: 68, height: 68, borderRadius: 999, background: "radial-gradient(circle, rgba(120,233,192,0.55), rgba(120,233,192,0) 70%)" }}
+        />
       )}
 
       {/* Tooltip — glides between steps, content cross-fades. */}
