@@ -39,6 +39,13 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 // real Zama FHE happening in the browser, not a fake progress bar.
 const SEAL_MESSAGES = ["Sealing amounts", "Zama FHE doing its magic", "Sealing under Zama's keys"];
 
+// Per-card seal cadence (must match the encIdx interval) + how long a single
+// amount churns before it locks — used to hold the step until every card has
+// finished sealing, THEN linger for SEAL_LINGER_MS before advancing.
+const SEAL_CADENCE_MS = 720;
+const SEAL_CHURN_MS = 520;
+const SEAL_LINGER_MS = 5000; // deliberate pause after all amounts are sealed
+
 // A calm "breathing" glow for active waits — a slow, soft pulse in the app's
 // own green that signals work is happening without a fast, aggressive spinner.
 // Deliberately subtle; reused by the Processing and Authorizing states.
@@ -156,7 +163,9 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
     if (idle(prev) && (phase === "encrypting" || phase === "authorizing" || phase === "dispersing")) {
       setEncHold(true);
       window.clearTimeout(encHoldTimer.current);
-      const ms = Math.max(1900, running.length * 1000 + 900);
+      // Hold until the last card has fully sealed (N cadences + one churn), then
+      // linger a beat so the sealed state reads before the step advances.
+      const ms = running.length * SEAL_CADENCE_MS + SEAL_CHURN_MS + SEAL_LINGER_MS;
       encHoldTimer.current = window.setTimeout(() => setEncHold(false), ms);
     } else if (idle(phase)) {
       // A pre-broadcast error drops us back — release immediately so the error
@@ -183,7 +192,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
         ? 2
         : 3;
 
-  /* Encrypting cascade: one card seals every 1000ms for as long as the step is
+  /* Encrypting cascade: one card seals every 720ms for as long as the step is
      shown (real proof + the minimum-dwell hold). */
   useEffect(() => {
     if (!showEncrypting || reduced) {
@@ -192,7 +201,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
       return;
     }
     setEncIdx(0);
-    const t = window.setInterval(() => setEncIdx((k) => k + 1), 1000);
+    const t = window.setInterval(() => setEncIdx((k) => k + 1), 720);
     return () => window.clearInterval(t);
   }, [showEncrypting, reduced, running.length]);
 
