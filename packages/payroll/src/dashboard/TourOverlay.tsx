@@ -160,7 +160,13 @@ export function TourOverlay({
       }
       const el = document.querySelector(`[data-tour="${step.target}"]`);
       if (el) {
-        el.scrollIntoView({ block: "center", behavior: "smooth" });
+        // Only scroll when the target is near or past a viewport edge. Avoids a
+        // jerky re-center scroll for elements already comfortably in view.
+        const r = el.getBoundingClientRect();
+        const m = 72;
+        if (r.top < m || r.bottom > window.innerHeight - m) {
+          el.scrollIntoView({ block: "center", behavior: "smooth" });
+        }
         setRadius(parseFloat(getComputedStyle(el).borderRadius) || 14);
         settle();
       } else if (tries < 90) {
