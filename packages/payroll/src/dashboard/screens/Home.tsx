@@ -104,21 +104,23 @@ function TipPuck({ tip, children }: { tip: string; children: ReactNode }) {
 
 /* ── View All (navigation is owned by the shell; cosmetic here) ─────────── */
 
-function ViewAll() {
+function ViewAll({ onClick }: { onClick?: () => void }) {
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
       className="flex cursor-pointer items-center transition-colors hover:text-[#e8f0ec]"
-      style={{ gap: 4, fontSize: 11, color: tokens.text.muted }}
+      style={{ gap: 4, fontSize: 11, color: tokens.text.muted, background: "transparent", border: "none", padding: 0 }}
     >
       View All
       <ChevronRightGlyph size={11} />
-    </div>
+    </button>
   );
 }
 
 /* ── Screen ─────────────────────────────────────────────────────────────── */
 
-export function Home({ data, tab, setTab, onAddEmployee }: HomeScreenProps) {
+export function Home({ data, tab, setTab, onAddEmployee, onViewInsights }: HomeScreenProps) {
   const reduced = useReducedMotion();
 
   // Which stacked block (month + segment id) the cursor is over, so the tooltip
@@ -242,7 +244,7 @@ export function Home({ data, tab, setTab, onAddEmployee }: HomeScreenProps) {
       <GlassCard dataTour="tour-home-chart" style={{ padding: "20px 23px 16px 23px" }}>
         <div className="flex items-center justify-between">
           <div style={{ fontWeight: 400, fontSize: 17 }}>Payout Activity</div>
-          <ViewAll />
+          <ViewAll onClick={onViewInsights} />
         </div>
 
         {chart.months.length === 0 ? (

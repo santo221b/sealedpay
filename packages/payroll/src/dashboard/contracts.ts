@@ -85,6 +85,8 @@ export interface HomeScreenProps {
   setTab: (tab: string) => void;
   /** Open the Add-employee modal (used by the empty team state). */
   onAddEmployee: () => void;
+  /** Navigate to the Insights screen (the Payout Activity "View All"). */
+  onViewInsights: () => void;
 }
 
 export interface TeamScreenProps {
