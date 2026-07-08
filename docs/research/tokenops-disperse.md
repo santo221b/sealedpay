@@ -4,7 +4,7 @@ Researched: 2026-07-02. Ground truth: installed `@tokenops/sdk@1.1.1` package + 
 
 ## Verdict: GO
 
-The official confidential disperse contract exists, is verified, is live and unpaused on **Sepolia**, and its full Solidity source has been retrieved and saved to `/Users/santo/dispersekit/packages/contracts/reference/`. The official npm SDK (`@tokenops/sdk@1.1.1`) ships the exact ABI, deployed addresses, subtotal helper, and viem/wagmi clients. No fallback contract needed.
+The official confidential disperse contract exists, is verified, is live and unpaused on **Sepolia**, and its full Solidity source has been retrieved and saved to `/Users/santo/dispersekit/packages/smart-contracts/reference/`. The official npm SDK (`@tokenops/sdk@1.1.1`) ships the exact ABI, deployed addresses, subtotal helper, and viem/wagmi clients. No fallback contract needed.
 
 ---
 
@@ -40,7 +40,7 @@ Accessors: `getFheDisperseSingletonAddress(chainId)` / `requireFheDisperseSingle
 - Etherscan API v2 without a key: **rejected** (`Missing/Invalid API Key`).
 - **Sourcify: worked.** `https://sourcify.dev/server/files/any/11155111/0x710dD9885Cc9986EfD234E7719483147a6d8DBb4` returned the full bundle, match status `partial` (bytecode match; metadata hash differs). 33 files incl. `contracts/DisperseConfidential.sol`, `contracts/wallet/DisperseWallet.sol`, interfaces, `@fhevm/solidity` libs, OZ contracts, metadata.json, constructor args.
 - Compiler: **solc 0.8.27**, optimizer on (runs 800), evmVersion `cancun`, `bytecodeHash: none`. Pragma `solidity 0.8.27`.
-- Saved to `/Users/santo/dispersekit/packages/contracts/reference/` (6 project .sol files + NOTES.md with constructor args and compiler settings).
+- Saved to `/Users/santo/dispersekit/packages/smart-contracts/reference/` (6 project .sol files + NOTES.md with constructor args and compiler settings).
 
 ## 4. Contract shape (confirmed FHE/confidential)
 

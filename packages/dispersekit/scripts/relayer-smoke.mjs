@@ -1,7 +1,7 @@
 /**
  * Relayer connectivity smoke test (no wallet, no funds, no browser).
  *
- *   node packages/widget/scripts/relayer-smoke.mjs
+ *   node packages/dispersekit/scripts/relayer-smoke.mjs
  *
  * Proves from this machine that: (1) the SDK boots, (2) protocol config loads
  * from Sepolia over a public RPC, (3) a real euint64 input encrypts and the

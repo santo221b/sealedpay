@@ -4,19 +4,19 @@
     {
       "name": "widget",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace", "packages/widget"],
+      "runtimeArgs": ["run", "dev", "--workspace", "packages/dispersekit"],
       "port": 5173
     },
     {
       "name": "demo-host",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace", "packages/demo-host"],
+      "runtimeArgs": ["run", "dev", "--workspace", "packages/dispersekit-docs"],
       "port": 5174
     },
     {
       "name": "payroll",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace", "packages/payroll"],
+      "runtimeArgs": ["run", "dev", "--workspace", "packages/sealedpay"],
       "port": 5175
     }
   ],

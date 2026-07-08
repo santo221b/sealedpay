@@ -18,6 +18,6 @@ jobs:
       - name: Contracts — compile + full mock suite (disperse, privacy, footguns)
         run: npm run test:contracts
       - name: Widget — type-check + build
-        run: npm run build --workspace packages/widget
+        run: npm run build --workspace packages/dispersekit
       - name: Demo host — type-check + build
-        run: npm run build --workspace packages/demo-host
+        run: npm run build --workspace packages/dispersekit-docs

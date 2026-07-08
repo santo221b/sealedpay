@@ -3,7 +3,7 @@
  * a sender authorizes + disperses through the OFFICIAL TokenOps singleton,
  * and amounts decrypt only for the parties with ACL.
  *
- *   node scripts/e2e-sepolia.mjs        (from packages/contracts)
+ *   node scripts/e2e-sepolia.mjs        (from packages/smart-contracts)
  *
  * Steps: faucet-mint → setOperator (1h) → encrypt 2 amounts (one proof) →
  * disperseConfidentialTokenDirect{value: fee×2} → parse DirectDistribution →

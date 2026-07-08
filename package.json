@@ -4,18 +4,18 @@
   "version": "0.1.0",
   "description": "White-label confidential disperse widget — one-import React component for confidential bulk payouts on the Zama Protocol (TokenOps × Zama bounty)",
   "workspaces": [
-    "packages/contracts",
-    "packages/widget",
-    "packages/demo-host",
-    "packages/payroll"
+    "packages/smart-contracts",
+    "packages/dispersekit",
+    "packages/dispersekit-docs",
+    "packages/sealedpay"
   ],
   "scripts": {
-    "dev:widget": "npm run dev --workspace packages/widget",
-    "dev:demo": "npm run dev --workspace packages/demo-host",
-    "dev:payroll": "npm run dev --workspace packages/payroll",
+    "dev:dispersekit": "npm run dev --workspace packages/dispersekit",
+    "dev:docs": "npm run dev --workspace packages/dispersekit-docs",
+    "dev:sealedpay": "npm run dev --workspace packages/sealedpay",
     "build": "npm run build --workspaces --if-present",
-    "test:contracts": "npm run test --workspace packages/contracts",
-    "compile": "npm run compile --workspace packages/contracts"
+    "test:contracts": "npm run test --workspace packages/smart-contracts",
+    "compile": "npm run compile --workspace packages/smart-contracts"
   },
   "engines": {
     "node": ">=20"

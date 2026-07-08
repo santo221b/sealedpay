@@ -1,6 +1,6 @@
 # DisperseKit — Research Synthesis & Build Decisions
 
-Date: 2026-07-02. Synthesized from the five research docs in this directory (`tokenops-disperse.md`, `relayer-sdk.md`, `hardhat-template.md`, `erc7984.md`, `sepolia-config.md`) plus the verified TokenOps source now restored to `/Users/santo/dispersekit/packages/contracts/reference/`.
+Date: 2026-07-02. Synthesized from the five research docs in this directory (`tokenops-disperse.md`, `relayer-sdk.md`, `hardhat-template.md`, `erc7984.md`, `sepolia-config.md`) plus the verified TokenOps source now restored to `/Users/santo/dispersekit/packages/smart-contracts/reference/`.
 
 Ground-truth priority applied throughout: installed package source/types > official docs > blog posts.
 
@@ -15,7 +15,7 @@ Ground-truth priority applied throughout: installed package source/types > offic
 | 3 | Docs vs SDK 0.4.4: docs show `relayerUrl: relayer.testnet.zama.cloud`, `gatewayChainId: 55815`, string `startTimestamp`, `publicDecrypt` returning a bare record, root package import | **SDK source (0.4.4) wins on every point** (installed `lib/web.d.ts`/`lib/web.js` read directly): relayer `https://relayer.testnet.zama.org`, gatewayChainId `10901`, `createEIP712` asserts **number** timestamps, `publicDecrypt` returns `{clearValues, abiEncodedClearValues, decryptionProof}`, and only `/web`, `/bundle`, `/node` subpath exports exist. Docs are stale vs 0.4.4. |
 | 4 | `awaitDecryptionOracle` mentioned in Zama docs vs absent from `@fhevm/hardhat-plugin@0.4.2` | Installed `.d.ts` wins: it does not exist in 0.4.2. Use `publicDecrypt*`/`userDecrypt*` helpers. |
 | 5 | Live singleton batch limits: TokenOps report read **30/20/5** live, but the deployment constructor args (decoded in `reference/NOTES.md`) were **10/15/5** | Both correct at different times — the admin changed them post-deploy. Chain state at call time is authoritative, and mutable. **Never hardcode limits or fee: read `maxBatchSizeDirect()`/`maxBatchSizeHolding()`/`maxBatchSizeTokenFee()` and `getGasFee(sender)` at runtime.** |
-| 6 | tokenops-disperse.md said reference source was saved to `packages/contracts/reference/` — the directory did not exist in the repo | Fixed during this synthesis: restored from scratchpad Sourcify bundle. Now contains `DisperseConfidential.sol`, `DisperseWallet.sol`, `IDisperseConfidential.sol`, `IERC7984.sol`, `IArbSys.sol`, `Errors.sol`, `metadata.json`, `constructor-args.txt`, `NOTES.md`. |
+| 6 | tokenops-disperse.md said reference source was saved to `packages/smart-contracts/reference/` — the directory did not exist in the repo | Fixed during this synthesis: restored from scratchpad Sourcify bundle. Now contains `DisperseConfidential.sol`, `DisperseWallet.sol`, `IDisperseConfidential.sol`, `IERC7984.sol`, `IArbSys.sol`, `Errors.sol`, `metadata.json`, `constructor-args.txt`, `NOTES.md`. |
 | 7 | HCU estimate caps disperse at "~20–30 recipients" (sepolia-config.md, marked UNVERIFIED) vs TokenOps live limits of 30 (wallet) / 20 (direct) | Consistent, not conflicting — TokenOps' deployed limits are themselves evidence that 20 direct / 30 wallet transfers fit under the 20M/5M HCU caps. Still verify empirically (open question #1). |
 | 8 | ERC7984 uses `FHE.isAllowed(amount, msg.sender)` while Zama docs prescribe `FHE.isSenderAllowed(handle)` | Functionally identical when the argument is `msg.sender`. No action. |
 | 9 | `@zama-fhe/relayer-sdk` **0.4.1** in the contracts package vs **0.4.4** in the widget | Fine — different workspaces. 0.4.1 is what `fhevm-hardhat-template`'s lockfile pins for the hardhat plugin path; 0.4.4 is the browser SDK we researched. Do not "unify" them. |
@@ -27,7 +27,7 @@ Ground-truth priority applied throughout: installed package source/types > offic
 **Official TokenOps source: YES — available, verified, and in the repo.**
 
 - Live Sepolia singleton: `0x710dD9885Cc9986EfD234E7719483147a6d8DBb4` (verified live & unpaused 2026-07-02; mainnet `0x4fC0d28cBe4B82D512Ad0B42F6787480Cc98cC70`).
-- Full verified Solidity source (Sourcify, partial match — bytecode matches): `/Users/santo/dispersekit/packages/contracts/reference/`.
+- Full verified Solidity source (Sourcify, partial match — bytecode matches): `/Users/santo/dispersekit/packages/smart-contracts/reference/`.
 - Compiler settings **identical to our hardhat config**: solc 0.8.27, optimizer runs 800, evmVersion cancun, `bytecodeHash: none` — the reference source compiles in our template unchanged.
 
 ### Decision: deploy our own instance from the official source + keep the widget address-configurable
@@ -37,7 +37,7 @@ Rationale:
 2. On our own Sepolia instance we control fees (`defaultGasFee = 0` keeps UX friction-free) and batch limits; the ABI is byte-identical to the official singleton, so the widget works against **both** — point it at `0x710dD9...DBb4` to demo against the canonical TokenOps deployment (0.001 ETH/recipient fee applies there).
 3. `direct` mode is the primary widget flow (no `register()` step, simplest UX); `wallet` mode is an optional stretch (unlinkability, 30 recipients).
 
-Vendor the six reference `.sol` files into `packages/contracts/contracts/` (keep `reference/` as the pristine copy).
+Vendor the six reference `.sol` files into `packages/smart-contracts/contracts/` (keep `reference/` as the pristine copy).
 
 ### Exact API (from verified source)
 
@@ -107,7 +107,7 @@ Precondition (all modes): the sender must have called `token.setOperator(dispers
 
 ## 2. Pinned versions
 
-### `packages/contracts` (already scaffolded — matches research; keep)
+### `packages/smart-contracts` (already scaffolded — matches research; keep)
 
 | Package | Version |
 |---|---|
@@ -125,7 +125,7 @@ Precondition (all modes): the sender must have called `token.setOperator(dispers
 
 Solidity: compiler **0.8.27**, optimizer runs **800**, evmVersion **cancun**, `bytecodeHash: "none"` (already in `hardhat.config.ts`; also exactly matches the TokenOps verified build). Contract pragmas: our contracts `^0.8.27` (union of ERC7984 `^0.8.27` and FHE `^0.8.24`; TokenOps source is `0.8.27`).
 
-### `packages/widget` (already scaffolded — matches research; keep)
+### `packages/dispersekit` (already scaffolded — matches research; keep)
 
 | Package | Version | Note |
 |---|---|---|

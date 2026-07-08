@@ -36,4 +36,4 @@ Deployment args of the live Sepolia singleton (decoded from `constructor-args.tx
 
 NOTE: live reads on 2026-07-02 returned batch limits **30 / 20 / 5** — the admin has changed them since deployment. Always read `maxBatchSizeHolding() / maxBatchSizeDirect() / maxBatchSizeTokenFee()` and `getGasFee(sender)` at runtime; never hardcode.
 
-Files here are reference-only (outside hardhat `sources`); a compile-ready vendored copy belongs in `packages/contracts/contracts/` if we deploy our own instance.
+Files here are reference-only (outside hardhat `sources`); a compile-ready vendored copy belongs in `packages/smart-contracts/contracts/` if we deploy our own instance.

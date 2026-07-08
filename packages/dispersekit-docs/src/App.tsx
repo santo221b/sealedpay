@@ -3,8 +3,8 @@
  *
  * A real documentation surface for @dispersekit/widget: sidebar nav with
  * scroll-spy, syntax-highlighted examples, and a guide per engine export.
- * Every snippet is faithful to the actual API (see packages/widget/src) and to
- * how the SealedPay payroll app wires it up (packages/payroll/src).
+ * Every snippet is faithful to the actual API (see packages/dispersekit/src) and to
+ * how the SealedPay payroll app wires it up (packages/sealedpay/src).
  *
  * Built on Zama FHE (encryption) and TokenOps (confidential transfers + batch
  * disperse). Its own teal identity, one glow rising from the bottom.
@@ -12,7 +12,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 
-// SealedPay motion signatures (packages/payroll/src/design/tokens.ts).
+// SealedPay motion signatures (packages/sealedpay/src/design/tokens.ts).
 const EASE = [0.22, 1, 0.36, 1] as const;
 const SPRING = { type: "spring", stiffness: 400, damping: 30 } as const;
 const SPRING_POP = { type: "spring", stiffness: 500, damping: 30 } as const;

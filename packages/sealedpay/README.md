@@ -10,7 +10,7 @@ on-chain or cryptographic code. (The package keeps its `@dispersekit/payroll`
 name — code identifiers are engine-side.)
 
 ```bash
-npm run dev   # http://localhost:5175   (root: npm run dev:payroll)
+npm run dev   # http://localhost:5175   (root: npm run dev:sealedpay)
 ```
 
 ## The architecture rule this package proves

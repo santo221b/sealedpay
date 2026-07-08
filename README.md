@@ -4,8 +4,8 @@
 
 Two layers live in this repo:
 
-- **SealedPay** — the product: an employer-only payroll dashboard ([`packages/payroll`](packages/payroll)). Manage a team, click *Run payroll*, and every salary is delivered in a single confidential transaction — encrypted end-to-end, decryptable only by the employer and each individual employee, with delivery *proven* by decryption rather than assumed.
-- **DisperseKit** — the engine: a white-label confidential disperse widget ([`packages/widget`](packages/widget)). One import, one click, a confidential bulk payout. SealedPay is a skin over it; any partner app can be too.
+- **SealedPay** — the product: an employer-only payroll dashboard ([`packages/sealedpay`](packages/sealedpay)). Manage a team, click *Run payroll*, and every salary is delivered in a single confidential transaction — encrypted end-to-end, decryptable only by the employer and each individual employee, with delivery *proven* by decryption rather than assumed.
+- **DisperseKit** — the engine: a white-label confidential disperse widget ([`packages/dispersekit`](packages/dispersekit)). One import, one click, a confidential bulk payout. SealedPay is a skin over it; any partner app can be too.
 
 > Built for the Zama Developer Program Mainnet Season 3 — Special Bounty Track × TokenOps.
 
@@ -23,7 +23,7 @@ That's the whole integration. Recipients, amounts, encryption, operator approval
 
 ## Live demos
 
-- **SealedPay (the product)** — [sealedpay.vercel.app](https://sealedpay.vercel.app) (the confidential payroll dashboard; run locally with `npm run dev:payroll`)
+- **SealedPay (the product)** — [sealedpay.vercel.app](https://sealedpay.vercel.app) (the confidential payroll dashboard; run locally with `npm run dev:sealedpay`)
 - **DisperseKit SDK docs** — [dispersekit-demo.vercel.app](https://dispersekit-demo.vercel.app) (the single-page SDK integration guide, with a full API reference and SealedPay as the case study)
 
 ## For judges — running SealedPay end to end
@@ -37,11 +37,11 @@ SealedPay runs live on Sepolia; the whole flow takes about two minutes.
 5. **Run Payroll** (Team screen) → watch encrypt → authorize operator → disperse → verify. Every amount is encrypted on-chain; the tx is public on Etherscan but the salaries are not.
 6. **Inspect** — the run appears in Recent activity with an Etherscan link, the Payout Activity / Insights charts update, and each employee's payment history can be decrypted with your wallet signature.
 
-> Note: in this demo build the five sample employees share one recipient wallet so a single tester can verify both sides; edit `packages/payroll/src/lib/seed.ts` (`SEED_EMPLOYEES`) to point at distinct addresses for a real team. Use **Settings → Reset demo** to clear local state.
+> Note: in this demo build the five sample employees share one recipient wallet so a single tester can verify both sides; edit `packages/sealedpay/src/lib/seed.ts` (`SEED_EMPLOYEES`) to point at distinct addresses for a real team. Use **Settings → Reset demo** to clear local state.
 
 ### Deploy SealedPay (Vercel)
 
-Create a **new Vercel project** from this repo with **Root Directory = `packages/payroll`** — Vercel auto-detects Vite via `packages/payroll/vercel.json` and installs the workspace from the repo root. Set these environment variables on the project:
+Create a **new Vercel project** from this repo with **Root Directory = `packages/sealedpay`** — Vercel auto-detects Vite via `packages/sealedpay/vercel.json` and installs the workspace from the repo root. Set these environment variables on the project:
 
 | Variable | Value |
 |---|---|
@@ -57,7 +57,7 @@ Deploy, then paste the URL into the **Live demos** list above.
 | `DisperseConfidential` — **official TokenOps singleton** (audited, verified) | [`0x710dD9885Cc9986EfD234E7719483147a6d8DBb4`](https://sepolia.etherscan.io/address/0x710dD9885Cc9986EfD234E7719483147a6d8DBb4) |
 | `ConfidentialTokenDemo` (cUSDd, ERC-7984, open faucet) | [`0xCE27C522e403FA3d14dC245c0509c2f61AeD17E1`](https://sepolia.etherscan.io/address/0xCE27C522e403FA3d14dC245c0509c2f61AeD17E1) |
 
-Proof it works end-to-end on the live network: [this transaction](https://sepolia.etherscan.io/tx/0xc8d190a014015a8fe8aca9af82b49db44e61fd46a5ff2cece98033e81a6fe154) disperses two encrypted amounts through the official singleton — the amounts on-chain are opaque handles, and `packages/contracts/scripts/e2e-sepolia.mjs` decrypts them back (12.5 / 7.25 cUSDd) as sender *and* as recipient.
+Proof it works end-to-end on the live network: [this transaction](https://sepolia.etherscan.io/tx/0xc8d190a014015a8fe8aca9af82b49db44e61fd46a5ff2cece98033e81a6fe154) disperses two encrypted amounts through the official singleton — the amounts on-chain are opaque handles, and `packages/smart-contracts/scripts/e2e-sepolia.mjs` decrypts them back (12.5 / 7.25 cUSDd) as sender *and* as recipient.
 
 ## What it does
 
@@ -77,14 +77,18 @@ Proof it works end-to-end on the live network: [this transaction](https://sepoli
 
 Full model: [docs/CONFIDENTIALITY.md](docs/CONFIDENTIALITY.md)
 
-## Repository layout
+## Repository layout — where to look
 
-| Package | What it is |
-|---|---|
-| [`packages/payroll`](packages/payroll) | **SealedPay** — the confidential payroll dashboard (the product) |
-| [`packages/widget`](packages/widget) | **DisperseKit** — the engine: the single-import `<DisperseWidget />` + the shared disperse flow |
-| [`packages/contracts`](packages/contracts) | Hardhat project — ERC-7984 demo token + the audited TokenOps disperse contract (Sepolia) |
-| [`packages/demo-host`](packages/demo-host) | **DisperseKit SDK docs** — the single-page integration guide for the SDK |
+This is a monorepo. The two pieces the bounty asks for — the **smart contracts** and the **frontend** — plus the SDK they share and its docs:
+
+| Package | Role | What it is |
+|---|---|---|
+| [`packages/smart-contracts`](packages/smart-contracts) | **Smart contracts** | Hardhat — the ERC-7984 confidential token + the audited TokenOps disperse contract (Sepolia) |
+| [`packages/sealedpay`](packages/sealedpay) | **Frontend** (the product) | **SealedPay** — the confidential payroll dashboard ([live](https://sealedpay.vercel.app)) |
+| [`packages/dispersekit`](packages/dispersekit) | **SDK engine** | **DisperseKit** — the single-import `<DisperseWidget />` + the shared disperse flow SealedPay is built on |
+| [`packages/dispersekit-docs`](packages/dispersekit-docs) | **SDK docs** | The single-page DisperseKit integration guide ([live](https://dispersekit-demo.vercel.app)) |
+
+> Folder names map 1:1 to their role. Package names stay `@dispersekit/*` (so the `import { DisperseWidget } from "@dispersekit/widget"` above is unchanged).
 
 ## Quickstart
 
@@ -92,8 +96,8 @@ Full model: [docs/CONFIDENTIALITY.md](docs/CONFIDENTIALITY.md)
 git clone <this-repo> && cd dispersekit
 npm install
 npm run test:contracts   # bulk disperse + per-recipient decryption, proven in the FHEVM mock
-npm run dev:payroll      # SealedPay — the confidential payroll dashboard
-npm run dev:demo         # DisperseKit SDK docs site
+npm run dev:sealedpay      # SealedPay — the confidential payroll dashboard
+npm run dev:docs         # DisperseKit SDK docs site
 ```
 
 Full setup (env, Sepolia deploy): [docs/SETUP.md](docs/SETUP.md) · Embedding guide: [docs/EMBED.md](docs/EMBED.md)

@@ -16,7 +16,7 @@ Every snippet is faithful to the real API in [`../widget/src`](../widget) and
 to how the payroll app ([`../payroll`](../payroll)) actually calls it.
 
 ```bash
-npm run dev   # http://localhost:5174   (from repo root: npm run dev:demo)
+npm run dev   # http://localhost:5174   (from repo root: npm run dev:docs)
 ```
 
 ## Notes

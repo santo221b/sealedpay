@@ -57,12 +57,12 @@
 
 **Works — verified**
 - **Engine seam (no behavior change):** the disperse flow was promoted to the widget package's public API (`useDisperseFlow`, `DisperseProviders`, `parseRecipients`, `StatusTimeline`, `DeliveredPanel`, `PrivacyBadge`, …). `DisperseWidget` and the new payroll app are now two skins over one engine. Only wording hooks were added (DeliveredPanel `labels`/`nameFor`, PrivacyBadge `copy`) — defaults identical.
-- **`packages/payroll` — Confidential Payroll dashboard** (`npm run dev:payroll`, port 5175): employees add/edit/remove with EIP-55 + amount validation (browser-verified, incl. a rejected bad-checksum address), localStorage persistence across reload (verified), exact team total at live token decimals (verified: 2,500.50 + 1,800 → "4,300.5 cUSDd", updated on edit/remove), display-only next-due date (manual set verified persisted), payout history wired to record ONLY on confirmed delivery + ✓ badge after decrypt-verify. The seam is one documented file: `packages/payroll/src/components/RunPayroll.tsx` — roster → widget's validated parser → unchanged flow.
+- **`packages/sealedpay` — Confidential Payroll dashboard** (`npm run dev:sealedpay`, port 5175): employees add/edit/remove with EIP-55 + amount validation (browser-verified, incl. a rejected bad-checksum address), localStorage persistence across reload (verified), exact team total at live token decimals (verified: 2,500.50 + 1,800 → "4,300.5 cUSDd", updated on edit/remove), display-only next-due date (manual set verified persisted), payout history wired to record ONLY on confirmed delivery + ✓ badge after decrypt-verify. The seam is one documented file: `packages/sealedpay/src/components/RunPayroll.tsx` — roster → widget's validated parser → unchanged flow.
 - **Guardrail — the working path did NOT break:** after all changes: widget + demo-host + payroll all type-check/build; contracts suite 7/7; **live Sepolia E2E re-run PASSED** through the official singleton (fresh tx `0xc3968e09…e025`, sender + recipient decrypts ✓).
 
 **Stubbed / notes**
 - The dashboard's in-browser "Run payroll" click-through needs a wallet (can't be driven headlessly) — the engine path it calls is the one just re-proven live. Employer walkthrough = connect → Run payroll now → confirm → verify salaries.
-- Visual polish deliberately deferred (owner does UI/UX tomorrow). No Vercel project for payroll yet — deploy after polish: link a project with root-directory build like the demo (`buildCommand: npm run build --workspace packages/payroll`, output `packages/payroll/dist`).
+- Visual polish deliberately deferred (owner does UI/UX tomorrow). No Vercel project for payroll yet — deploy after polish: link a project with root-directory build like the demo (`buildCommand: npm run build --workspace packages/sealedpay`, output `packages/sealedpay/dist`).
 
 ## 2026-07-02 — Session 1 (evening): Phases E, F, most of G
 

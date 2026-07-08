@@ -2,7 +2,7 @@
  * Known deployments.
  *
  * The disperse contract is TokenOps' audited singleton — already live and
- * verified on both networks (source vendored in packages/contracts/contracts/
+ * verified on both networks (source vendored in packages/smart-contracts/contracts/
  * tokenops/, provenance in its README). The widget talks to the official
  * instance; nothing DisperseKit-specific is deployed besides the demo token.
  */

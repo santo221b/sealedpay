@@ -9,7 +9,7 @@
 
 /* The widget ships as workspace source; scan it so its utility classes are
    generated in this app's stylesheet (same as demo-host). */
-@source "../../widget/src";
+@source "../../dispersekit/src";
 
 /* SealedPay design-system base (per design handoff README §Design Tokens). */
 html,
