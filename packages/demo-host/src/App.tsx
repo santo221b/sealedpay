@@ -389,7 +389,7 @@ export function App() {
                     const on = active === id;
                     return (
                       <motion.a key={id} href={`#${id}`} whileHover={{ x: on ? 0 : 2 }} transition={SPRING} className="relative" style={{ fontSize: 13, fontWeight: on ? 600 : 500, color: on ? T.accentText : T.muted, padding: "5px 10px", textDecoration: "none", transition: "color .15s" }}>
-                        {on && <motion.span layoutId="nav-active" transition={SPRING} className="absolute inset-0" style={{ borderRadius: 8, background: "rgba(255,255,255,0.07)", borderLeft: `2px solid ${T.accent}` }} />}
+                        {on && <motion.span layoutId="nav-active" transition={SPRING} className="absolute inset-0" style={{ borderRadius: 8, background: "rgba(255,255,255,0.07)" }} />}
                         <span className="relative">{label}</span>
                       </motion.a>
                     );
@@ -534,8 +534,8 @@ export function App() {
             <Lead>The full public surface, grouped by layer.</Lead>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", color: T.dim, marginTop: 20 }}>The engine</div>
             <Card hover={false} style={{ padding: "6px 20px 16px", marginTop: 10 }}>
-              {ENGINE_REF.map(([name, sig, desc]) => (
-                <div key={name} style={{ padding: "13px 0", borderTop: `1px solid ${T.cardBorder}` }}>
+              {ENGINE_REF.map(([name, sig, desc], i) => (
+                <div key={name} style={{ padding: "13px 0", borderTop: i ? `1px solid ${T.cardBorder}` : "none" }}>
                   <div className="flex flex-wrap items-baseline" style={{ gap: 9 }}>
                     <span style={{ fontFamily: T.mono, fontSize: 13, fontWeight: 600, color: T.accentText }}>{name}</span>
                     <span style={{ fontFamily: T.mono, fontSize: 10.5, color: T.dim }}>{sig}</span>
@@ -546,8 +546,8 @@ export function App() {
             </Card>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", color: T.dim, marginTop: 22 }}>Ready-made parts</div>
             <Card hover={false} style={{ padding: "6px 20px 16px", marginTop: 10 }}>
-              {PARTS_REF.map(([name, sig, desc]) => (
-                <div key={name} style={{ padding: "13px 0", borderTop: `1px solid ${T.cardBorder}` }}>
+              {PARTS_REF.map(([name, sig, desc], i) => (
+                <div key={name} style={{ padding: "13px 0", borderTop: i ? `1px solid ${T.cardBorder}` : "none" }}>
                   <div className="flex flex-wrap items-baseline" style={{ gap: 9 }}>
                     <span style={{ fontFamily: T.mono, fontSize: 13, fontWeight: 600, color: T.accentText }}>{name}</span>
                     <span style={{ fontFamily: T.mono, fontSize: 10.5, color: T.dim }}>{sig}</span>
