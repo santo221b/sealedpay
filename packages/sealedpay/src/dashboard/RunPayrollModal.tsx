@@ -44,7 +44,7 @@ const SEAL_MESSAGES = ["Sealing amounts", "Zama FHE doing its magic", "Sealing u
 // finished sealing, THEN linger for SEAL_LINGER_MS before advancing.
 const SEAL_CADENCE_MS = 720;
 const SEAL_CHURN_MS = 520;
-const SEAL_LINGER_MS = 5000; // deliberate pause after all amounts are sealed
+const SEAL_LINGER_MS = 4000; // deliberate pause after all amounts are sealed
 
 // A calm "breathing" glow for active waits — a slow, soft pulse in the app's
 // own green that signals work is happening without a fast, aggressive spinner.
