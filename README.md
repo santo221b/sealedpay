@@ -24,7 +24,6 @@ That's the whole integration. Recipients, amounts, encryption, operator approval
 ## Live demos
 
 - **SealedPay (the product)** — [sealedpay.vercel.app](https://sealedpay.vercel.app) (the confidential payroll dashboard; run locally with `npm run dev:payroll`)
-- **DisperseKit widget playground** — [dispersekit-widget.vercel.app](https://dispersekit-widget.vercel.app) (the engine standalone + a gallery of every state + the integration test bench)
 - **DisperseKit SDK docs** — [dispersekit-demo.vercel.app](https://dispersekit-demo.vercel.app) (the single-page SDK integration guide, with a full API reference and SealedPay as the case study)
 
 ## For judges — running SealedPay end to end
@@ -94,8 +93,7 @@ git clone <this-repo> && cd dispersekit
 npm install
 npm run test:contracts   # bulk disperse + per-recipient decryption, proven in the FHEVM mock
 npm run dev:payroll      # SealedPay — the confidential payroll dashboard
-npm run dev:widget       # DisperseKit widget playground
-npm run dev:demo         # partner app embedding the widget
+npm run dev:demo         # DisperseKit SDK docs site
 ```
 
 Full setup (env, Sepolia deploy): [docs/SETUP.md](docs/SETUP.md) · Embedding guide: [docs/EMBED.md](docs/EMBED.md)
