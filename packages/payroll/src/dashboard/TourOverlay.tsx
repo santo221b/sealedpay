@@ -15,8 +15,9 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from
 import { motion } from "framer-motion";
 import { tokens, motionTokens } from "../design/tokens";
 
-/** Off by default. Set to true to show the tour to first-time visitors. */
-export const TOUR_DEFAULT_ON = false;
+/** Shown once to first-time visitors after onboarding, then remembered
+ *  (cleared by Reset demo). Preview anytime with the ?tour=1 query param. */
+export const TOUR_DEFAULT_ON = true;
 
 export interface TourStep {
   /** Switch to this screen (0 = Home, 1 = Team) before the step shows. */

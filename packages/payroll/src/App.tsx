@@ -226,6 +226,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
     if (!forced && loadTourSeen()) return;
     applyStepContext(TOUR_STEPS[0], false);
     setTourStep(0);
+    if (!forced) setTourSeenPref(true); // auto-show exactly once, even if abandoned
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const advanceTour = (dir: 1 | -1) => {
