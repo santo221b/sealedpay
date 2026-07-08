@@ -31,6 +31,10 @@ export interface TourStep {
   target?: string;
   /** Skip scrollIntoView (for popover targets that must not scroll the page). */
   noScroll?: boolean;
+  /** Scroll the content to the very top before showing (instead of centering). */
+  scrollTop?: boolean;
+  /** Place the tooltip to the right of the target instead of above/below. */
+  placement?: "right";
   title: string;
   body: string;
 }
@@ -76,6 +80,7 @@ export const TOUR_STEPS: TourStep[] = [
     openEmployee: true,
     clickAnchor: "tour-team-employee",
     target: "tour-employee-pay",
+    scrollTop: true,
     title: "Pay one person",
     body: "From a card, send a one-off payment, handy for a quick test. Only they can read their own amount.",
   },
@@ -89,6 +94,7 @@ export const TOUR_STEPS: TourStep[] = [
     clickAnchor: "tour-rail-settings",
     target: "tour-settings-panel",
     noScroll: true,
+    placement: "right",
     title: "Clear the samples",
     body: "Ready for your own data? Clear the sample team and history from here.",
   },
@@ -180,9 +186,11 @@ export function TourOverlay({
         const r = el.getBoundingClientRect();
         const m = 72;
         const scroller = step.noScroll ? null : (el.closest(".slim-scroll") as HTMLElement | null);
-        if (scroller && (r.top < m || r.bottom > window.innerHeight - m)) {
-          // Scroll only the content container, never the window. Scrolling the
-          // window would push the fixed top bar off-screen with no way back.
+        // Scroll only the content container, never the window. Scrolling the
+        // window would push the fixed top bar off-screen with no way back.
+        if (scroller && step.scrollTop) {
+          scroller.scrollTo({ top: 0, behavior: "smooth" });
+        } else if (scroller && (r.top < m || r.bottom > window.innerHeight - m)) {
           const sr = scroller.getBoundingClientRect();
           scroller.scrollBy({ top: r.top + r.height / 2 - (sr.top + sr.height / 2), behavior: "smooth" });
         }
@@ -222,6 +230,9 @@ export function TourOverlay({
   if (!rect) {
     top = vh / 2 - tipH / 2;
     left = vw / 2 - TIP_W / 2;
+  } else if (step.placement === "right") {
+    left = clamp(rect.left + rect.width + GAP, 16, vw - TIP_W - 16);
+    top = clamp(rect.top + rect.height / 2 - tipH / 2, 12, vh - tipH - 12);
   } else {
     left = clamp(rect.left + rect.width / 2 - TIP_W / 2, 16, vw - TIP_W - 16);
     const belowTop = rect.top + rect.height + GAP;
@@ -260,7 +271,7 @@ export function TourOverlay({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, top: rect.top - PAD, left: rect.left - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }}
           transition={RING_SPRING}
-          style={{ borderRadius: haloRadius, boxShadow: `0 0 22px 0 rgba(95,230,175,0.5), 0 0 0 9999px ${SCRIM}` }}
+          style={{ borderRadius: haloRadius, boxShadow: `0 0 16px 0 rgba(95,230,175,0.36), 0 0 0 9999px ${SCRIM}` }}
         />
       ) : (
         <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28 }} style={{ background: SCRIM }} />
