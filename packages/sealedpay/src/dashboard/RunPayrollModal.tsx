@@ -142,13 +142,23 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
      encHold stuck true and the modal frozen on the encrypting step while the tx
      confirmed on-chain. So: arm once on entry, then let it run to completion. */
   const encHoldTimer = useRef<number | undefined>(undefined);
+  const prevPhaseRef = useRef(phase);
   useEffect(() => {
-    if (phase === "encrypting") {
+    const prev = prevPhaseRef.current;
+    prevPhaseRef.current = phase;
+    const idle = (p: string) => p === "input" || p === "review";
+    // Arm the seal dwell on ANY idle→active edge, not just phase==="encrypting".
+    // Since the confidential disperse moved into @tokenops/sdk, the "encrypting"
+    // phase only warms the FHE instance — instant on every run after the first
+    // (cached) — so React batches encrypting→authorizing into one render and
+    // never paints "encrypting". Keying the dwell on that phase alone would skip
+    // the whole seal cascade. Any leave-review edge into an active phase arms it.
+    if (idle(prev) && (phase === "encrypting" || phase === "authorizing" || phase === "dispersing")) {
       setEncHold(true);
       window.clearTimeout(encHoldTimer.current);
       const ms = Math.max(1300, running.length * 720 + 500);
       encHoldTimer.current = window.setTimeout(() => setEncHold(false), ms);
-    } else if (phase === "input" || phase === "review") {
+    } else if (idle(phase)) {
       // A pre-broadcast error drops us back — release immediately so the error
       // surfaces instead of the cascade.
       window.clearTimeout(encHoldTimer.current);
