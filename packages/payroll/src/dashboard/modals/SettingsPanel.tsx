@@ -37,6 +37,7 @@ export function SettingsPanel({ open, onClose, maskDefault, reminders, autoverif
             key="panel"
             role="dialog"
             aria-label="Settings"
+            data-tour="tour-settings-panel"
             className="cursor-auto overflow-hidden text-left"
             style={{
               width: 252,

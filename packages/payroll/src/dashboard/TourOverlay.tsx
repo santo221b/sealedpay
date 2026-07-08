@@ -36,73 +36,73 @@ export interface TourStep {
 export const TOUR_STEPS: TourStep[] = [
   {
     nav: 0,
-    title: "Welcome to SealedPay",
-    body: "A confidential payroll dashboard. Here is a quick tour of how it works. Amounts stay encrypted end to end, and only each recipient can read their own.",
+    title: "A quick tour",
+    body: "You are all set. Here is a quick guided tour of the dashboard, about 40 seconds, so you know where everything is.",
   },
   {
     nav: 0,
     target: "tour-home-chart",
     title: "Sample data, to start",
-    body: "The dashboard comes pre-loaded with a sample team and history so you can look around. Every real payout you run lands here on the chart. You can clear the samples anytime from Settings.",
+    body: "The dashboard is pre-loaded with a sample team and history so you can explore. Any real payout you run shows up here on the chart.",
   },
   {
     nav: 0,
     target: "tour-wallet-fund",
     title: "Fund your wallet",
-    body: "Add testnet cUSDd and a little Sepolia gas here. Your balance stays encrypted on-chain, and new funds show up right away.",
+    body: "Add testnet cUSDd and a little Sepolia gas here. New funds appear right away, and your balance stays encrypted.",
   },
   {
     nav: 0,
     target: "tour-home-team-donut",
-    title: "Your org at a glance",
-    body: "Headcount and departments, drawn straight from your roster.",
+    title: "Your team at a glance",
+    body: "Your people, split by department.",
   },
   {
     nav: 1,
     clickAnchor: "tour-rail-nav-1",
     target: "tour-team-run-payroll",
     title: "Run payroll",
-    body: "Over on the Team page, this pays everyone at once in a single confidential transfer. Amounts are encrypted in the browser before they ever touch the chain.",
+    body: "On the Team page, pay everyone at once in one confidential transfer. Amounts are encrypted before they leave your browser.",
   },
   {
     nav: 1,
     target: "tour-team-roster",
     title: "Your team",
-    body: "Your roster lives here. To pay one person on their own, open their card.",
+    body: "Your roster. To pay someone on their own, open their card.",
   },
   {
     openEmployee: true,
     clickAnchor: "tour-team-employee",
     target: "tour-employee-pay",
     title: "Pay one person",
-    body: "From an employee's card you can send a one-off payment, handy for a quick test. They sign once to reveal only their own pay.",
+    body: "From a card, send a one-off payment, handy for a quick test. Only they can read their own amount.",
   },
   {
     nav: 0,
     clickAnchor: "tour-rail-nav-0",
     target: "tour-rail-settings",
     title: "Settings",
-    body: "Back on the dashboard, everything else lives in Settings.",
+    body: "The rest lives here in Settings.",
   },
   {
     nav: 0,
     openSettings: true,
     clickAnchor: "tour-rail-settings",
-    target: "tour-settings-clear",
+    target: "tour-settings-panel",
     title: "Clear the samples",
-    body: "When you want only your own data, clear the sample team and history from right here.",
+    body: "Ready for your own data? Clear the sample team and history from here.",
   },
   {
     nav: 0,
-    title: "You are set",
-    body: "Fund your wallet, add your team, and run your first confidential payroll. That is the whole loop.",
+    title: "That's the tour",
+    body: "Fund your wallet, add your team, and run your first payroll. That is the whole loop.",
   },
 ];
 
 const SCRIM = "rgba(6,12,10,0.79)";
 const RING_SPRING = { type: "spring", stiffness: 240, damping: 30 } as const;
 const TIP_SPRING = { type: "spring", stiffness: 300, damping: 32 } as const;
-const PAD = 3;
+const PAD = -1;
 const GAP = 14;
 const TIP_W = 320;
 
@@ -228,7 +228,7 @@ export function TourOverlay({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, top: rect.top - PAD, left: rect.left - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }}
           transition={RING_SPRING}
-          style={{ borderRadius: haloRadius, boxShadow: `0 0 26px 1px rgba(95,230,175,0.42), 0 0 0 9999px ${SCRIM}` }}
+          style={{ borderRadius: haloRadius, boxShadow: `0 0 22px 0 rgba(95,230,175,0.5), 0 0 0 9999px ${SCRIM}` }}
         />
       ) : (
         <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28 }} style={{ background: SCRIM }} />
