@@ -450,7 +450,7 @@ export function App() {
             <motion.div className="grid gap-5 md:grid-cols-2" style={{ marginTop: 16 }} variants={LIST_V} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }}>
               {[
                 { name: "Zama FHE", role: "Encryption layer", desc: "Amounts are encrypted with Zama's FHEVM. The SDK wraps the instance, the encryption, and user-decryption.", tags: ["getFhevmInstance", "encryptAmounts", "userDecryptHandles"] },
-                { name: "TokenOps", role: "Transfer layer", desc: "ERC-7984 confidential transfers, dispersed to every recipient in one transaction. ABIs and flow included.", tags: ["disperseAbi", "erc7984Abi", "useDisperseFlow"] },
+                { name: "TokenOps", role: "Transfer layer", desc: "The confidential disperse runs through the official @tokenops/sdk against TokenOps' audited singleton — every recipient paid in one ERC-7984 transaction.", tags: ["@tokenops/sdk", "useDisperseFlow"] },
               ].map((f) => (
                 <Card key={f.name} variants={ITEM_V} style={{ padding: 22, height: "100%" }}>
                   <div style={{ fontSize: 16, fontWeight: 700, color: T.heading }}>{f.name}</div>

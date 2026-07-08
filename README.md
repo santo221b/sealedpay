@@ -66,8 +66,8 @@ Proof it works end-to-end on the live network: [this transaction](https://sepoli
 ## What it does
 
 - A **sender** pastes or uploads (CSV) a list of `recipient, amount` rows.
-- Each amount — and the subtotal — is **encrypted client-side** with the Zama relayer SDK.
-- The widget asks the sender to authorize the disperse contract as an **operator** on the confidential token (ERC-7984), then executes **one transaction** that delivers every encrypted amount.
+- Each amount is **encrypted client-side** with the Zama relayer SDK.
+- Through the official **TokenOps SDK** ([`@tokenops/sdk`](https://www.npmjs.com/package/@tokenops/sdk)) the sender authorizes the disperse contract as an **operator** on the confidential token (ERC-7984), then runs **one transaction** against the SDK's audited `DisperseConfidential` singleton that delivers every encrypted amount. No new contracts are deployed — we install and call the SDK directly.
 - Each **recipient** can privately decrypt *their own* amount — and nobody else's.
 
 ## What stays private (and what doesn't)
@@ -108,7 +108,7 @@ Full setup (env, Sepolia deploy): [docs/SETUP.md](docs/SETUP.md) · Embedding gu
 
 ## Tech stack
 
-Solidity `^0.8.27` · [`@fhevm/solidity`](https://docs.zama.org/protocol) · [`@openzeppelin/confidential-contracts`](https://zama.org/erc-7984) (ERC-7984) · Hardhat (fhevm template) · React + TypeScript + Vite · wagmi + viem + RainbowKit · [`@zama-fhe/relayer-sdk`](https://docs.zama.org/protocol/sdk) · Tailwind CSS + Framer Motion
+Solidity `^0.8.27` · [`@fhevm/solidity`](https://docs.zama.org/protocol) · [`@openzeppelin/confidential-contracts`](https://zama.org/erc-7984) (ERC-7984) · Hardhat (fhevm template) · React + TypeScript + Vite · wagmi + viem + RainbowKit · [`@tokenops/sdk`](https://www.npmjs.com/package/@tokenops/sdk) (confidential disperse) · [`@zama-fhe/relayer-sdk`](https://docs.zama.org/protocol/sdk) · Tailwind CSS + Framer Motion
 
 ## Docs
 

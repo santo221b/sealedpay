@@ -2,9 +2,11 @@
 
 **The DisperseKit SDK.** One engine for confidential token disperse, plus
 ready-made React parts. Pay many recipients in a single transaction with
-amounts encrypted end to end. Built on **Zama FHE** (encryption) and
-**TokenOps** (confidential ERC-7984 transfers through the official, audited
-disperse contract).
+amounts encrypted end to end. Built on **Zama FHE** (encryption) and the
+official **[TokenOps SDK](https://www.npmjs.com/package/@tokenops/sdk)**
+(`@tokenops/sdk`) — the confidential ERC-7984 disperse runs through its
+`ConfidentialDisperseClient` against the audited, already-deployed singleton
+(no factories deployed).
 
 Full integration docs, with a runnable example per export:
 [dispersekit-demo.vercel.app](https://dispersekit-demo.vercel.app).
@@ -69,9 +71,15 @@ node scripts/relayer-smoke.mjs   # encrypt round-trip vs the live Sepolia relaye
 
 ## Design decisions worth knowing
 
+- **The disperse runs through `@tokenops/sdk`.** `useDisperseFlow` authorizes the
+  operator (`setOperator`) and disperses via the SDK's `ConfidentialDisperseClient`
+  (`mode: "direct"`), encrypting through our relayer instance adapted to the SDK's
+  `Encryptor` interface — one FHE stack, no second Zama SDK pulled in. The flow
+  captures the broadcast tx hash so a confirmation hiccup is recovered from the
+  hash, never re-sent (no double payout).
 - **Direct mode** (`disperseConfidentialTokenDirect`) is the flow: no
   registration, no subtotals to get wrong, funds never held by the contract.
-  The live singleton caps the batch (currently 20 recipients), read at runtime.
+  The singleton caps the batch (currently 20 recipients), validated by the SDK.
 - **Delivery is verified, never assumed.** ERC-7984 transfers silently move an
   encrypted zero if the sender is short. After the tx, the flow decrypts the
   `transferred` handles (the sender holds ACL on them) and flags any zeros.

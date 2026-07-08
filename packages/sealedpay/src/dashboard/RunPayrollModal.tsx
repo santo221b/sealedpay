@@ -39,6 +39,14 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 // real Zama FHE happening in the browser, not a fake progress bar.
 const SEAL_MESSAGES = ["Sealing amounts", "Zama FHE doing its magic", "Sealing under Zama's keys"];
 
+// A calm "breathing" glow for active waits — a slow, soft pulse in the app's
+// own green that signals work is happening without a fast, aggressive spinner.
+// Deliberately subtle; reused by the Processing and Authorizing states.
+const BREATHE = {
+  boxShadow: ["0 0 0 0 rgba(95,230,175,0)", "0 0 16px 0 rgba(95,230,175,0.42)", "0 0 0 0 rgba(95,230,175,0)"],
+};
+const BREATHE_TRANSITION = { duration: 2.2, repeat: Infinity, ease: "easeInOut" as const };
+
 export interface RunPayrollModalProps {
   open: boolean;
   people: Person[];
@@ -427,6 +435,7 @@ function StepSelect(props: {
   myAddress?: `0x${string}`;
 }) {
   const { people, sel, selectedCount, single } = props;
+  const reduced = useReducedMotion();
   return (
     <div className="mt-2.5">
       <div>
@@ -594,13 +603,30 @@ function StepSelect(props: {
 
       <motion.button
         type="button"
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={props.busy ? undefined : { scale: 1.02 }}
+        whileTap={props.busy ? undefined : { scale: 0.98 }}
+        animate={props.busy && !reduced ? BREATHE : { boxShadow: "0 0 0 0 rgba(95,230,175,0)" }}
+        transition={props.busy ? BREATHE_TRANSITION : { duration: 0.3 }}
         disabled={selectedCount === 0 || props.busy || props.blocked}
         onClick={props.onContinue}
-        className="mt-4 w-full rounded-full text-center font-medium disabled:cursor-not-allowed disabled:opacity-40"
-        style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 13.5, padding: "12.6px 0" }}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full text-center font-medium disabled:cursor-not-allowed"
+        style={{
+          background: "#5fe3ab",
+          color: "#0b1512",
+          fontSize: 13.5,
+          padding: "12.6px 0",
+          // Stay bright while processing (it's active, not dead); dim only when
+          // the button is disabled because the run isn't valid to start.
+          opacity: !props.busy && (selectedCount === 0 || props.blocked) ? 0.4 : 1,
+        }}
       >
+        {props.busy && (
+          <span
+            className="inline-block rounded-full"
+            style={{ width: 14, height: 14, border: "2px solid rgba(11,21,18,0.28)", borderTopColor: "#0b1512", animation: "dc-spin .7s linear infinite" }}
+            aria-hidden
+          />
+        )}
         {props.busy ? "Processing" : single ? "Pay" : "Continue"}
       </motion.button>
     </div>
@@ -678,6 +704,7 @@ function StepEncrypting({ people, encIdx, single }: { people: Person[]; encIdx: 
 /* ── Step 2 — Authorize (the wallet prompt IS the signature) ─────────────── */
 
 function StepAuthorize({ alreadyAuthorized }: { alreadyAuthorized: boolean }) {
+  const reduced = useReducedMotion();
   return (
     <div className="mt-2 text-center" style={{ padding: "14px 6px 6px 6px" }}>
       <div className="relative mx-auto mb-1.5 flex items-center justify-center" style={{ width: 66, height: 66 }}>
@@ -698,10 +725,15 @@ function StepAuthorize({ alreadyAuthorized }: { alreadyAuthorized: boolean }) {
           Already authorized
         </div>
       ) : (
-        <div className="mt-3.5 flex w-full items-center justify-center gap-2 rounded-full" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#cfdcd6", fontSize: 13.5, fontWeight: 600, padding: "12.6px 0" }}>
+        <motion.div
+          className="mt-3.5 flex w-full items-center justify-center gap-2 rounded-full"
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#cfdcd6", fontSize: 13.5, fontWeight: 600, padding: "12.6px 0" }}
+          animate={reduced ? undefined : BREATHE}
+          transition={BREATHE_TRANSITION}
+        >
           <span style={{ width: 15, height: 15, borderRadius: "50%", border: "2.2px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }} />
           Confirm in your wallet
-        </div>
+        </motion.div>
       )}
     </div>
   );

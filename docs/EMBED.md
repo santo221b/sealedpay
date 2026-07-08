@@ -80,10 +80,12 @@ RainbowKit connect modal picks up your `accent` automatically.
    Zama relayer SDK — one ZK proof covers the whole batch. Plaintext never
    leaves the page.
 2. **Time-boxed authorization.** `setOperator` on the token for 1 hour — no
-   unlimited approvals. Skipped when a grant is still live.
-3. **One transaction.** The audited TokenOps `DisperseConfidential` singleton
-   delivers every encrypted amount in a single tx (direct mode — the contract
-   never holds funds).
+   unlimited approvals. Skipped when a grant is still live. (Run through the
+   official `@tokenops/sdk`.)
+3. **One transaction.** The `@tokenops/sdk` `ConfidentialDisperseClient`
+   (`mode: "direct"`) submits to the audited TokenOps `DisperseConfidential`
+   singleton, delivering every encrypted amount in a single tx — the contract
+   never holds funds, and no new contracts are deployed.
 4. **Verified delivery.** Confidential transfers can't revert on insufficient
    balance (they move an encrypted zero — an FHE reality). The widget decrypts
    the `transferred` handles after the tx and flags any zeros, so "delivered"

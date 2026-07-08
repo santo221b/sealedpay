@@ -6,26 +6,33 @@
  * confirming → delivered (→ verifying → verified within delivered).
  *
  * Design decisions worth knowing:
- * - Direct mode (`disperseConfidentialTokenDirect`): one wallet signature per
- *   disperse (plus a one-time operator grant), no funds held by the contract,
- *   no subtotals to get wrong. The live singleton caps it at 20 recipients.
+ * - The disperse runs through the official TokenOps SDK
+ *   (`@tokenops/sdk/fhe-disperse`, direct mode) against the same audited
+ *   `DisperseConfidential` singleton. The SDK validates the batch, encrypts
+ *   every amount under one proof (through our relayer-sdk, adapted), pays the
+ *   anti-spam gas fee, submits `disperseConfidentialTokenDirect`, and returns
+ *   the per-recipient requested/transferred handles. Encryption and
+ *   user-decryption everywhere else still use our relayer-sdk directly.
  * - Delivery is VERIFIED, never assumed: confidential transfers silently move
  *   an encrypted zero when the sender's balance is short, so after the tx we
  *   decrypt the `transferred` handles (the sender holds ACL on them) and
  *   compare against what was requested.
- * - A broadcast transaction is never abandoned: if confirmation fails (RPC
- *   hiccup), the flow stays in `confirming` with the tx hash on display and a
- *   retry — going back to review there would invite a double payout.
+ * - A broadcast payout is never abandoned. The disperse tx hash is captured the
+ *   instant the SDK broadcasts it (a thin wallet proxy over `writeContract`);
+ *   if the SDK's own receipt-wait then fails, we resolve from the hash rather
+ *   than return to review (which would invite a double send): a confirmed
+ *   delivery finishes, a revert returns to review, and a still-unconfirmed tx
+ *   stays in `confirming` with a retry. This also arms the orphan-recovery net.
  */
+import { ConfidentialDisperseClient, setOperator, type Encryptor } from "@tokenops/sdk/fhe-disperse";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { parseEventLogs } from "viem";
+import { getAddress, parseEventLogs } from "viem";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 
 import { disperseAbi, erc7984Abi } from "../lib/contracts/abis";
 import { disperseAddressFor } from "../lib/contracts/addresses";
 import { userDecryptHandles } from "../lib/fhe/decrypt";
-import { encryptAmounts } from "../lib/fhe/encrypt";
-import { getFhevmInstance } from "../lib/fhe/instance";
+import { getFhevmInstance, type FhevmInstance } from "../lib/fhe/instance";
 import type { RecipientRow } from "../lib/parse";
 
 export type FlowPhase =
@@ -110,6 +117,48 @@ function isTerminal(e: unknown): boolean {
   return e instanceof Error && (e as Error & { terminal?: boolean }).terminal === true;
 }
 
+/**
+ * Was a wallet prompt cancelled? The TokenOps SDK wraps a rejection in its own
+ * error type (e.g. `TokenOpsContractError` / `WalletRejectedError`) with the
+ * underlying viem "User rejected the request" attached as `.cause`, so a
+ * top-level message check misses it — walk the whole cause chain.
+ */
+function isRejection(e: unknown): boolean {
+  const parts: string[] = [];
+  let cur: unknown = e;
+  for (let i = 0; i < 6 && cur; i++) {
+    if (cur && typeof cur === "object") {
+      const o = cur as { name?: unknown; message?: unknown; shortMessage?: unknown; code?: unknown; cause?: unknown };
+      parts.push(String(o.name ?? ""), String(o.message ?? ""), String(o.shortMessage ?? ""), String(o.code ?? ""));
+      cur = o.cause;
+    } else {
+      parts.push(String(cur));
+      break;
+    }
+  }
+  return /reject|denied|cancel/i.test(parts.join(" "));
+}
+
+/**
+ * Adapt our relayer-sdk FHEVM instance to the `@tokenops/sdk` `Encryptor` shape,
+ * so the TokenOps disperse client encrypts through the SAME relayer the rest of
+ * the app uses (one FHE stack — no second Zama SDK, no wallet-switch caching to
+ * get wrong). The disperse flow only ever produces `euint64` amount inputs.
+ */
+function makeEncryptor(instance: FhevmInstance): Encryptor {
+  return {
+    async encrypt({ values, contractAddress, userAddress }) {
+      const input = instance.createEncryptedInput(getAddress(contractAddress), getAddress(userAddress));
+      for (const v of values) {
+        if (v.type !== "euint64") throw new Error(`Unexpected FHE input type "${v.type}" in disperse`);
+        input.add64(BigInt(v.value as bigint));
+      }
+      const { handles, inputProof } = await input.encrypt();
+      return { handles, inputProof };
+    },
+  };
+}
+
 export function useDisperseFlow(options: {
   token: `0x${string}` | undefined;
   chainId: number;
@@ -150,7 +199,8 @@ export function useDisperseFlow(options: {
     (e: unknown, backTo: FlowPhase) => {
       const err = e instanceof Error ? e : new Error(String(e));
       // Wallet rejections read like failures but are user choices — soften them.
-      const rejected = /user rejected|denied/i.test(err.message);
+      // (Checks the SDK-wrapped error's whole cause chain, not just the top.)
+      const rejected = isRejection(e);
       setError(rejected ? "Request cancelled in the wallet." : err.message);
       setPhase(backTo);
       if (!rejected) onError?.(err);
@@ -219,31 +269,47 @@ export function useDisperseFlow(options: {
     if (rows.length === 0) return fail(new Error("No recipients"), "input");
     setError(undefined);
 
-    let txHash: `0x${string}` | undefined;
-    try {
-      // 0. The batch cap is admin-mutable on the live singleton — re-check at
-      //    execution time, falling back to the known live value if the read fails.
-      const cap = await publicClient
-        .readContract({ address: disperse, abi: disperseAbi, functionName: "maxBatchSizeDirect" })
-        .then((v) => Number(v) || Infinity)
-        .catch(() => 20);
-      if (rows.length > cap) {
-        throw new Error(`This batch has ${rows.length} recipients but the contract accepts ${cap} per transaction — split the list.`);
-      }
+    // Capture the disperse tx hash the instant the SDK broadcasts it, by
+    // wrapping the wallet's writeContract. The SDK's disperse() waits for the
+    // receipt internally and, on an RPC hiccup there, throws WITHOUT the hash —
+    // so without this we could abandon an in-flight payout to review and, on a
+    // re-run, pay everyone twice. Setting pendingTxHash here also arms orphan
+    // recovery. Only the disperse write is captured (setOperator uses the real
+    // wallet below), and for direct mode disperse() makes exactly one write.
+    let dispersedTxHash: `0x${string}` | undefined;
+    const captureWallet = new Proxy(walletClient, {
+      get(target, prop, receiver) {
+        if (prop === "writeContract") {
+          return async (params: unknown) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const orig = target.writeContract as any;
+            const hash = (await orig.call(target, params)) as `0x${string}`;
+            dispersedTxHash = hash;
+            setPendingTxHash(hash);
+            return hash;
+          };
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
 
-      // 1. Encrypt every amount client-side under one proof.
+    try {
+      // 1. Warm the relayer instance (the heavy step) while the encrypting
+      //    animation plays; the TokenOps client encrypts through it in step 3.
+      //    (The SDK validates recipient count / bounds inside disperse().)
       setPhase("encrypting");
       const instance = await getFhevmInstance(FHE_NETWORK);
-      const enc = await encryptAmounts({
-        instance,
-        disperseAddress: disperse,
-        senderAddress: sender,
-        amounts: amountsRef.current,
+      const client = new ConfidentialDisperseClient({
+        publicClient,
+        walletClient: captureWallet,
+        chainId,
+        address: disperse, // pin to the singleton we target (env-overridable)
+        encryptor: makeEncryptor(instance),
       });
 
-      // 2. Grant the disperse contract a time-boxed operator permission.
-      //    Skipped only for a grant WE made recently — expiry of older grants
-      //    is unreadable on-chain, and one expiring mid-flow reverts the tx.
+      // 2. Time-boxed operator grant via the SDK — the standard ERC-7984 approval
+      //    direct-mode disperse needs (uses the REAL wallet so its hash isn't
+      //    captured). Skipped for a fresh grant we made.
       setPhase("authorizing");
       const isOperator = await publicClient.readContract({
         address: token,
@@ -253,59 +319,62 @@ export function useDisperseFlow(options: {
       });
       if (!isOperator || !hasFreshGrant(token, sender, disperse)) {
         const until = Math.floor(Date.now() / 1000) + OPERATOR_TTL_SECONDS;
-        const authHash = await walletClient.writeContract({
-          address: token,
-          abi: erc7984Abi,
-          functionName: "setOperator",
-          args: [disperse, until],
-          account: sender,
-        });
-        await publicClient.waitForTransactionReceipt({ hash: authHash });
+        await setOperator({ publicClient, walletClient, account: sender, token, spender: disperse, deadline: BigInt(until) });
         sessionGrants.set(grantKey(token, sender, disperse), until);
       }
 
-      // 3. One transaction pays everyone.
+      // 3. Disperse through the TokenOps SDK. `disperse()` validates the batch,
+      //    encrypts every amount under one proof (via our encryptor), computes
+      //    the gas fee, submits `disperseConfidentialTokenDirect`, waits for the
+      //    receipt, and returns per-recipient requested/transferred handles.
       setPhase("dispersing");
-      const fee = await publicClient.readContract({
-        address: disperse,
-        abi: disperseAbi,
-        functionName: "getGasFee",
-        args: [sender],
-      });
-      const toHex = (u8: Uint8Array) =>
-        `0x${Array.from(u8, (b) => b.toString(16).padStart(2, "0")).join("")}` as `0x${string}`;
-      txHash = await walletClient.writeContract({
-        address: disperse,
-        abi: disperseAbi,
-        functionName: "disperseConfidentialTokenDirect",
-        args: [token, rows.map((r) => r.address), enc.amountHandles.map(toHex), toHex(enc.inputProof)],
-        value: BigInt(fee) * BigInt(rows.length),
+      const result = await client.disperse({
+        token,
+        mode: "direct",
+        recipients: rows.map((r) => r.address as `0x${string}`),
+        amounts: amountsRef.current,
         account: sender,
       });
-      setPendingTxHash(txHash);
-
-      // 4. Confirm delivery from the event — not from optimism.
-      setPhase("confirming");
-      await confirmDelivery(txHash);
+      const dist = result.distributions[0];
+      if (!dist) throw new Error("The disperse confirmed but no distribution was found in the receipt.");
+      const delivery: DeliveryResult = {
+        txHash: result.hash,
+        recipients: [...dist.recipients] as `0x${string}`[],
+        requested: [...dist.requested] as `0x${string}`[],
+        transferred: [...dist.transferred] as `0x${string}`[],
+      };
+      setDelivery(delivery);
+      setPhase("delivered");
+      onDispersed?.(delivery);
     } catch (e) {
-      if (txHash && !isTerminal(e)) {
-        // Broadcast but not yet confirmed (RPC hiccup) — the payout may still
-        // land, so returning to review would invite a second send. Stay in
-        // confirming with the tx hash on display; the UI offers a retry.
-        setError(
-          `The payout transaction was sent (${txHash.slice(0, 10)}…) but confirmation failed: ${
-            e instanceof Error ? e.message : String(e)
-          }`,
-        );
+      if (dispersedTxHash && !isRejection(e)) {
+        // The payout WAS broadcast (funds may be moving) but the SDK's own
+        // confirmation wait failed. Returning to review would invite a DOUBLE
+        // send, so resolve it ourselves from the hash: a confirmed delivery
+        // recovers to the finale, a revert is terminal (nothing moved → review),
+        // and a still-unconfirmed tx stays in `confirming` with a retry.
+        setPhase("confirming");
+        try {
+          await confirmDelivery(dispersedTxHash);
+        } catch (e2) {
+          if (isTerminal(e2)) {
+            setPendingTxHash(undefined);
+            fail(e2, "review");
+          } else {
+            setError(
+              `The payout transaction was sent (${dispersedTxHash.slice(0, 10)}…) but confirmation failed: ${
+                e2 instanceof Error ? e2.message : String(e2)
+              }`,
+            );
+          }
+        }
       } else {
-        // Pre-broadcast failure, OR a mined-and-final failure (reverted /
-        // event-less) where nothing moved — safe to return to review so the
-        // modal is dismissable and the run can be retried without double paying.
-        if (txHash) setPendingTxHash(undefined);
+        // Pre-broadcast failure (wallet rejection, encryption, validation) —
+        // nothing moved, safe to return to review.
         fail(e, "review");
       }
     }
-  }, [token, disperse, sender, walletClient, publicClient, rows, fail, confirmDelivery]);
+  }, [token, disperse, sender, walletClient, publicClient, chainId, rows, fail, onDispersed, confirmDelivery]);
 
   const retryConfirmation = useCallback(async () => {
     if (!pendingTxHash) return;
@@ -313,11 +382,20 @@ export function useDisperseFlow(options: {
     try {
       await confirmDelivery(pendingTxHash);
     } catch (e) {
-      setError(
-        `Still couldn't confirm ${pendingTxHash.slice(0, 10)}…: ${e instanceof Error ? e.message : String(e)}`,
-      );
+      if (isTerminal(e)) {
+        // A reverted / event-less receipt is FINAL — retrying just re-reads the
+        // same failure forever, stranding the modal (confirming blocks close).
+        // Nothing moved, so return to review (a re-run is legitimate) — the same
+        // routing execute()'s catch uses.
+        setPendingTxHash(undefined);
+        fail(e, "review");
+      } else {
+        setError(
+          `Still couldn't confirm ${pendingTxHash.slice(0, 10)}…: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
     }
-  }, [pendingTxHash, confirmDelivery]);
+  }, [pendingTxHash, confirmDelivery, fail]);
 
   /**
    * Post-delivery audit: decrypt what actually moved and flag any silent

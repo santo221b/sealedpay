@@ -24,9 +24,12 @@ export function humanizeError(raw: string | null | undefined): string | undefine
   if (/wrong network|chain mismatch|does not match the target chain|chain id/.test(s)) {
     return "Wrong network. Switch your wallet to Sepolia and try again.";
   }
+  if (/batch too large|too many recipients|batch.*(size|limit)|exceeds.*batch/.test(s)) {
+    return "This batch has too many recipients for a single transaction. Split the list and run them separately.";
+  }
   // Zama's FHE relayer (encryption key / CRS fetch + every user-decryption).
   // Name it so an outage there never reads as an app or wallet fault.
-  if (/relayer|bad json|fhevm|zama|public key|\bcrs\b|kms/.test(s)) {
+  if (/relayer|bad json|fhevm|zama|public key|\bcrs\b|kms|encryption failed|decryption failed/.test(s)) {
     return "Zama's FHE relayer didn't respond correctly. Give it a moment and try again.";
   }
   // The Sepolia RPC node (all reads/writes go through it).

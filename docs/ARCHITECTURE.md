@@ -19,12 +19,12 @@ Partner app ──embeds──► [DisperseKit widget]
 ## The three flows
 
 ### 1. Encrypt inputs (browser)
-The widget builds one encrypted input bundle per disperse with the relayer SDK:
-`createEncryptedInput(disperseContract, senderAddress)` → `.add64(amount₁)…add64(amountₙ).add64(subtotal)` → `.encrypt()` → `{ handles, inputProof }`. The handles map 1:1 to `externalEuint64` parameters on the contract.
+Each amount is encrypted with the Zama relayer SDK: `createEncryptedInput(disperseContract, senderAddress)` → `.add64(amount₁)…add64(amountₙ)` → `.encrypt()` → `{ handles, inputProof }`. The handles map 1:1 to `externalEuint64` parameters on the contract. In SealedPay this encryption is driven **by the TokenOps SDK** (step 2) — we adapt our relayer instance to its `Encryptor` interface, so one FHE stack serves the whole app.
 
-### 2. Authorize + disperse (on-chain)
-- `cToken.setOperator(disperse, until)` — time-boxed operator permission (ERC-7984).
-- `disperse.disperse(token, recipients[], amountHandles[], subtotalHandle, inputProof)` — one transaction: verifies the input proof, moves funds via the operator permission, transfers each encrypted amount, grants each recipient ACL access to their amount.
+### 2. Authorize + disperse (via `@tokenops/sdk`)
+Both steps run through the official TokenOps SDK (`@tokenops/sdk/fhe-disperse`), pointed at the same audited `DisperseConfidential` singleton — **no factories are deployed**:
+- `setOperator({ token, spender: disperse, deadline })` — time-boxed ERC-7984 operator permission.
+- `new ConfidentialDisperseClient({ …, encryptor }).disperse({ token, mode: "direct", recipients, amounts })` — the SDK validates the batch, encrypts every amount under one proof (via our adapted relayer encryptor), pays the anti-spam gas fee, submits `disperseConfidentialTokenDirect`, waits for the receipt, and returns the per-recipient `requested`/`transferred` handles. DisperseKit's `useDisperseFlow` captures the broadcast tx hash so a confirmation hiccup is recovered, never re-sent.
 
 ### 3. User-decrypt (browser, recipient)
 The recipient signs an EIP-712 decryption request; the relayer checks the on-chain ACL and returns the plaintext of *their* handle only.
@@ -32,6 +32,6 @@ The recipient signs an EIP-712 decryption request; the relayer checks the on-cha
 ## Packages
 
 - **`packages/sealedpay`** — **SealedPay**, the product: an employer-only confidential payroll dashboard skinned over the engine (roster/history in localStorage; the one engine touchpoint is documented as THE SEAM in `src/dashboard/RunPayrollModal.tsx`).
-- **`packages/dispersekit`** — **DisperseKit**, the engine. `DisperseWidget.tsx` (sender flow), `ReceiptWidget.tsx` (recipient flow), `lib/fhe/` (SDK init + encrypt/decrypt helpers), the shared `useDisperseFlow` state machine, self-contained wallet providers (wagmi + RainbowKit) so a host app needs nothing.
+- **`packages/dispersekit`** — **DisperseKit**, the engine. `DisperseWidget.tsx` (sender flow), `ReceiptWidget.tsx` (recipient flow), `lib/fhe/` (relayer init + encrypt/decrypt helpers), the shared `useDisperseFlow` state machine (which drives the confidential disperse through **`@tokenops/sdk`**), self-contained wallet providers (wagmi + RainbowKit) so a host app needs nothing.
 - **`packages/smart-contracts`** — Hardhat (fhevm template). `ConfidentialTokenDemo` (ERC-7984 + public mint faucet for the demo) and the audited TokenOps disperse contract. Mock-mode tests prove the full flow without any external service.
 - **`packages/dispersekit-docs`** — the DisperseKit SDK documentation site: a single-page integration guide for the SDK, with SealedPay as the case study.
