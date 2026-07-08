@@ -10,7 +10,7 @@
  * disperse). Its own teal identity, one glow rising from the bottom.
  */
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 
 // SealedPay motion signatures (packages/payroll/src/design/tokens.ts).
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -292,10 +292,10 @@ function BrandMark({ size = 26, fill = T.accent }: { size?: number; fill?: strin
   );
 }
 
-function Card({ children, style, soft, hover = true, variants }: { children: React.ReactNode; style?: React.CSSProperties; soft?: boolean; hover?: boolean; variants?: unknown }) {
+function Card({ children, style, soft, hover = true, variants }: { children: React.ReactNode; style?: React.CSSProperties; soft?: boolean; hover?: boolean; variants?: Variants }) {
   return (
     <motion.div
-      variants={variants as never}
+      variants={variants}
       whileHover={hover ? { y: -4 } : undefined}
       transition={SPRING}
       style={{ background: soft ? T.glassBgSoft : T.glassBg, border: `1px solid ${T.cardBorder}`, borderRadius: 18, boxShadow: T.glassShadow, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", ...style }}

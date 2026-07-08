@@ -19,9 +19,9 @@ export function PayoutsPage() {
 }
 ```
 
-That is the entire integration. See it live in the demo host
-([`packages/demo-host`](../packages/demo-host)) — a fictional "Acme Payroll"
-that embeds the widget and restyles it to its own brand with one prop.
+That is the entire integration. Try the widget live in the
+[widget playground](https://dispersekit-widget.vercel.app), and read the full
+SDK walkthrough at the [DisperseKit docs](https://dispersekit-demo.vercel.app).
 
 ## `<DisperseWidget />` props
 

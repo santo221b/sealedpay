@@ -22,7 +22,7 @@ export function ProfilePopup({ open, onClose, name, avatar, employerShort }: Pro
               : { scale: 1.06, rotate: -2.5, filter: "drop-shadow(0 10px 24px rgba(52,211,153,0.35))" }
           }
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="cursor-pointer rounded-full object-cover"
+          className="rounded-full object-cover"
           style={{ width: 250, height: 250, maxWidth: "100%", background: "transparent" }}
         />
         <h2 id="profile-name" style={{ fontSize: 34, fontWeight: 700, color: "#f2f7f4", marginTop: 18, letterSpacing: 0.3 }}>

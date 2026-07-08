@@ -25,7 +25,7 @@ That's the whole integration. Recipients, amounts, encryption, operator approval
 
 - **SealedPay (the product)** — [sealedpay.vercel.app](https://sealedpay.vercel.app) (the confidential payroll dashboard; run locally with `npm run dev:payroll`)
 - **DisperseKit widget playground** — [dispersekit-widget.vercel.app](https://dispersekit-widget.vercel.app) (the engine standalone + a gallery of every state + the integration test bench)
-- **White-label embed** — [dispersekit-demo.vercel.app](https://dispersekit-demo.vercel.app) ("Acme Payroll", a fictional partner product embedding the widget with one import)
+- **DisperseKit SDK docs** — [dispersekit-demo.vercel.app](https://dispersekit-demo.vercel.app) (the single-page SDK integration guide, with a full API reference and SealedPay as the case study)
 
 ## For judges — running SealedPay end to end
 
@@ -60,8 +60,6 @@ Deploy, then paste the URL into the **Live demos** list above.
 
 Proof it works end-to-end on the live network: [this transaction](https://sepolia.etherscan.io/tx/0xc8d190a014015a8fe8aca9af82b49db44e61fd46a5ff2cece98033e81a6fe154) disperses two encrypted amounts through the official singleton — the amounts on-chain are opaque handles, and `packages/contracts/scripts/e2e-sepolia.mjs` decrypts them back (12.5 / 7.25 cUSDd) as sender *and* as recipient.
 
-<!-- TODO(phase-g): screenshots/GIF for the README -->
-
 ## What it does
 
 - A **sender** pastes or uploads (CSV) a list of `recipient, amount` rows.
@@ -87,7 +85,7 @@ Full model: [docs/CONFIDENTIALITY.md](docs/CONFIDENTIALITY.md)
 | [`packages/payroll`](packages/payroll) | **SealedPay** — the confidential payroll dashboard (the product) |
 | [`packages/widget`](packages/widget) | **DisperseKit** — the engine: the single-import `<DisperseWidget />` + the shared disperse flow |
 | [`packages/contracts`](packages/contracts) | Hardhat project — ERC-7984 demo token + the audited TokenOps disperse contract (Sepolia) |
-| [`packages/demo-host`](packages/demo-host) | "Acme Payroll", a mock partner app embedding the widget — the white-label story |
+| [`packages/demo-host`](packages/demo-host) | **DisperseKit SDK docs** — the single-page integration guide for the SDK |
 
 ## Quickstart
 

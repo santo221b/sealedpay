@@ -102,7 +102,16 @@ export function TopBar({
         <motion.img
           src={profile.avatar}
           alt={`${profile.name} profile`}
+          role="button"
+          tabIndex={0}
+          aria-label="Open profile"
           onClick={onProfile}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onProfile();
+            }
+          }}
           whileHover={reduced ? undefined : { scale: 1.06, rotate: -2.5, filter: "drop-shadow(0 6px 14px rgba(59,191,142,0.45))" }}
           transition={{ duration: 0.3 }}
           className="cursor-pointer rounded-full object-cover"

@@ -18,7 +18,7 @@ npm run dev   # http://localhost:5175   (root: npm run dev:payroll)
 The disperse flow lives in ONE place — `useDisperseFlow` in
 [`@dispersekit/widget`](../widget) — and both the widget and this dashboard
 import it unchanged. The single file where payroll touches the engine is
-[`src/components/RunPayroll.tsx`](src/components/RunPayroll.tsx) (marked
+[`src/dashboard/RunPayrollModal.tsx`](src/dashboard/RunPayrollModal.tsx) (marked
 `THE SEAM`): it serializes the roster into the same `address, amount` lines
 the widget accepts, funnels them through the widget's validated
 `parseRecipients` (EIP-55, euint64 range, no rounding, duplicate warnings),

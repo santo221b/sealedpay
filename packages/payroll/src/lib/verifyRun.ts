@@ -8,7 +8,6 @@
  * employee was actually paid. Uses only the frozen engine helpers.
  */
 import {
-  DEMO_TOKEN_ADDRESS,
   disperseAddressFor,
   getFhevmInstance,
   SEPOLIA_CHAIN_ID,
@@ -88,5 +87,3 @@ export function useVerifyRun(token: `0x${string}` | undefined) {
 
   return { verifyRun, busyRunId, error, results };
 }
-
-export const TOKEN = DEMO_TOKEN_ADDRESS;

@@ -22,7 +22,7 @@
  *   failure path (toast + notification, nothing recorded).
  * ─────────────────────────────────────────────────────────────────────────────
  */
-import { formatAmount, type DisperseFlow, type VerificationEntry } from "@dispersekit/widget";
+import { type DisperseFlow, type VerificationEntry } from "@dispersekit/widget";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
@@ -789,7 +789,6 @@ function Finale(props: {
   onDone: () => void;
   onViewMyPay?: () => void;
 }) {
-  void formatAmount;
   const [copied, setCopied] = useState(false);
   const copyLink = () => {
     try {

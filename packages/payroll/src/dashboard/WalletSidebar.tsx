@@ -84,13 +84,14 @@ function ActivityRowView({ row }: { row: ActivityRow }) {
       </span>
     </>
   );
-  const className = "flex cursor-pointer items-center transition-colors hover:bg-[rgba(95,230,175,0.1)]";
+  const linkClass = "flex cursor-pointer items-center transition-colors hover:bg-[rgba(95,230,175,0.1)]";
   return row.url ? (
-    <a href={row.url} target="_blank" rel="noreferrer" className={className} style={rowStyle}>
+    <a href={row.url} target="_blank" rel="noreferrer" className={linkClass} style={rowStyle}>
       {body}
     </a>
   ) : (
-    <div className={className} style={rowStyle}>
+    // No link to open, so this row is static — no pointer cursor or hover.
+    <div className="flex items-center" style={rowStyle}>
       {body}
     </div>
   );

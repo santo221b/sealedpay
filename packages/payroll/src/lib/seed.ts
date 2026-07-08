@@ -107,6 +107,7 @@ export function midWallet(address: string): string {
   return `${address.slice(0, 8)}…${address.slice(-6)}`;
 }
 
+/** First letters of the first two words of a name, e.g. "John Smith" gives "JS". */
 export function initials(name: string): string {
   return name
     .split(/\s+/)
