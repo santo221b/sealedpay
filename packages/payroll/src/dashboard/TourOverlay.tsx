@@ -111,7 +111,6 @@ export function TourOverlay({
   index,
   total,
   ripple,
-  clicking,
   onNext,
   onBack,
   onClose,
@@ -121,8 +120,6 @@ export function TourOverlay({
   total: number;
   /** A translucent click ripple, retriggered by its `key` (e.g. on nav). */
   ripple?: { x: number; y: number; key: number } | null;
-  /** While true, the dim + tooltip lift so the ripple lands on the lit app. */
-  clicking?: boolean;
   onNext: () => void;
   onBack: () => void;
   onClose: () => void;
@@ -236,12 +233,12 @@ export function TourOverlay({
         <motion.div
           className="pointer-events-none absolute"
           initial={{ opacity: 0 }}
-          animate={{ opacity: clicking ? 0 : 1, top: rect.top - PAD, left: rect.left - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }}
-          transition={{ ...RING_SPRING, opacity: { duration: 0.22 } }}
+          animate={{ opacity: 1, top: rect.top - PAD, left: rect.left - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }}
+          transition={RING_SPRING}
           style={{ borderRadius: haloRadius, boxShadow: `0 0 22px 0 rgba(95,230,175,0.5), 0 0 0 9999px ${SCRIM}` }}
         />
       ) : (
-        <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: clicking ? 0 : 1 }} transition={{ duration: 0.24 }} style={{ background: SCRIM }} />
+        <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28 }} style={{ background: SCRIM }} />
       )}
 
       {/* Click ripple — a translucent expanding circle where the tour "clicks". */}
@@ -257,7 +254,7 @@ export function TourOverlay({
       )}
 
       {/* Tooltip — glides between steps, content cross-fades. */}
-      <motion.div ref={tipRef} initial={false} animate={{ top, left, opacity: clicking ? 0 : 1 }} transition={{ ...TIP_SPRING, opacity: { duration: 0.2 } }} style={tipStyle}>
+      <motion.div ref={tipRef} initial={false} animate={{ top, left }} transition={TIP_SPRING} style={tipStyle}>
         <motion.div key={index} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: motionTokens.easeEnter }}>
           <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: tokens.accent.pillText }}>
             Step {index + 1} of {total}
