@@ -274,23 +274,29 @@ export function TourOverlay({
             </div>
             <div className="flex items-center" style={{ gap: 8 }}>
               {index > 0 && (
-                <button
+                <motion.button
                   type="button"
                   onClick={onBack}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={motionTokens.springPop}
                   className="rounded-full"
                   style={{ fontSize: 12.5, fontWeight: 600, color: tokens.text.secondary, padding: "7px 13px", background: "transparent", border: "1px solid rgba(255,255,255,0.16)", cursor: "pointer" }}
                 >
                   Back
-                </button>
+                </motion.button>
               )}
-              <button
+              <motion.button
                 type="button"
                 onClick={last ? onClose : onNext}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={motionTokens.springPop}
                 className="rounded-full"
                 style={{ fontSize: 12.5, fontWeight: 700, color: "#08130e", padding: "7px 17px", background: tokens.accent.primary, cursor: "pointer" }}
               >
                 {last ? "Done" : "Next"}
-              </button>
+              </motion.button>
             </div>
           </div>
         </motion.div>
