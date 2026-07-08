@@ -48,7 +48,7 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
           >
             Add employee
           </SecondaryButton>
-          <span data-tour="tour-team-run-payroll" style={{ display: "inline-flex" }}>
+          <span data-tour="tour-team-run-payroll" style={{ display: "inline-flex", borderRadius: 999 }}>
             <PrimaryButton
               onClick={onRunPayroll}
               style={{

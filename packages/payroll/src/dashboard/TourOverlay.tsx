@@ -135,7 +135,9 @@ export function TourOverlay({
   // Measure the target, tracking scroll + resize so the spotlight follows.
   useEffect(() => {
     let raf = 0;
+    let settleRaf = 0;
     let tries = 0;
+    let settleN = 0;
     const remeasure = () => {
       if (!step.target) {
         setRect(null);
@@ -147,6 +149,13 @@ export function TourOverlay({
         setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
       }
     };
+    // Track the target's own entrance (popover scale, screen slide, smooth
+    // scroll) for a beat, so the halo lands on the settled bounds.
+    const settle = () => {
+      remeasure();
+      settleN += 1;
+      if (settleN < 40) settleRaf = requestAnimationFrame(settle);
+    };
     const start = () => {
       if (!step.target) {
         setRect(null);
@@ -156,7 +165,7 @@ export function TourOverlay({
       if (el) {
         el.scrollIntoView({ block: "center", behavior: "smooth" });
         setRadius(parseFloat(getComputedStyle(el).borderRadius) || 14);
-        remeasure();
+        settle();
       } else if (tries < 90) {
         tries += 1;
         raf = requestAnimationFrame(start);
@@ -170,6 +179,7 @@ export function TourOverlay({
     window.addEventListener("scroll", remeasure, true);
     return () => {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(settleRaf);
       window.removeEventListener("resize", remeasure);
       window.removeEventListener("scroll", remeasure, true);
     };
