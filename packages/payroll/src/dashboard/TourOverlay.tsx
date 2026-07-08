@@ -29,6 +29,8 @@ export interface TourStep {
   clickAnchor?: string;
   /** data-tour of the element to spotlight. Omit for a centered card. */
   target?: string;
+  /** Skip scrollIntoView (for popover targets that must not scroll the page). */
+  noScroll?: boolean;
   title: string;
   body: string;
 }
@@ -86,6 +88,7 @@ export const TOUR_STEPS: TourStep[] = [
     openSettings: true,
     clickAnchor: "tour-rail-settings",
     target: "tour-settings-panel",
+    noScroll: true,
     title: "Clear the samples",
     body: "Ready for your own data? Clear the sample team and history from here.",
   },
@@ -164,7 +167,7 @@ export function TourOverlay({
         // jerky re-center scroll for elements already comfortably in view.
         const r = el.getBoundingClientRect();
         const m = 72;
-        if (r.top < m || r.bottom > window.innerHeight - m) {
+        if (!step.noScroll && (r.top < m || r.bottom > window.innerHeight - m)) {
           el.scrollIntoView({ block: "center", behavior: "smooth" });
         }
         setRadius(parseFloat(getComputedStyle(el).borderRadius) || 14);

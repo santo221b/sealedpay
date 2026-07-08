@@ -212,6 +212,8 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
       setNav(s.nav as NavIndex);
     }
     setPopup(s.openSettings ? "gear" : null);
+    // A stray scrollIntoView can push the fixed top bar off-screen; keep it in view.
+    if (window.scrollY) window.scrollTo(0, 0);
   };
   useEffect(() => {
     let forced = false;
@@ -254,6 +256,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
     setTourSeenPref(true);
     setTourStep(null);
     setPopup(null);
+    if (window.scrollY) window.scrollTo(0, 0);
   };
 
   const identity = loadIdentity();
