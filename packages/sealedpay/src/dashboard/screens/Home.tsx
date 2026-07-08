@@ -34,22 +34,24 @@ const DONUT_COLORS = ["#8b7cf6", "#d7ee59", "#5fe3ab"];
 /* ── Payout Activity scale (data-assets §8) ─────────────────────────────── */
 
 function yScale(maxVal: number) {
-  // Auto-hug the data: the ceiling is the smallest "nice" number just above the
-  // tallest month (~10-45% headroom), not a fixed 5x overshoot. So an 11k max
-  // scales to a 15k axis (bars ~73%) instead of the old 25k (bars ~44%).
-  const target = Math.max(maxVal, 1) * 1.1;
+  // Auto-hug the data with a GUARANTEED top gap: the ceiling is the smallest
+  // "nice" number at or above 1.25x the tallest month, so the tallest bar is
+  // always <= 80% of the axis (>= 20% headroom) and never touches the top. e.g.
+  // an 80k max scales to a 100k axis (bars 80%); a 72k max to 100k (bars ~72%);
+  // an 11k max to 15k (bars ~73%). The 1.25x is what forces the gap.
+  const target = Math.max(maxVal, 1) * 1.25;
   const mag = Math.pow(10, Math.floor(Math.log10(target)));
   const norm = target / mag; // 1 … <10
+  // Ceilings chosen so niceMax/5 is always a round step — no 16k/12k tick
+  // ladders. e.g. 100k→20k steps, 75k→15k, 50k→10k, 25k→5k, 15k→3k.
   const niceMax =
     (norm <= 1 ? 1
       : norm <= 1.5 ? 1.5
       : norm <= 2 ? 2
       : norm <= 2.5 ? 2.5
       : norm <= 3 ? 3
-      : norm <= 4 ? 4
       : norm <= 5 ? 5
-      : norm <= 6 ? 6
-      : norm <= 8 ? 8
+      : norm <= 7.5 ? 7.5
       : 10) * mag;
   const yStep = niceMax / 5;
   const fmt = (v: number) =>
