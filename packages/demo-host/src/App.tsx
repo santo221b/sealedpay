@@ -563,7 +563,7 @@ export function App() {
             <Card style={{ padding: "26px 28px", position: "relative", overflow: "hidden" }}>
               <div aria-hidden className="pointer-events-none absolute" style={{ right: -60, top: -80, width: 260, height: 260, background: "radial-gradient(circle, rgba(255,255,255,0.05), rgba(0,0,0,0) 68%)" }} />
               <div className="relative">
-                <div className="flex items-center" style={{ gap: 13 }}>
+                <div className="flex items-center" style={{ gap: 20 }}>
                   <img src="/seal.svg" alt="SealedPay" width={42} height={42} style={{ flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.4, color: T.accentText }}>Case study</div>
