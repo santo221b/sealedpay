@@ -281,7 +281,7 @@ export function TourOverlay({
                   whileTap={{ scale: 0.95 }}
                   transition={motionTokens.springPop}
                   className="rounded-full"
-                  style={{ fontSize: 12.5, fontWeight: 600, color: tokens.text.secondary, padding: "7px 13px", background: "transparent", border: "1px solid rgba(255,255,255,0.16)", cursor: "pointer" }}
+                  style={{ fontSize: 12.5, fontWeight: 400, color: tokens.text.secondary, padding: "7px 13px", background: "transparent", border: "1px solid rgba(255,255,255,0.16)", cursor: "pointer" }}
                 >
                   Back
                 </motion.button>
@@ -293,7 +293,7 @@ export function TourOverlay({
                 whileTap={{ scale: 0.95 }}
                 transition={motionTokens.springPop}
                 className="rounded-full"
-                style={{ fontSize: 12.5, fontWeight: 700, color: "#08130e", padding: "7px 17px", background: tokens.accent.primary, cursor: "pointer" }}
+                style={{ fontSize: 12.5, fontWeight: 400, color: "#08130e", padding: "7px 17px", background: tokens.accent.primary, cursor: "pointer" }}
               >
                 {last ? "Done" : "Next"}
               </motion.button>
