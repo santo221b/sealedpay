@@ -35,5 +35,3 @@ The recipient signs an EIP-712 decryption request; the relayer checks the on-cha
 - **`packages/widget`** — **DisperseKit**, the engine. `DisperseWidget.tsx` (sender flow), `ReceiptWidget.tsx` (recipient flow), `lib/fhe/` (SDK init + encrypt/decrypt helpers), the shared `useDisperseFlow` state machine, self-contained wallet providers (wagmi + RainbowKit) so a host app needs nothing.
 - **`packages/contracts`** — Hardhat (fhevm template). `ConfidentialTokenDemo` (ERC-7984 + public mint faucet for the demo) and the audited TokenOps disperse contract. Mock-mode tests prove the full flow without any external service.
 - **`packages/demo-host`** — the DisperseKit SDK documentation site: a single-page integration guide for the SDK, with SealedPay as the case study.
-
-<!-- TODO(phase-b): pin down the exact disperse contract API once the TokenOps research lands; keep this file in sync with the deployed source. -->

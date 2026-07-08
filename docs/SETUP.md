@@ -46,11 +46,9 @@ VITE_CTOKEN_ADDRESS=0x...
 VITE_DISPERSE_ADDRESS=0x...
 ```
 
-then restart the dev servers. Get Sepolia ETH from any faucet; mint demo cTokens straight from the widget playground (the demo token has an open faucet `mint`).
+`VITE_DISPERSE_ADDRESS` is optional: omit it to use the official TokenOps singleton (the default), or set it to point at your own deployment. Then restart the dev servers. Get Sepolia ETH from any faucet, and mint demo cTokens straight from the widget playground (the demo token has an open faucet `mint`).
 
 ## Troubleshooting
 
 - **`npm install` warns about peer deps** — the workspaces pin compatible majors (wagmi 2 / viem 2 / RainbowKit 2); use npm ≥ 7 so workspaces hoist correctly.
 - **Tests are skipped** — the suite only runs against the local mock by design (`fhevm.isMock`); it will skip itself on a live network. Use the Sepolia scripts instead.
-
-<!-- TODO(phase-g): verify timings + add screenshots of a fresh-clone run -->

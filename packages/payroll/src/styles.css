@@ -26,6 +26,14 @@ body {
   overflow: hidden;
 }
 
+/* Keyboard-visible focus ring on form fields. Several inputs set inline
+   `outline: none`, which would otherwise leave keyboard users with no focus
+   indicator (box-shadow follows each field's own border-radius). */
+input:focus-visible,
+textarea:focus-visible {
+  box-shadow: 0 0 0 2px rgba(95, 230, 175, 0.55);
+}
+
 /* Amounts never jitter while scrambling. */
 .tnum {
   font-variant-numeric: tabular-nums;

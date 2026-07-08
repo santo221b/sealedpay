@@ -378,6 +378,23 @@ export function App() {
       </motion.header>
 
       <div className="relative z-0 mx-auto max-w-6xl px-6 md:grid" style={{ gridTemplateColumns: "212px minmax(0,1fr)", columnGap: 48 }}>
+        {/* Mobile section jumper (the sidebar is hidden below md) */}
+        <div className="md:hidden" style={{ position: "sticky", top: 0, zIndex: 20, padding: "12px 0", background: "rgba(11,12,14,0.92)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
+          <select
+            aria-label="Jump to a section"
+            defaultValue=""
+            onChange={(e) => {
+              const el = document.getElementById(e.target.value);
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }}
+            style={{ width: "100%", background: "rgba(255,255,255,0.05)", color: T.secondary, border: `1px solid ${T.cardBorder}`, borderRadius: 10, padding: "10px 12px", fontSize: 13, fontFamily: "inherit" }}
+          >
+            <option value="">Jump to a section</option>
+            {NAV.flatMap((g) => g.items).map(([id, label]) => (
+              <option key={id} value={id}>{label}</option>
+            ))}
+          </select>
+        </div>
         {/* Sidebar */}
         <aside className="hidden md:block" style={{ position: "sticky", top: 0, alignSelf: "start", maxHeight: "100vh", overflowY: "auto", paddingTop: 26, paddingBottom: 40 }}>
           <motion.nav className="flex flex-col" style={{ gap: 20 }} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.12, ease: EASE }}>
