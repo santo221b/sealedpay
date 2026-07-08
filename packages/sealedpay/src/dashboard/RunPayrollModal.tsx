@@ -950,8 +950,8 @@ function Finale(props: {
       {/* Proof card: the amount (tap to reveal) and the on-chain proof grouped
           into one surface, so the finale reads as confirm + one primary. */}
       <div
-        className="mx-auto mt-[18px]"
-        style={{ borderRadius: 16, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.18)", padding: "15px 16px 4px" }}
+        className="mx-auto mt-[18px] overflow-hidden"
+        style={{ borderRadius: 16, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.18)", padding: "15px 16px 0" }}
       >
         <button
           type="button"
@@ -975,8 +975,8 @@ function Finale(props: {
           href={props.url}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center justify-between rounded-[11px] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#e8f0ec]"
-          style={{ fontSize: 12, color: "#9db3aa", textDecoration: "none", margin: "0 -8px", padding: "12px 12px 11px" }}
+          className="flex items-center justify-between transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#e8f0ec]"
+          style={{ fontSize: 12, color: "#9db3aa", textDecoration: "none", margin: "0 -16px", padding: "13px 16px" }}
         >
           View on Etherscan
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

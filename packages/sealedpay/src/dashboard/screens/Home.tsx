@@ -335,25 +335,35 @@ export function Home({ data, tab, setTab, onAddEmployee, onViewInsights, onViewT
                         background: hasData ? segBg("base") : undefined,
                       }}
                     />
-                    {/* run caps (grow in from the bottom) */}
-                    {caps.map((r) => (
-                      <motion.div
-                        key={r.id}
-                        className={active ? "" : "hatch"}
-                        onMouseEnter={enterSeg(r.id, r.total, r.paid)}
-                        initial={reduced ? false : { scaleY: 0, opacity: 0.4 }}
-                        animate={{ scaleY: 1, opacity: 1 }}
-                        transition={{ duration: reduced ? 0 : 0.52, ease: EASE }}
-                        style={{
-                          width: 54,
-                          height: Math.max((r.total / chart.niceMax) * CH, 8),
-                          borderRadius: 14,
-                          transformOrigin: "bottom",
-                          transition: "background .25s",
-                          background: segBg(r.id),
-                        }}
-                      />
-                    ))}
+                    {/* All live runs for the month collapse into ONE segment on
+                        top of the seeded base. Each run used to be its own block
+                        with an 8px floor, so a month of many small one-off
+                        payments stacked into an overflowing tower. Merged, the
+                        height stays exactly proportional to the live total and
+                        the tooltip shows the month's live aggregate. */}
+                    {caps.length > 0 &&
+                      (() => {
+                        const liveTotal = caps.reduce((s, r) => s + r.total, 0);
+                        const livePaid = caps.reduce((s, r) => s + r.paid, 0);
+                        return (
+                          <motion.div
+                            key="live"
+                            className={active ? "" : "hatch"}
+                            onMouseEnter={enterSeg("live", liveTotal, livePaid)}
+                            initial={reduced ? false : { scaleY: 0, opacity: 0.4 }}
+                            animate={{ scaleY: 1, opacity: 1 }}
+                            transition={{ duration: reduced ? 0 : 0.52, ease: EASE }}
+                            style={{
+                              width: 54,
+                              height: Math.max((liveTotal / chart.niceMax) * CH, 5),
+                              borderRadius: 14,
+                              transformOrigin: "bottom",
+                              transition: "background .25s",
+                              background: segBg("live"),
+                            }}
+                          />
+                        );
+                      })()}
                     {active && (
                       <>
                         {/* glass tooltip — reflects the hovered block */}
