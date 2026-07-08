@@ -52,8 +52,8 @@ export function TopBar({
         className="flex cursor-pointer items-center transition-opacity hover:opacity-80"
         style={{ gap: 9 }}
       >
-        <SealLogo size={31} />
-        <span style={{ fontWeight: 700, fontSize: 14, color: tokens.text.heading }}>SealedPay</span>
+        <SealLogo size={29} />
+        <span style={{ fontWeight: 700, fontSize: 16, color: tokens.text.heading }}>SealedPay</span>
       </button>
 
       {/* Search field + its dropdown, lifted above the dimming overlay via z-60 */}

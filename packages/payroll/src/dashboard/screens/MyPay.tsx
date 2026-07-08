@@ -280,7 +280,7 @@ export function MyPay({ onExit }: { onExit: () => void }) {
         )}
 
         <p className="text-center" style={{ fontSize: 10.5, color: "#6f8577", marginTop: 6 }}>
-          SealedPay · Powered by DisperseKit · TokenOps disperse · Zama FHE
+          SealedPay · Powered by <a href="https://dispersekit-demo.vercel.app" target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: "2px" }}>DisperseKit</a> · TokenOps disperse · Zama FHE
         </p>
       </div>
     </div>
