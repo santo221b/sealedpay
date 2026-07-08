@@ -10,7 +10,7 @@
  * previewable at any time with the `?tour=1` query param (see Dashboard). Flip
  * the flag to true to enable it for every first-time visitor after onboarding.
  */
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import { tokens, motionTokens } from "../design/tokens";
 
@@ -76,7 +76,14 @@ export const TOUR_STEPS: TourStep[] = [
 ];
 
 const SCRIM = "rgba(6,12,10,0.74)";
+const RING_SPRING = { type: "spring", stiffness: 240, damping: 30 } as const;
+const TIP_SPRING = { type: "spring", stiffness: 300, damping: 32 } as const;
+const PAD = 7;
+const GAP = 14;
+const TIP_W = 320;
+
 type Rect = { top: number; left: number; width: number; height: number } | null;
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(v, hi));
 
 export function TourOverlay({
   step,
@@ -94,7 +101,10 @@ export function TourOverlay({
   onClose: () => void;
 }) {
   const [rect, setRect] = useState<Rect>(null);
+  const tipRef = useRef<HTMLDivElement>(null);
+  const [tipH, setTipH] = useState(170);
 
+  // Measure the target, tracking scroll + resize so the spotlight follows.
   useEffect(() => {
     let raf = 0;
     let tries = 0;
@@ -136,98 +146,103 @@ export function TourOverlay({
     };
   }, [step.target, index]);
 
+  // Keep the measured tooltip height current so placement never overflows.
+  useLayoutEffect(() => {
+    if (tipRef.current) setTipH(tipRef.current.offsetHeight);
+  });
+
   const last = index === total - 1;
-  const pad = 8;
-  const tipW = 320;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
-  let tipStyle: CSSProperties;
+  // Position the tooltip in viewport px (so it can glide) and never cut off.
+  let top: number;
+  let left: number;
   if (!rect) {
-    tipStyle = { top: "50%", left: "50%", transform: "translate(-50%,-50%)" };
+    top = vh / 2 - tipH / 2;
+    left = vw / 2 - TIP_W / 2;
   } else {
-    const below = rect.top + rect.height / 2 < vh / 2;
-    let left = rect.left + rect.width / 2 - tipW / 2;
-    left = Math.max(16, Math.min(left, vw - tipW - 16));
-    tipStyle = below
-      ? { top: rect.top + rect.height + pad + 8, left }
-      : { bottom: vh - rect.top + pad + 8, left };
+    left = clamp(rect.left + rect.width / 2 - TIP_W / 2, 16, vw - TIP_W - 16);
+    const belowTop = rect.top + rect.height + GAP;
+    const aboveTop = rect.top - tipH - GAP;
+    if (belowTop + tipH <= vh - 12) top = belowTop;
+    else if (aboveTop >= 12) top = aboveTop;
+    else top = clamp(belowTop, 12, vh - tipH - 12);
   }
 
+  const tipStyle: CSSProperties = {
+    position: "absolute",
+    width: TIP_W,
+    maxWidth: "calc(100vw - 32px)",
+    background: "rgba(16,30,24,0.94)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    borderRadius: 18,
+    boxShadow: "0 24px 60px -20px rgba(0,0,0,0.75)",
+    backdropFilter: "blur(14px)",
+    WebkitBackdropFilter: "blur(14px)",
+    padding: 18,
+  };
+
   return (
-    <div className="fixed inset-0" style={{ zIndex: 200 }}>
+    <motion.div className="fixed inset-0" style={{ zIndex: 200 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28, ease: motionTokens.easeEnter }}>
       {/* Click blocker — the tour cannot be skipped, only stepped through. */}
       <div className="absolute inset-0" onMouseDown={(e) => e.preventDefault()} />
 
-      {/* Dim: a box-shadow "hole" over the target, or a full scrim for centered steps. */}
+      {/* Dim + subtle ring over the target, or a full scrim for centered steps. */}
       {rect ? (
         <motion.div
           className="pointer-events-none absolute"
-          initial={false}
-          animate={{ top: rect.top - pad, left: rect.left - pad, width: rect.width + pad * 2, height: rect.height + pad * 2 }}
-          transition={{ type: "spring", stiffness: 300, damping: 32 }}
-          style={{ borderRadius: 18, boxShadow: `0 0 0 9999px ${SCRIM}`, border: `2px solid ${tokens.accent.primary}` }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, top: rect.top - PAD, left: rect.left - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }}
+          transition={RING_SPRING}
+          style={{ borderRadius: 16, boxShadow: `0 0 0 1.5px rgba(120,233,192,0.4), 0 0 0 9999px ${SCRIM}` }}
         />
       ) : (
-        <div className="absolute inset-0" style={{ background: SCRIM }} />
+        <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28 }} style={{ background: SCRIM }} />
       )}
 
-      {/* Tooltip */}
-      <motion.div
-        key={index}
-        initial={{ opacity: 0, y: 8, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={motionTokens.springPop}
-        className="absolute"
-        style={{
-          width: tipW,
-          maxWidth: "calc(100vw - 32px)",
-          background: "rgba(16,30,24,0.94)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          borderRadius: 18,
-          boxShadow: "0 24px 60px -20px rgba(0,0,0,0.75)",
-          backdropFilter: "blur(14px)",
-          WebkitBackdropFilter: "blur(14px)",
-          padding: 18,
-          ...tipStyle,
-        }}
-      >
-        <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: tokens.accent.pillText }}>
-          Step {index + 1} of {total}
-        </div>
-        <div style={{ fontSize: 15.5, fontWeight: 700, color: tokens.text.heading, marginTop: 7 }}>{step.title}</div>
-        <p style={{ fontSize: 12.5, color: tokens.text.muted, lineHeight: 1.55, marginTop: 6 }}>{step.body}</p>
-        <div className="flex items-center justify-between" style={{ marginTop: 15 }}>
-          <div className="flex items-center" style={{ gap: 4 }}>
-            {Array.from({ length: total }).map((_, i) => (
-              <span
-                key={i}
-                style={{ width: i === index ? 16 : 6, height: 6, borderRadius: 999, background: i === index ? tokens.accent.primary : "rgba(255,255,255,0.22)", transition: "width .2s, background .2s" }}
-              />
-            ))}
+      {/* Tooltip — glides between steps, content cross-fades. */}
+      <motion.div ref={tipRef} initial={false} animate={{ top, left }} transition={TIP_SPRING} style={tipStyle}>
+        <motion.div key={index} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: motionTokens.easeEnter }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: tokens.accent.pillText }}>
+            Step {index + 1} of {total}
           </div>
-          <div className="flex items-center" style={{ gap: 8 }}>
-            {index > 0 && (
+          <div style={{ fontSize: 15.5, fontWeight: 700, color: tokens.text.heading, marginTop: 7 }}>{step.title}</div>
+          <p style={{ fontSize: 12.5, color: tokens.text.muted, lineHeight: 1.55, marginTop: 6 }}>{step.body}</p>
+          <div className="flex items-center justify-between" style={{ marginTop: 15 }}>
+            <div className="flex items-center" style={{ gap: 4 }}>
+              {Array.from({ length: total }).map((_, i) => (
+                <motion.span
+                  key={i}
+                  animate={{ width: i === index ? 16 : 6, backgroundColor: i === index ? tokens.accent.primary : "rgba(255,255,255,0.22)" }}
+                  transition={{ duration: 0.25, ease: motionTokens.easeEnter }}
+                  style={{ height: 6, borderRadius: 999 }}
+                />
+              ))}
+            </div>
+            <div className="flex items-center" style={{ gap: 8 }}>
+              {index > 0 && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="rounded-full"
+                  style={{ fontSize: 12.5, fontWeight: 600, color: tokens.text.secondary, padding: "7px 13px", background: "transparent", border: "1px solid rgba(255,255,255,0.16)", cursor: "pointer" }}
+                >
+                  Back
+                </button>
+              )}
               <button
                 type="button"
-                onClick={onBack}
+                onClick={last ? onClose : onNext}
                 className="rounded-full"
-                style={{ fontSize: 12.5, fontWeight: 600, color: tokens.text.secondary, padding: "7px 13px", background: "transparent", border: "1px solid rgba(255,255,255,0.16)", cursor: "pointer" }}
+                style={{ fontSize: 12.5, fontWeight: 700, color: "#08130e", padding: "7px 17px", background: tokens.accent.primary, cursor: "pointer" }}
               >
-                Back
+                {last ? "Done" : "Next"}
               </button>
-            )}
-            <button
-              type="button"
-              onClick={last ? onClose : onNext}
-              className="rounded-full"
-              style={{ fontSize: 12.5, fontWeight: 700, color: "#08130e", padding: "7px 17px", background: tokens.accent.primary, cursor: "pointer" }}
-            >
-              {last ? "Done" : "Next"}
-            </button>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
