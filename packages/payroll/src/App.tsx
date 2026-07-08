@@ -188,6 +188,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
 
   /* ── first-run guided tour (dormant unless TOUR_DEFAULT_ON or ?tour=1) ──── */
   const [tourStep, setTourStep] = useState<number | null>(null);
+  const [tourClicking, setTourClicking] = useState(false);
   const [tourRipple, setTourRipple] = useState<{ x: number; y: number; key: number } | null>(null);
   const tourRippleId = useRef(0);
   const tourTimer = useRef<number | undefined>(undefined);
@@ -237,13 +238,16 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
     }
     const s = TOUR_STEPS[next];
     if (dir === 1 && s.clickAnchor) {
-      // Show the click, then perform the change a beat later so the ripple is
-      // clearly seen before the screen or popover transitions.
+      // Lift the overlay and ripple the click on the fully lit element, then a
+      // beat later perform the screen or popover change and drop the overlay
+      // back with the next spotlight.
+      setTourClicking(true);
       pulseAnchor(s.clickAnchor);
       tourTimer.current = window.setTimeout(() => {
         applyStepContext(s, false);
         setTourStep(next);
-      }, 560);
+        setTourClicking(false);
+      }, 760);
     } else {
       applyStepContext(s, false);
       setTourStep(next);
@@ -251,6 +255,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   };
   const closeTour = () => {
     window.clearTimeout(tourTimer.current);
+    setTourClicking(false);
     setTourSeenPref(true);
     setTourStep(null);
     setPopup(null);
@@ -809,6 +814,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
           index={tourStep}
           total={TOUR_STEPS.length}
           ripple={tourRipple}
+          clicking={tourClicking}
           onNext={() => advanceTour(1)}
           onBack={() => advanceTour(-1)}
           onClose={closeTour}
