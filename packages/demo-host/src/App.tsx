@@ -15,41 +15,40 @@ import { motion } from "framer-motion";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 const T = {
-  app: "linear-gradient(180deg, #05090e 0%, #06111a 40%, #081722 70%, #06121b 100%)",
-  bloom: "radial-gradient(115% 78% at 50% 125%, rgba(48,206,214,0.32), rgba(20,140,170,0.08) 44%, rgba(0,0,0,0) 66%)",
-  heading: "#eef6f8",
-  secondary: "#c7dbe0",
-  muted: "#95b2ba",
-  dim: "#6f8b93",
-  accent: "#39d5dd",
-  accentText: "#7ce8ec",
-  onAccent: "#04323a",
-  accentGrad: "linear-gradient(135deg,#5fe6e6,#28c6dc)",
-  glassBg: "linear-gradient(180deg, rgba(150,220,228,0.09), rgba(150,220,228,0.035))",
-  glassBgSoft: "linear-gradient(180deg, rgba(150,220,228,0.055), rgba(150,220,228,0.022))",
-  cardBorder: "rgba(225,244,248,0.10)",
+  // Neutral dark. A whisper of light at the top for depth, otherwise flat.
+  app: "radial-gradient(1100px 620px at 50% -8%, rgba(255,255,255,0.035), rgba(0,0,0,0) 55%), linear-gradient(180deg, #0b0c0e 0%, #090a0b 100%)",
+  heading: "#f2f4f5",
+  secondary: "#c9ced2",
+  muted: "#9aa1a6",
+  dim: "#6d747a",
+  accent: "#f2f4f5",
+  accentText: "#e4e7ea",
+  onAccent: "#0b0c0e",
+  accentGrad: "linear-gradient(180deg,#ffffff,#e6e9ec)",
+  glassBg: "linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.022))",
+  glassBgSoft: "linear-gradient(180deg, rgba(255,255,255,0.033), rgba(255,255,255,0.014))",
+  cardBorder: "rgba(255,255,255,0.10)",
   glassShadow:
-    "inset 0 1px 0 rgba(255,255,255,0.09), inset 0 8px 14px -9px rgba(255,255,255,0.06), 0 20px 54px -28px rgba(0,0,0,0.85)",
-  // The reading surface: dark frosted glass that dims the glow behind it,
-  // instead of letting it bleed up through the content.
-  panelBg: "linear-gradient(180deg, rgba(11,24,29,0.62), rgba(8,17,22,0.46))",
-  panelBorder: "rgba(190,232,240,0.10)",
-  panelShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 30px 80px -44px rgba(0,0,0,0.9)",
-  buttonGlow: "0 0 0 1px rgba(120,228,232,0.4), 0 6px 22px -6px rgba(46,205,221,0.6)",
-  codeBg: "rgba(4,11,15,0.66)",
+    "inset 0 1px 0 rgba(255,255,255,0.07), inset 0 8px 14px -9px rgba(255,255,255,0.05), 0 20px 54px -28px rgba(0,0,0,0.85)",
+  // The reading surface: a slightly raised dark panel.
+  panelBg: "linear-gradient(180deg, rgba(24,26,29,0.6), rgba(17,19,21,0.44))",
+  panelBorder: "rgba(255,255,255,0.10)",
+  panelShadow: "inset 0 1px 0 rgba(255,255,255,0.05), 0 30px 80px -44px rgba(0,0,0,0.9)",
+  buttonGlow: "0 8px 22px -10px rgba(0,0,0,0.7)",
+  codeBg: "rgba(0,0,0,0.34)",
   mono: "'JetBrains Mono', ui-monospace, monospace",
 };
 
-/* ── syntax highlighter ──────────────────────────────────────────────────── */
+/* ── syntax highlighter (warm-neutral, no blue) ──────────────────────────── */
 const HL: Record<string, string> = {
-  kw: "#5fd0e6",
-  str: "#8fe3b0",
-  com: "#5f838b",
-  num: "#e6b483",
-  fn: "#8ad8ff",
-  type: "#a9c4ff",
-  id: "#cfe9ee",
-  punc: "#8fb0b6",
+  kw: "#d59a9a",
+  str: "#9ecf9a",
+  com: "#6b7278",
+  num: "#d8b98a",
+  fn: "#e6e9ec",
+  type: "#cbb58a",
+  id: "#d2d6d9",
+  punc: "#8b9197",
 };
 const KEYWORDS = new Set(["import", "from", "export", "const", "let", "var", "function", "return", "await", "async", "new", "if", "else", "for", "while", "of", "in", "type", "interface", "extends", "as", "default", "void", "null", "undefined", "true", "false", "typeof"]);
 
@@ -298,7 +297,7 @@ function Card({ children, style, soft }: { children: React.ReactNode; style?: Re
 
 function Note({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ marginTop: 14, borderRadius: 12, border: `1px solid ${T.cardBorder}`, borderLeft: `2px solid ${T.accent}`, background: "rgba(57,213,221,0.06)", padding: "11px 14px", fontSize: 12.5, color: T.secondary, lineHeight: 1.55 }}>
+    <div style={{ marginTop: 14, borderRadius: 12, border: `1px solid ${T.cardBorder}`, borderLeft: `2px solid rgba(255,255,255,0.45)`, background: "rgba(255,255,255,0.04)", padding: "11px 14px", fontSize: 12.5, color: T.secondary, lineHeight: 1.55 }}>
       {children}
     </div>
   );
@@ -357,17 +356,14 @@ export function App() {
 
   return (
     <div className="relative min-h-screen" style={{ color: T.heading, fontFamily: "'Manrope', system-ui, sans-serif", background: T.app }}>
-      {/* one glow, rising from the center-bottom */}
-      <div aria-hidden className="pointer-events-none fixed inset-0" style={{ background: T.bloom }} />
-
       {/* Header — bare glowing logo, no band */}
       <motion.header initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }} className="relative z-10">
         <div className="mx-auto flex max-w-6xl items-center gap-2.5 px-6 py-5">
-          <span style={{ display: "inline-flex", filter: "drop-shadow(0 0 9px rgba(57,213,221,0.55))" }}>
+          <span style={{ display: "inline-flex", filter: "drop-shadow(0 0 9px rgba(255,255,255,0.35))" }}>
             <BrandMark size={26} />
           </span>
           <span style={{ fontWeight: 700, fontSize: 15, color: T.heading }}>DisperseKit</span>
-          <span className="rounded-full" style={{ marginLeft: 3, color: T.accentText, border: `1px solid rgba(95,222,230,0.4)`, fontSize: 10, fontWeight: 600, padding: "3px 9px", letterSpacing: 0.4 }}>SDK</span>
+          <span className="rounded-full" style={{ marginLeft: 3, color: T.accentText, border: `1px solid rgba(255,255,255,0.22)`, fontSize: 10, fontWeight: 600, padding: "3px 9px", letterSpacing: 0.4 }}>SDK</span>
         </div>
       </motion.header>
 
@@ -382,7 +378,7 @@ export function App() {
                   {g.items.map(([id, label]) => {
                     const on = active === id;
                     return (
-                      <a key={id} href={`#${id}`} style={{ fontSize: 13, fontWeight: on ? 600 : 500, color: on ? T.accentText : T.muted, padding: "5px 10px", borderRadius: 8, borderLeft: `2px solid ${on ? T.accent : "transparent"}`, background: on ? "rgba(57,213,221,0.08)" : "transparent", textDecoration: "none", transition: "color .15s, background .15s" }}>{label}</a>
+                      <a key={id} href={`#${id}`} style={{ fontSize: 13, fontWeight: on ? 600 : 500, color: on ? T.accentText : T.muted, padding: "5px 10px", borderRadius: 8, borderLeft: `2px solid ${on ? T.accent : "transparent"}`, background: on ? "rgba(255,255,255,0.07)" : "transparent", textDecoration: "none", transition: "color .15s, background .15s" }}>{label}</a>
                     );
                   })}
                 </div>
@@ -407,7 +403,7 @@ export function App() {
               <span style={{ fontSize: 12, fontWeight: 500, color: T.dim }}>Built on</span>
               {["Zama FHE", "TokenOps"].map((l) => (
                 <span key={l} className="inline-flex items-center" style={{ gap: 6, background: T.glassBg, border: `1px solid ${T.cardBorder}`, borderRadius: 999, padding: "5px 12px 5px 10px", fontSize: 12, fontWeight: 600, color: T.secondary }}>
-                  <span aria-hidden style={{ width: 6, height: 6, borderRadius: 999, background: T.accent, boxShadow: "0 0 8px rgba(57,213,221,0.85)" }} />
+                  <span aria-hidden style={{ width: 6, height: 6, borderRadius: 999, background: T.accent, boxShadow: "0 0 8px rgba(255,255,255,0.5)" }} />
                   {l}
                 </span>
               ))}
@@ -433,7 +429,7 @@ export function App() {
                   <p style={{ fontSize: 13, color: T.muted, lineHeight: 1.6, marginTop: 13 }}>{f.desc}</p>
                   <div className="flex flex-wrap" style={{ gap: 7, marginTop: 14 }}>
                     {f.tags.map((t) => (
-                      <span key={t} style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary, background: "rgba(120,204,214,0.07)", border: `1px solid ${T.cardBorder}`, borderRadius: 8, padding: "4px 9px" }}>{t}</span>
+                      <span key={t} style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary, background: "rgba(255,255,255,0.05)", border: `1px solid ${T.cardBorder}`, borderRadius: 8, padding: "4px 9px" }}>{t}</span>
                     ))}
                   </div>
                 </Card>
@@ -570,7 +566,7 @@ export function App() {
           {/* Case study */}
           <Reveal id="casestudy">
             <Card style={{ padding: "26px 28px", position: "relative", overflow: "hidden" }}>
-              <div aria-hidden className="pointer-events-none absolute" style={{ right: -60, top: -80, width: 260, height: 260, background: "radial-gradient(circle, rgba(46,201,221,0.16), rgba(0,0,0,0) 68%)" }} />
+              <div aria-hidden className="pointer-events-none absolute" style={{ right: -60, top: -80, width: 260, height: 260, background: "radial-gradient(circle, rgba(255,255,255,0.05), rgba(0,0,0,0) 68%)" }} />
               <div className="relative">
                 <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.4, color: T.accentText }}>Case study</div>
                 <div style={{ fontSize: 20, fontWeight: 700, color: T.heading, marginTop: 7 }}>SealedPay, built entirely on the SDK</div>
