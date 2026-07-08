@@ -276,14 +276,13 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
               ? "96%"
               : "6%";
 
-  // The finale (with its Done button) must render on ANY settled delivered
-  // state — verified, unverified, or verify-failed — so a rejected auto-verify
-  // signature can never strand the modal with no way out.
-  const finale =
-    phase === "delivered" &&
-    !flow.verifying &&
-    (!autoverify || Boolean(verification) || Boolean(flow.error)) &&
-    (verification ? deliveredN >= verification.length : true);
+  // The finale renders the INSTANT the disperse confirms — success is never
+  // gated behind verification. A hung, slow, or failed relayer decrypt can no
+  // longer hide a confirmed payout or trap the operator (the "Verifying
+  // delivery · 0/2" freeze): verifying / verified / verify-failed all show as a
+  // non-blocking sub-state inside the finale, which always carries Done + the
+  // Etherscan proof. Verification stays a real check — just never a gate.
+  const finale = phase === "delivered";
 
   return (
     <AnimatePresence>
@@ -394,6 +393,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
                     onVerify={verification ? undefined : () => void flow.verifyDelivery()}
                     verifyError={humanizeError(flow.error)}
                     verifying={flow.verifying}
+                    autoverify={autoverify}
                     onDone={onClose}
                     onViewMyPay={onViewMyPay}
                   />
@@ -819,11 +819,28 @@ function StepDisperse(props: {
         </div>
       )}
 
-      {/* The error itself surfaces as a toast; only the recovery action lives here. */}
+      {/* The error itself surfaces as a toast; the recovery actions live here.
+          The Etherscan link lets the operator confirm the payout independently
+          even if our own confirmation read keeps stalling. */}
       {props.error && props.pendingTxHash && (
-        <button type="button" onClick={props.onRetryConfirm} className="mt-3 w-full rounded-full font-medium" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
-          Retry confirmation
-        </button>
+        <>
+          <button type="button" onClick={props.onRetryConfirm} className="mt-3 w-full rounded-full font-medium" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
+            Retry confirmation
+          </button>
+          <a
+            href={`https://sepolia.etherscan.io/tx/${props.pendingTxHash}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2.5 flex items-center justify-center gap-1.5 transition-colors hover:text-[#e8f0ec]"
+            style={{ fontSize: 11.5, color: "#9db3aa", textDecoration: "none" }}
+          >
+            Check the transaction on Etherscan
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M7 17 17 7" />
+              <path d="M8 7h9v9" />
+            </svg>
+          </a>
+        </>
       )}
     </div>
   );
@@ -863,6 +880,7 @@ function Finale(props: {
   onVerify?: () => void;
   verifyError?: string;
   verifying: boolean;
+  autoverify: boolean;
   onDone: () => void;
   onViewMyPay?: () => void;
 }) {
@@ -905,14 +923,22 @@ function Finale(props: {
         </motion.span>
       </div>
       <h2 style={{ fontSize: 22, fontWeight: 700, color: "#f2f7f4", marginTop: 14 }}>
-        {mismatch ? "Couldn't verify amounts" : props.single ? "Payment delivered" : "Payroll delivered"}
+        {mismatch
+          ? props.verifiedOk === 0
+            ? "No amounts went through"
+            : "Some amounts didn't arrive"
+          : props.single
+            ? "Payment delivered"
+            : "Payroll delivered"}
       </h2>
       <p className="tnum" style={{ fontSize: 12.6, color: mismatch ? "#e6c082" : "#9db3aa", marginTop: 6 }}>
         {props.verifiedOk !== undefined ? `${props.verifiedOk}/${props.n} verified` : `${props.n} paid`}
       </p>
       {mismatch && (
         <p className="mx-auto" style={{ fontSize: 11.5, color: "#c9a86a", marginTop: 8, maxWidth: 322, lineHeight: 1.5 }}>
-          The transaction confirmed on-chain, but the amounts don't match. Your wallet balance was likely too low, so nothing moved. Top up the wallet and run payroll again.
+          {props.verifiedOk === 0
+            ? "The transaction confirmed on-chain, but no amounts moved. Your wallet balance was likely too low. Top up the wallet and run payroll again."
+            : `The transaction confirmed on-chain, but only ${props.verifiedOk} of ${props.n} amounts went through · the rest moved zero, most likely because the wallet ran short. Top up and run the remaining ones again.`}
         </p>
       )}
 
@@ -935,7 +961,7 @@ function Finale(props: {
           <span style={{ fontSize: 12, color: "#9db3aa" }}>cUSDd</span>
         </button>
         <div className="text-center" style={{ fontSize: 10.5, color: mismatch ? "#c9a86a" : "#6f857c", marginTop: 6 }}>
-          {mismatch ? "Attempted · not delivered" : "Employer only"}
+          {mismatch ? (props.verifiedOk === 0 ? "Attempted · not delivered" : "Partly delivered") : "Employer only"}
         </div>
 
         <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "12px -16px 0" }} />
@@ -955,13 +981,24 @@ function Finale(props: {
         </a>
       </div>
 
-      {props.onVerify && props.verifiedOk === undefined && (
-        <button type="button" onClick={props.onVerify} disabled={props.verifying} className="mx-auto mt-3.5 block w-full rounded-full font-medium disabled:opacity-50" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
-          {props.verifying ? "Decrypting" : props.single ? "Verify the payment was delivered" : "Verify salaries were delivered"}
+      {/* Verification is a NON-BLOCKING sub-state — the payment above is already
+          confirmed. While it runs, a quiet spinner; if it can't reach the
+          relayer, a retry. It never gates the Done button. */}
+      {props.verifiedOk === undefined && props.verifying && (
+        <div className="mx-auto mt-3.5 flex items-center justify-center gap-2" style={{ fontSize: 12.5, color: "#9db3aa" }}>
+          <span aria-hidden style={{ width: 13, height: 13, borderRadius: "50%", border: "2px solid rgba(120,233,192,0.28)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }} />
+          Verifying amounts privately
+        </div>
+      )}
+      {/* With auto-verify on, the button only appears as a RETRY after a failure —
+          otherwise the auto-run's spinner covers it (no one-frame button flash). */}
+      {props.onVerify && props.verifiedOk === undefined && !props.verifying && (!props.autoverify || Boolean(props.verifyError)) && (
+        <button type="button" onClick={props.onVerify} className="mx-auto mt-3.5 block w-full rounded-full font-medium" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
+          {props.verifyError ? "Retry verification" : props.single ? "Verify the payment was delivered" : "Verify salaries were delivered"}
         </button>
       )}
       {props.verifyError && props.verifiedOk === undefined && !props.verifying && (
-        <p className="mt-2" style={{ fontSize: 11, color: "#eb8f85" }}>
+        <p className="mx-auto mt-2" style={{ fontSize: 11, color: "#9db3aa", lineHeight: 1.5, maxWidth: 322 }}>
           {props.verifyError}
         </p>
       )}

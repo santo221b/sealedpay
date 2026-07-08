@@ -90,6 +90,14 @@ const OPERATOR_TTL_SECONDS = 3600; // time-boxed, not unlimited
 // minutes ago would pass isOperator at review time and expire mid-flow.
 const OPERATOR_MARGIN_SECONDS = 600;
 
+// Resilience budgets. These bound the awaits that can otherwise hang FOREVER —
+// the ones that go through the Zama relayer over browser `fetch` (no built-in
+// timeout). viem RPC reads and waitForTransactionReceipt already self-time-out
+// (10s transport / 180s receipt), so they're not wrapped here.
+const RELAYER_WARM_TIMEOUT_MS = 45_000; // getFhevmInstance: fetch FHE key + CRS
+const AUTHORIZE_TIMEOUT_MS = 150_000; // the operator-grant wallet prompt (idempotent, no funds)
+const VERIFY_TIMEOUT_MS = 60_000; // post-delivery decrypt round-trip (read-only)
+
 // ERC-7984 stores operator expiry privately (isOperator only returns a bool),
 // so we remember the `until` of grants WE made this session. An untracked
 // grant (from a previous session) has unknown expiry → re-grant to be safe.
@@ -115,6 +123,31 @@ function terminal(message: string): Error {
 }
 function isTerminal(e: unknown): boolean {
   return e instanceof Error && (e as Error & { terminal?: boolean }).terminal === true;
+}
+
+/**
+ * Bound an await that could otherwise hang forever. JS can't cancel the
+ * underlying promise, so this only stops US waiting — use it ONLY where a late
+ * resolution is harmless: read-only reads, decryptions, or a signature/grant
+ * that moves no funds. NEVER wrap the money-moving disperse write, whose late
+ * approval would broadcast and orphan the payout. The message deliberately
+ * omits reject/denied/cancel so isRejection() won't soften a real timeout into
+ * "cancelled" and swallow it.
+ */
+function withTimeout<T>(p: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    p.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
 }
 
 /**
@@ -182,6 +215,10 @@ export function useDisperseFlow(options: {
   const [pendingTxHash, setPendingTxHash] = useState<`0x${string}`>();
   // Amounts in row order, kept out of state to avoid re-render churn mid-flow.
   const amountsRef = useRef<bigint[]>([]);
+  // Synchronous re-entrancy latch: a second execute() before the first settles
+  // (double-click, StrictMode, a host re-firing) would broadcast twice. State
+  // updates are async, so guard with a ref set before the first await.
+  const executingRef = useRef(false);
 
   // No deployment on this chain is a configuration state, not an exception —
   // the widget renders a friendly card instead of crashing the host app.
@@ -264,9 +301,11 @@ export function useDisperseFlow(options: {
   );
 
   const execute = useCallback(async () => {
+    if (executingRef.current) return; // a run is already in flight — never broadcast twice
     if (!token || !disperse) return fail(new Error("No token or disperse contract configured"), "review");
     if (!sender || !walletClient || !publicClient) return fail(new Error("Connect a wallet first"), "review");
     if (rows.length === 0) return fail(new Error("No recipients"), "input");
+    executingRef.current = true;
     setError(undefined);
 
     // Capture the disperse tx hash the instant the SDK broadcasts it, by
@@ -298,7 +337,14 @@ export function useDisperseFlow(options: {
       //    animation plays; the TokenOps client encrypts through it in step 3.
       //    (The SDK validates recipient count / bounds inside disperse().)
       setPhase("encrypting");
-      const instance = await getFhevmInstance(FHE_NETWORK);
+      // Warming the relayer fetches the FHE key + CRS over `fetch` (no built-in
+      // timeout). Bound it so a dead relayer fails to review — nothing has
+      // broadcast yet, so a late resolution is harmless.
+      const instance = await withTimeout(
+        getFhevmInstance(FHE_NETWORK),
+        RELAYER_WARM_TIMEOUT_MS,
+        "Couldn't reach the Zama encryption service in time. Check your connection and try again.",
+      );
       const client = new ConfidentialDisperseClient({
         publicClient,
         walletClient: captureWallet,
@@ -319,7 +365,15 @@ export function useDisperseFlow(options: {
       });
       if (!isOperator || !hasFreshGrant(token, sender, disperse)) {
         const until = Math.floor(Date.now() / 1000) + OPERATOR_TTL_SECONDS;
-        await setOperator({ publicClient, walletClient, account: sender, token, spender: disperse, deadline: BigInt(until) });
+        // Bound the authorize prompt so an unanswered wallet request can't hang
+        // the flow forever. Safe to time out: the grant moves no funds and is
+        // idempotent, so a late approval just leaves a harmless operator grant a
+        // re-run detects. (The disperse write below is deliberately NOT bounded.)
+        await withTimeout(
+          setOperator({ publicClient, walletClient, account: sender, token, spender: disperse, deadline: BigInt(until) }),
+          AUTHORIZE_TIMEOUT_MS,
+          "The authorization wasn't confirmed in time. Approve it in your wallet, then run payroll again.",
+        );
         sessionGrants.set(grantKey(token, sender, disperse), until);
       }
 
@@ -373,6 +427,11 @@ export function useDisperseFlow(options: {
         // nothing moved, safe to return to review.
         fail(e, "review");
       }
+    } finally {
+      // Release the latch whether we ended in delivered, confirming, or review —
+      // the confirming state re-broadcasts nothing (retryConfirmation only reads
+      // the captured hash), so re-enabling execute() here can't double-send.
+      executingRef.current = false;
     }
   }, [token, disperse, sender, walletClient, publicClient, chainId, rows, fail, onDispersed, confirmDelivery]);
 
@@ -406,18 +465,30 @@ export function useDisperseFlow(options: {
     setVerifying(true);
     setError(undefined);
     try {
-      const instance = await getFhevmInstance(FHE_NETWORK);
-      const results = await userDecryptHandles({
-        instance,
-        requests: [
-          ...delivery.transferred.map((handle) => ({ handle, contractAddress: token })),
-          ...delivery.requested.map((handle) => ({ handle, contractAddress: disperse })),
-        ],
-        userAddress: sender,
-        signTypedData: (args) =>
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          walletClient.signTypedData({ ...args, account: sender } as any),
-      });
+      // This runs AFTER the payout is confirmed on-chain and is strictly
+      // read-only, but both the signature prompt and the relayer's userDecrypt
+      // go over channels with no timeout — a stalled relayer or an unanswered
+      // prompt would otherwise pin `verifying` true forever (the reported
+      // "Verifying delivery · 0/2" freeze). Bound the whole thing: on timeout
+      // the finale still shows the payment as delivered and offers a retry.
+      const results = await withTimeout(
+        (async () => {
+          const instance = await getFhevmInstance(FHE_NETWORK);
+          return userDecryptHandles({
+            instance,
+            requests: [
+              ...delivery.transferred.map((handle) => ({ handle, contractAddress: token })),
+              ...delivery.requested.map((handle) => ({ handle, contractAddress: disperse })),
+            ],
+            userAddress: sender,
+            signTypedData: (args) =>
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              walletClient.signTypedData({ ...args, account: sender } as any),
+          });
+        })(),
+        VERIFY_TIMEOUT_MS,
+        "Couldn't reach the Zama decryption service to verify amounts. The payment already went through. You can retry the check.",
+      );
       setVerification(
         delivery.recipients.map((address, i) => {
           const requestedAmount = results[delivery.requested[i]];
@@ -445,6 +516,7 @@ export function useDisperseFlow(options: {
     setVerification(undefined);
     setPendingTxHash(undefined);
     amountsRef.current = [];
+    executingRef.current = false;
   }, []);
 
   return {

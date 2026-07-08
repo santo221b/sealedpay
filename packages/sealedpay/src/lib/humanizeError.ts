@@ -27,6 +27,12 @@ export function humanizeError(raw: string | null | undefined): string | undefine
   if (/batch too large|too many recipients|batch.*(size|limit)|exceeds.*batch/.test(s)) {
     return "This batch has too many recipients for a single transaction. Split the list and run them separately.";
   }
+  // A post-delivery verification read that couldn't reach the relayer. The
+  // payout already confirmed on-chain, so this must reassure, not alarm —
+  // preserve the "already went through" meaning the generic Zama line drops.
+  if (/verify amounts|retry the check/.test(s)) {
+    return "The payment is confirmed on-chain. We couldn't reach Zama's relayer to verify the amounts right now · retry the check whenever you like.";
+  }
   // Zama's FHE relayer (encryption key / CRS fetch + every user-decryption).
   // Name it so an outage there never reads as an app or wallet fault.
   if (/relayer|bad json|fhevm|zama|public key|\bcrs\b|kms|encryption failed|decryption failed/.test(s)) {
