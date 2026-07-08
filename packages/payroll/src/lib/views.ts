@@ -9,6 +9,15 @@ import { SEED_EMPLOYEES, SEED_HISTORY, fmtAmount } from "./seed";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+/** Compact local clock time: "2 pm" on the hour, else "3:10 pm". */
+function fmtClock(d: Date): string {
+  let h = d.getHours();
+  const m = d.getMinutes();
+  const ampm = h >= 12 ? "pm" : "am";
+  h = h % 12 || 12;
+  return m === 0 ? `${h} ${ampm}` : `${h}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
 /**
  * Seed metadata for a roster member, matched by NAME. The roster may share a
  * single wallet (test flow), so an address match would collapse everyone onto
@@ -103,6 +112,9 @@ export function employeeRows(
     liveRows.push({
       key,
       date: `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`,
+      // Live rows carry the confirmed run's own recorded time — shown instantly,
+      // no block-time fetch needed (that lag is why a fresh row showed no time).
+      time: fmtClock(d),
       tx: r.txHash,
       url: `https://sepolia.etherscan.io/tx/${r.txHash}`,
       amount: decrypted[key],

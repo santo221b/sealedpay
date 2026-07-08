@@ -13,6 +13,8 @@ import { createPublicClient, http, parseAbiItem, zeroHash } from "viem";
 import { sepolia } from "viem/chains";
 import { useAccount, useWalletClient } from "wagmi";
 
+import { humanizeError } from "./humanizeError";
+
 const TOKEN = DEMO_TOKEN_ADDRESS;
 const FHE_NETWORK = "https://ethereum-sepolia-rpc.publicnode.com";
 const TRANSFER_EVENT = parseAbiItem(
@@ -128,7 +130,7 @@ export function useMyPay() {
         }
       }
     }
-    setError(lastErr instanceof Error ? lastErr.message : "Could not read your payments right now. Try again in a moment.");
+    setError(lastErr instanceof Error ? (humanizeError(lastErr.message) ?? lastErr.message) : "Could not read your payments right now. Try again in a moment.");
     setPhase("idle");
   }, [me]);
 
@@ -161,7 +163,7 @@ export function useMyPay() {
       setPhase("revealed");
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      setError(/user rejected|denied/i.test(message) ? "Request cancelled in the wallet." : message);
+      setError(humanizeError(message) ?? message);
       setPhase("idle");
     }
   }, [walletClient, me, payments, balanceHandle]);

@@ -63,7 +63,9 @@ import { savePendingRun, useOrphanRun } from "./lib/orphan";
 import { THEME_COLORS, setThemeColor } from "./lib/themeColor";
 import { clearOnboarded, loadIdentity, loadSamplesCleared, loadTourSeen, setSamplesClearedPref, setTourSeenPref } from "./lib/prefs";
 import { useSettings } from "./lib/prefs";
+import { humanizeError } from "./lib/humanizeError";
 import { rosterToRows } from "./lib/roster";
+import { useTxTimes } from "./lib/txTime";
 import { SEEDED_KEY, SEED_EMPLOYEES, fmtAmount, midWallet, shortWallet } from "./lib/seed";
 import { useVerifyRun } from "./lib/verifyRun";
 import { activityRows, employeeRows, encryptedAmountsCount, toPerson, toRunViews, type FundingEvent } from "./lib/views";
@@ -323,6 +325,14 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
       // Rejections do not reach onError from the engine; handled by the effect
       // below. This path is genuine on-chain / setup failure.
       if (/reject|denied|cancel/i.test(error.message)) return;
+      // A failing dependency (Zama relayer / Sepolia RPC) is not a payroll fault —
+      // name the service so the user knows to just retry, not that funds moved.
+      if (/relayer|bad json|fhevm|zama|public key|\bcrs\b|kms|http request failed|failed to fetch|json-rpc|rpc error|networkerror/i.test(error.message)) {
+        const msg = humanizeError(error.message) ?? "A service didn't respond. Try again in a moment.";
+        addNotif({ title: "Service didn't respond", sub: msg, color: "#e3b25f", tone: "warn" });
+        showToast("err", msg);
+        return;
+      }
       addNotif({ title: "Payroll failed", sub: "no funds moved · retry", color: "#e07a6a", tone: "err" });
       showToast("err", "Payroll failed · no funds moved · retry");
     },
@@ -335,12 +345,23 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   const toastedFlowErr = useRef<string>(undefined);
   useEffect(() => {
     const e = flow.error;
-    if (!e || toastedFlowErr.current === e || /transaction was sent/i.test(e)) return;
+    if (!e) {
+      // Reset between attempts so an identical error (e.g. cancelling the wallet
+      // prompt again) re-toasts instead of being deduped into silence.
+      toastedFlowErr.current = undefined;
+      return;
+    }
+    if (toastedFlowErr.current === e) return;
     if (/reject|denied|cancel/i.test(e)) {
       toastedFlowErr.current = e;
       addNotif({ title: "Payroll cancelled", sub: "you declined the request · nothing was sent", color: "#e3b25f", tone: "warn" });
       showToast("err", "Payroll cancelled · nothing was sent");
+    } else if (/transaction was sent|confirmation failed|couldn.t confirm/i.test(e)) {
+      // Broadcast but not yet confirmed — the modal keeps a Retry; surface why.
+      toastedFlowErr.current = e;
+      showToast("err", "Payment sent · confirmation is taking a moment. Retry from the dialog.");
     }
+    // Genuine on-chain / setup failures are toasted by onFlowError, not here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flow.error]);
 
@@ -352,7 +373,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
     const key = e ? `${e.runId}:${e.message}` : undefined;
     if (!e || !key || toastedRetroErr.current === key) return;
     toastedRetroErr.current = key;
-    showToast("err", /reject|denied|cancel/i.test(e.message) ? "Reveal cancelled in the wallet" : e.message);
+    showToast("err", humanizeError(e.message) ?? e.message);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [retro.error]);
 
@@ -387,22 +408,37 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   const executeWhenReady = useRef(0);
   const startRun = useCallback(
     async (selected: Person[]): Promise<string | null> => {
-      if (decimals === undefined) return "Token details are still loading, try again in a second.";
+      // Every block reason surfaces as a TOAST (never inline in the modal). The
+      // returned string only tells the modal to stay on step 0.
+      const block = (msg: string) => {
+        showToast("err", msg);
+        return msg;
+      };
+      if (decimals === undefined) return block("Token details are still loading, try again in a second.");
       const pseudo = selected.map((p, i) => ({ id: String(i), name: p.name, address: p.wallet as `0x${string}`, salary: String(p.salary) }));
       const parsed = rosterToRows(pseudo, decimals);
-      if (parsed.issues.length > 0) return parsed.namedProblems.join(" · ");
-      if (parsed.rows.length === 0) return "Nobody selected.";
-      // Preflight against a KNOWN (revealed) balance: an underfunded run would
-      // silently disperse encrypted zero (ERC-7984), so block it before gas.
-      if (balance.raw !== undefined && parsed.total > balance.raw) {
-        return `Your wallet holds ${formatAmount(balance.raw, decimals)} cUSDd but this run needs ${formatAmount(parsed.total, decimals)}. Fund the wallet first.`;
+      if (parsed.issues.length > 0) return block(parsed.namedProblems.join(" · "));
+      if (parsed.rows.length === 0) return block("Nobody selected.");
+      // Preflight against the REAL balance — an underfunded run silently
+      // disperses encrypted zero (ERC-7984). Decrypt the balance if we don't
+      // know it yet (one signature) so a doomed run is blocked at this first
+      // step with a toast, before any gas is spent.
+      const available = balance.raw !== undefined ? balance.raw : await balance.ensureRaw();
+      // Couldn't read the balance (cancelled in the wallet, or unavailable) —
+      // ensureRaw already toasted why. Block so a CANCELLED check never advances
+      // the flow to the next step. Do NOT proceed on an unknown balance.
+      if (available === undefined) return "balance-unreadable";
+      if (parsed.total > available) {
+        return block(
+          `Not enough funds. This run needs ${formatAmount(parsed.total, decimals)} cUSDd but the wallet holds ${formatAmount(available, decimals)}. Fund the wallet and try again.`,
+        );
       }
       pendingRun.current = { totalText: formatAmount(parsed.total, decimals), names: selected.map((p) => p.name) };
       executeWhenReady.current = parsed.rows.length;
       await flow.goToReview(parsed.rows);
       return null;
     },
-    [decimals, flow, balance],
+    [decimals, flow, balance, showToast],
   );
   useEffect(() => {
     if (executeWhenReady.current > 0 && flow.phase === "review" && flow.rows.length === executeWhenReady.current) {
@@ -539,9 +575,16 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
     return out;
   }, [retro.results, decimals]);
   const decryptingMap = useMemo(() => (retro.busyRunId ? { [retro.busyRunId]: true } : {}), [retro.busyRunId]);
-  const personRows = useMemo(
+  const baseRows = useMemo(
     () => (person ? employeeRows(person, liveRuns, decryptedRows, decryptingMap) : []),
     [person, liveRuns, decryptedRows, decryptingMap],
+  );
+  // Seed rows only need the on-chain block time (Etherscan) fetched; live rows
+  // already carry their own recorded time, so they render instantly.
+  const rowTimes = useTxTimes(baseRows.filter((r) => !r.live).map((r) => r.tx));
+  const personRows = useMemo(
+    () => baseRows.map((r) => ({ ...r, time: r.time ?? rowTimes[r.tx] })),
+    [baseRows, rowTimes],
   );
 
   const openEmployee = useCallback((id: string) => {
@@ -806,7 +849,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
           setPermPrompt(false);
         }}
       />
-      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} onValidatePayOne={payrollOnlyId ? validatePayOne : undefined} balance={payrollOnlyId ? data.balance : undefined} myAddress={employer} onViewMyPay={requestRecipientView} />
+      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} onTxLocked={() => showToast("err", "Transaction in progress · please wait")} onValidatePayOne={payrollOnlyId ? validatePayOne : undefined} balance={payrollOnlyId ? data.balance : undefined} myAddress={employer} onViewMyPay={requestRecipientView} />
       {tourStep !== null && (
         <TourOverlay
           step={TOUR_STEPS[tourStep]}

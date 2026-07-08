@@ -35,6 +35,10 @@ import type { Person } from "./contracts";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
+// Rotating status under the encrypting spinner — surfaces that the sealing is
+// real Zama FHE happening in the browser, not a fake progress bar.
+const SEAL_MESSAGES = ["Sealing amounts", "Zama FHE doing its magic", "Sealing under Zama's keys"];
+
 export interface RunPayrollModalProps {
   open: boolean;
   people: Person[];
@@ -45,6 +49,8 @@ export interface RunPayrollModalProps {
   onStart: (selected: Person[]) => Promise<string | null>;
   /** Close + flow.reset (only allowed when not mid-transaction). */
   onClose: () => void;
+  /** Called when the user tries to close mid-transaction — the shell toasts. */
+  onTxLocked?: () => void;
   /**
    * Single-employee runs: validate a one-off {recipient, amount} without
    * persisting anything to the roster. Presence of this prop switches the
@@ -64,7 +70,7 @@ export interface RunPayrollModalProps {
 
 type DesignStep = 0 | 1 | 2 | 3;
 
-export function RunPayrollModal({ open, people, flow, decimals, autoverify, onStart, onClose, onValidatePayOne, balance, myAddress, onViewMyPay }: RunPayrollModalProps) {
+export function RunPayrollModal({ open, people, flow, decimals, autoverify, onStart, onClose, onTxLocked, onValidatePayOne, balance, myAddress, onViewMyPay }: RunPayrollModalProps) {
   const reduced = useReducedMotion();
   const [sel, setSel] = useState<Record<string, boolean>>({});
   const [payReveal, setPayReveal] = useState(false);
@@ -118,17 +124,33 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
   const phase = flow.phase;
 
   /* Minimum encrypting dwell: keep the step visible long enough for the whole
-     seal cascade to land, no matter how fast the real FHE proof returns. */
+     seal cascade to land, no matter how fast the real FHE proof returns.
+
+     The release timer is held in a ref and is NOT returned as effect cleanup.
+     Once the FHE instance is warm (every run after the first) encryption
+     finishes in well under the dwell, so the engine advances
+     encrypting → authorizing before the timer fires. A cleanup-based timer
+     would be cancelled by that very phase change — and never re-armed — leaving
+     encHold stuck true and the modal frozen on the encrypting step while the tx
+     confirmed on-chain. So: arm once on entry, then let it run to completion. */
+  const encHoldTimer = useRef<number | undefined>(undefined);
   useEffect(() => {
     if (phase === "encrypting") {
       setEncHold(true);
+      window.clearTimeout(encHoldTimer.current);
       const ms = Math.max(1300, running.length * 720 + 500);
-      const t = window.setTimeout(() => setEncHold(false), ms);
-      return () => window.clearTimeout(t);
+      encHoldTimer.current = window.setTimeout(() => setEncHold(false), ms);
+    } else if (phase === "input" || phase === "review") {
+      // A pre-broadcast error drops us back — release immediately so the error
+      // surfaces instead of the cascade.
+      window.clearTimeout(encHoldTimer.current);
+      setEncHold(false);
     }
-    // A pre-broadcast error drops us back to review/input — never mask that.
-    if (phase === "input" || phase === "review") setEncHold(false);
+    // authorizing / dispersing / confirming / delivered: leave the armed timer
+    // running so it releases the hold on its own schedule.
   }, [phase, running.length]);
+  // Drop the dwell timer if the modal unmounts mid-run.
+  useEffect(() => () => window.clearTimeout(encHoldTimer.current), []);
 
   // Visually "still encrypting" = the engine is encrypting OR we are holding the
   // step open so the animation can finish. Never hold over review/input, so a
@@ -186,11 +208,16 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
     }
   }, [open, autoverify, phase, flow]);
 
+  // Synchronous latch: a rapid double-click fires before React re-renders the
+  // button to its disabled state, so guard the handler itself — one run at a time.
+  const submittingRef = useRef(false);
   async function handleContinue() {
-    if (selected.length === 0 || payBlocked) return;
+    if (selected.length === 0 || payBlocked || submittingRef.current) return;
+    submittingRef.current = true;
     setStartError(null);
     setRunning(selected);
     const err = await onStart(selected);
+    submittingRef.current = false;
     if (err) {
       setStartError(err);
       setRunning([]);
@@ -207,19 +234,24 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
 
   const inTx = ["encrypting", "authorizing", "dispersing", "confirming"].includes(phase);
   const requestClose = () => {
-    // Never abandon a broadcast tx by accident; scrim clicks are ignored mid-flight.
-    if (inTx) return;
+    // Mid-transaction (steps between select and the finale): closing is blocked
+    // so a broadcast is never abandoned by accident — the shell toasts why.
+    if (inTx) {
+      onTxLocked?.();
+      return;
+    }
     onClose();
   };
-  // Escape closes when it is safe to (not mid-transaction).
+  // Escape routes through the same guard — closes when safe, toasts mid-tx.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !inTx) onClose();
+      if (e.key === "Escape") requestClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, inTx, onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, inTx, onClose, onTxLocked]);
 
   const verifiedOk = verification ? verification.filter((v) => v.ok).length : 0;
   const n = running.length || selected.length;
@@ -277,8 +309,9 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
               />
             </div>
 
-            {/* Close — hidden mid-transaction so a broadcast is never abandoned. */}
-            {!inTx && <CloseButton onClick={requestClose} className="absolute z-[2]" style={{ top: 15, right: 15 }} />}
+            {/* Close — always visible, but mid-transaction it warns (toast) instead
+                of closing, so a broadcast is never abandoned by accident. */}
+            <CloseButton onClick={requestClose} className="absolute z-[2]" style={{ top: 15, right: 15 }} />
 
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
@@ -303,7 +336,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
                     payReveal={payReveal}
                     onToggleReveal={() => setPayReveal((r) => !r)}
                     error={humanizeError(startError ?? flow.error)}
-                    busy={phase === "review" && running.length > 0}
+                    busy={running.length > 0}
                     onContinue={() => void handleContinue()}
                     single={single}
                     payRecipient={payRecipient}
@@ -541,8 +574,8 @@ function StepSelect(props: {
                 </button>
               </p>
               <p className="mt-0.5 flex items-baseline gap-1.5">
-                <span className="tnum" style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
-                  <RevealAmount value={fmtAmount(props.total)} revealed={props.payReveal} label="total" />
+                <span style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
+                  <RevealAmount value={fmtAmount(props.total)} revealed={props.payReveal} label="total" tabular={false} />
                 </span>
                 <span style={{ fontSize: 12, color: "#9db3aa" }}>cUSDd</span>
               </p>
@@ -557,11 +590,7 @@ function StepSelect(props: {
         </>
       )}
 
-      {props.error && (
-        <p role="alert" className="mt-3 rounded-xl p-2.5" style={{ background: "rgba(224,110,98,0.1)", border: "1px solid rgba(224,110,98,0.4)", color: "#eb8f85", fontSize: 11.5 }}>
-          {props.error}
-        </p>
-      )}
+      {/* Errors surface only as toasts (never inline in this modal). */}
 
       <motion.button
         type="button"
@@ -572,7 +601,7 @@ function StepSelect(props: {
         className="mt-4 w-full rounded-full text-center font-medium disabled:cursor-not-allowed disabled:opacity-40"
         style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 13.5, padding: "12.6px 0" }}
       >
-        {props.busy ? "Preparing" : single ? "Pay" : "Continue"}
+        {props.busy ? "Processing" : single ? "Pay" : "Continue"}
       </motion.button>
     </div>
   );
@@ -593,6 +622,13 @@ const PAY_INPUT_STYLE: CSSProperties = {
 /* ── Step 1 — Encrypting (real proof + design cascade) ───────────────────── */
 
 function StepEncrypting({ people, encIdx, single }: { people: Person[]; encIdx: number; single: boolean }) {
+  const reduced = useReducedMotion();
+  const [msgIdx, setMsgIdx] = useState(0);
+  useEffect(() => {
+    if (reduced) return;
+    const t = window.setInterval(() => setMsgIdx((i) => (i + 1) % SEAL_MESSAGES.length), 1800);
+    return () => window.clearInterval(t);
+  }, [reduced]);
   return (
     <div className="mt-2.5">
       <h2 style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
@@ -616,9 +652,24 @@ function StepEncrypting({ people, encIdx, single }: { people: Person[]; encIdx: 
         ))}
       </div>
 
-      <div className="mt-4 flex items-center justify-center gap-2" style={{ fontSize: 12, color: "#9db3aa" }}>
-        <span style={{ width: 15, height: 15, borderRadius: "50%", border: "2.2px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }} />
-        Sealing amounts
+      {/* Fixed-width block, centered, so the spinner never shifts as the message
+          rotates and the text stays tight to the spinner (no floating gap). */}
+      <div className="mt-4 mx-auto flex items-center gap-2" style={{ width: 190, fontSize: 12, color: "#9db3aa" }}>
+        <span className="shrink-0" style={{ width: 15, height: 15, borderRadius: "50%", border: "2.2px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }} />
+        <span className="relative block" style={{ height: 16, flex: 1 }}>
+          <AnimatePresence initial={false}>
+            <motion.span
+              key={msgIdx}
+              className="absolute left-0 top-0 whitespace-nowrap"
+              initial={reduced ? false : { opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduced ? { opacity: 0 } : { opacity: 0, y: -5 }}
+              transition={{ duration: 0.32, ease: EASE }}
+            >
+              {SEAL_MESSAGES[msgIdx]}
+            </motion.span>
+          </AnimatePresence>
+        </span>
       </div>
     </div>
   );
@@ -736,17 +787,11 @@ function StepDisperse(props: {
         </div>
       )}
 
-      {props.error && (
-        <div className="mt-3">
-          <p role="alert" className="rounded-xl p-2.5" style={{ background: "rgba(224,110,98,0.1)", border: "1px solid rgba(224,110,98,0.4)", color: "#eb8f85", fontSize: 11.5 }}>
-            {props.error}
-          </p>
-          {props.pendingTxHash && (
-            <button type="button" onClick={props.onRetryConfirm} className="mt-2 w-full rounded-full font-medium" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
-              Retry confirmation
-            </button>
-          )}
-        </div>
+      {/* The error itself surfaces as a toast; only the recovery action lives here. */}
+      {props.error && props.pendingTxHash && (
+        <button type="button" onClick={props.onRetryConfirm} className="mt-3 w-full rounded-full font-medium" style={{ background: "#f5f8f6", color: "#14503b", fontSize: 13.5, padding: "12.6px 0" }}>
+          Retry confirmation
+        </button>
       )}
     </div>
   );
@@ -799,24 +844,45 @@ function Finale(props: {
       /* clipboard unavailable */
     }
   };
+  // A settled verification that came back short: the disperse tx confirmed, but
+  // the decrypted transferred amounts don't match what was requested — almost
+  // always an underfunded wallet (ERC-7984 silently moves zero when short). The
+  // finale must NOT read as a clean success in that case.
+  const mismatch = props.verifiedOk !== undefined && props.verifiedOk < props.n;
+  const accent = mismatch ? "#e6c082" : "#5fe3ab";
   return (
     <div className="text-center" style={{ padding: "12px 6px 4px 6px" }}>
       <div className="relative mx-auto flex items-center justify-center" style={{ width: 96, height: 96 }}>
         <motion.span
           className="absolute rounded-full"
-          style={{ inset: -12, background: "radial-gradient(circle, rgba(95,230,175,0.2), transparent 72%)" }}
+          style={{ inset: -12, background: `radial-gradient(circle, ${mismatch ? "rgba(230,192,130,0.2)" : "rgba(95,230,175,0.2)"}, transparent 72%)` }}
           initial={{ scale: 0.55, opacity: 0 }}
           animate={{ scale: 1, opacity: [0, 1, 0.6] }}
           transition={{ duration: 1.1, ease: "easeOut" }}
         />
         <motion.span initial={{ scale: 0 }} animate={{ scale: [0, 1.18, 1] }} transition={{ duration: 0.55, ease: EASE }}>
-          <DocCheckGlyph size={80} color="#5fe3ab" />
+          {mismatch ? (
+            <svg width="74" height="74" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          ) : (
+            <DocCheckGlyph size={80} color="#5fe3ab" />
+          )}
         </motion.span>
       </div>
-      <h2 style={{ fontSize: 22, fontWeight: 700, color: "#f2f7f4", marginTop: 14 }}>{props.single ? "Payment delivered" : "Payroll delivered"}</h2>
-      <p className="tnum" style={{ fontSize: 12.6, color: "#9db3aa", marginTop: 6 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, color: "#f2f7f4", marginTop: 14 }}>
+        {mismatch ? "Couldn't verify amounts" : props.single ? "Payment delivered" : "Payroll delivered"}
+      </h2>
+      <p className="tnum" style={{ fontSize: 12.6, color: mismatch ? "#e6c082" : "#9db3aa", marginTop: 6 }}>
         {props.verifiedOk !== undefined ? `${props.verifiedOk}/${props.n} verified` : `${props.n} paid`}
       </p>
+      {mismatch && (
+        <p className="mx-auto" style={{ fontSize: 11.5, color: "#c9a86a", marginTop: 8, maxWidth: 322, lineHeight: 1.5 }}>
+          The transaction confirmed on-chain, but the amounts don't match. Your wallet balance was likely too low, so nothing moved. Top up the wallet and run payroll again.
+        </p>
+      )}
 
       {/* Proof card: the amount (tap to reveal) and the on-chain proof grouped
           into one surface, so the finale reads as confirm + one primary. */}
@@ -836,8 +902,8 @@ function Finale(props: {
           </span>
           <span style={{ fontSize: 12, color: "#9db3aa" }}>cUSDd</span>
         </button>
-        <div className="text-center" style={{ fontSize: 10.5, color: "#6f857c", marginTop: 6 }}>
-          Employer only
+        <div className="text-center" style={{ fontSize: 10.5, color: mismatch ? "#c9a86a" : "#6f857c", marginTop: 6 }}>
+          {mismatch ? "Attempted · not delivered" : "Employer only"}
         </div>
 
         <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "12px -16px 0" }} />

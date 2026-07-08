@@ -44,6 +44,8 @@ export interface RunView {
 export interface PayRow {
   key: string;
   date: string;
+  /** On-chain time of the tx (block timestamp), e.g. "3:10 PM"; undefined until resolved. */
+  time?: string;
   tx: string;
   url: string;
   /** Known plaintext (seed rows / already-decrypted live rows); undefined until a live row is decrypted. */

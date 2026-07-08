@@ -24,6 +24,15 @@ export function humanizeError(raw: string | null | undefined): string | undefine
   if (/wrong network|chain mismatch|does not match the target chain|chain id/.test(s)) {
     return "Wrong network. Switch your wallet to Sepolia and try again.";
   }
+  // Zama's FHE relayer (encryption key / CRS fetch + every user-decryption).
+  // Name it so an outage there never reads as an app or wallet fault.
+  if (/relayer|bad json|fhevm|zama|public key|\bcrs\b|kms/.test(s)) {
+    return "Zama's FHE relayer didn't respond correctly. Give it a moment and try again.";
+  }
+  // The Sepolia RPC node (all reads/writes go through it).
+  if (/http request failed|failed to fetch|fetch failed|json-rpc|rpc error|networkerror|network request failed|load failed/.test(s)) {
+    return "The Sepolia RPC node didn't respond. Give it a moment and try again.";
+  }
   if (/timeout|timed out|took too long/.test(s)) {
     return "The network took too long to respond. Check the connection and try again.";
   }

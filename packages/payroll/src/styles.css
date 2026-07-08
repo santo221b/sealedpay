@@ -26,12 +26,14 @@ body {
   overflow: hidden;
 }
 
-/* Keyboard-visible focus ring on form fields. Several inputs set inline
-   `outline: none`, which would otherwise leave keyboard users with no focus
-   indicator (box-shadow follows each field's own border-radius). */
+/* Form fields render their own focus via border/background — no ring overlay
+   (neither a custom box-shadow nor the browser default outline). */
+input:focus,
 input:focus-visible,
+textarea:focus,
 textarea:focus-visible {
-  box-shadow: 0 0 0 2px rgba(95, 230, 175, 0.55);
+  outline: none;
+  box-shadow: none;
 }
 
 /* Amounts never jitter while scrambling. */

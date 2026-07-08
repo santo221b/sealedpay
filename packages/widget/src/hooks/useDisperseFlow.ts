@@ -94,6 +94,22 @@ function hasFreshGrant(token: string, sender: string, operator: string): boolean
   return until !== undefined && until - Date.now() / 1000 > OPERATOR_MARGIN_SECONDS;
 }
 
+// A mined transaction receipt is FINAL: a revert (operator grant expired mid-
+// flow, wrong fee, contract revert) or an event-less confirmation can never be
+// retried into a delivery. `terminal` tags such failures so execute() routes
+// them to a recoverable state instead of the "stay in confirming + retry"
+// branch — which is correct ONLY for a genuinely-unconfirmed broadcast (an RPC
+// hiccup where the tx may still succeed). Retrying a mined receipt just re-reads
+// the same final receipt and re-throws, stranding the modal forever.
+function terminal(message: string): Error {
+  const err = new Error(message) as Error & { terminal?: boolean };
+  err.terminal = true;
+  return err;
+}
+function isTerminal(e: unknown): boolean {
+  return e instanceof Error && (e as Error & { terminal?: boolean }).terminal === true;
+}
+
 export function useDisperseFlow(options: {
   token: `0x${string}` | undefined;
   chainId: number;
@@ -178,8 +194,12 @@ export function useDisperseFlow(options: {
     async (txHash: `0x${string}`) => {
       if (!publicClient) throw new Error("No network connection");
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+      // waitForTransactionReceipt RESOLVES on a reverted tx (it only rejects
+      // when the tx never mines) — so inspect status: a revert moved nothing.
+      if (receipt.status === "reverted")
+        throw terminal("The payout transaction reverted on-chain, so no funds moved. You can safely run it again.");
       const [event] = parseEventLogs({ abi: disperseAbi, logs: receipt.logs, eventName: "DirectDistribution" });
-      if (!event) throw new Error("Transaction confirmed but no DirectDistribution event was emitted");
+      if (!event) throw terminal("The transaction confirmed but no distribution event was emitted, so it could not be verified.");
       const result: DeliveryResult = {
         txHash,
         recipients: [...event.args.recipients],
@@ -268,15 +288,20 @@ export function useDisperseFlow(options: {
       setPhase("confirming");
       await confirmDelivery(txHash);
     } catch (e) {
-      if (txHash) {
-        // The payout is already in flight — returning to review here would
-        // invite a second send. Stay in confirming; the UI offers a retry.
+      if (txHash && !isTerminal(e)) {
+        // Broadcast but not yet confirmed (RPC hiccup) — the payout may still
+        // land, so returning to review would invite a second send. Stay in
+        // confirming with the tx hash on display; the UI offers a retry.
         setError(
           `The payout transaction was sent (${txHash.slice(0, 10)}…) but confirmation failed: ${
             e instanceof Error ? e.message : String(e)
           }`,
         );
       } else {
+        // Pre-broadcast failure, OR a mined-and-final failure (reverted /
+        // event-less) where nothing moved — safe to return to review so the
+        // modal is dismissable and the run can be retried without double paying.
+        if (txHash) setPendingTxHash(undefined);
         fail(e, "review");
       }
     }

@@ -19,6 +19,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { parseUnits, zeroHash } from "viem";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 
+import { humanizeError } from "./humanizeError";
+
 const FHE_NETWORK = "https://ethereum-sepolia-rpc.publicnode.com";
 const TOKEN = DEMO_TOKEN_ADDRESS;
 /** Per-call faucet cap enforced by the demo token contract (6 decimals). */
@@ -113,7 +115,7 @@ export function useWalletBalance(decimals: number | undefined, onError?: (msg: s
       setRevealed(true);
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      const friendly = /user rejected|denied/i.test(message) ? "Request cancelled in the wallet." : message;
+      const friendly = humanizeError(message) ?? message;
       setError(friendly);
       onError?.(friendly);
     } finally {
@@ -123,6 +125,52 @@ export function useWalletBalance(decimals: number | undefined, onError?: (msg: s
   }, [clear, handle, employer, walletClient, onError]);
 
   const hide = useCallback(() => setRevealed(false), []);
+
+  /**
+   * Return the REAL decrypted balance, decrypting once (one wallet signature) if
+   * it is not already known. Used to preflight a payroll run: an underfunded run
+   * silently disperses encrypted zero (ERC-7984), so we must know the true
+   * balance to block it before any gas is spent. Returns undefined only if the
+   * wallet is unavailable or the user rejects the signature (caller proceeds and
+   * lets post-run verification catch a shortfall).
+   */
+  const ensureRaw = useCallback(async (): Promise<bigint | undefined> => {
+    if (clear !== undefined) return clear;
+    if (!employer || !walletClient || !TOKEN) {
+      onError?.("Connect your wallet first");
+      return undefined;
+    }
+    if (!handle || handle === zeroHash) {
+      setClear(0n);
+      return 0n;
+    }
+    if (inFlight.current) return undefined;
+    inFlight.current = true;
+    setPending(true);
+    try {
+      const instance = await getFhevmInstance(FHE_NETWORK);
+      const result = await userDecryptHandles({
+        instance,
+        requests: [{ handle, contractAddress: TOKEN }],
+        userAddress: employer,
+        signTypedData: (args) =>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          walletClient.signTypedData({ ...args, account: employer } as any),
+      });
+      const value = result[handle];
+      setClear(value);
+      return value;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      const friendly = humanizeError(message) ?? message;
+      setError(friendly);
+      onError?.(friendly);
+      return undefined;
+    } finally {
+      inFlight.current = false;
+      setPending(false);
+    }
+  }, [clear, handle, employer, walletClient, onError]);
 
   return {
     /** Formatted plaintext once decrypted; undefined until then. */
@@ -134,6 +182,7 @@ export function useWalletBalance(decimals: number | undefined, onError?: (msg: s
     reveal,
     hide,
     refresh,
+    ensureRaw,
     connected: Boolean(employer),
   };
 }
@@ -224,11 +273,7 @@ export function useFundWallet(
         return true;
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
-        const friendly = /user rejected|denied/i.test(message)
-          ? "Request cancelled in the wallet."
-          : /insufficient funds/i.test(message)
-            ? "Not enough Sepolia ETH for gas. Grab some from a faucet."
-            : message;
+        const friendly = humanizeError(message) ?? message;
         setError(friendly);
         onError?.(friendly);
         return false;

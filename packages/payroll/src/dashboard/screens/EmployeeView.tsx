@@ -185,6 +185,9 @@ export function EmployeeView({
               <span className="min-w-0">
                 <span className="tnum block" style={{ fontSize: 13.5, fontWeight: 600, color: "#eef4f1" }}>
                   {row.date}
+                  {row.time && (
+                    <span style={{ fontWeight: 400, color: tokens.text.muted, fontVariantNumeric: "normal" }}> · {row.time}</span>
+                  )}
                 </span>
                 <span
                   className="tnum block whitespace-nowrap"

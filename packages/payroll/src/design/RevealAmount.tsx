@@ -17,10 +17,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const SCRAMBLE_FRAME_MS = 40;
 const RESOLVE_STAGGER_MS = 60;
-// The encrypt "seal" runs a touch slower (~37%) than a reveal so the ciphertext
-// scramble reads as deliberate rather than a blink.
-const SEAL_FRAME_MS = 54;
-const SEAL_STAGGER_MS = 82;
+// The encrypt "seal" whirs every digit for a visible beat before it collapses
+// to the stars, so it reads as the number being scrambled rather than a blink.
+const SEAL_FRAME_MS = 45; // digit whir cadence
+const SEAL_SCRAMBLE_MS = 520; // how long the number visibly churns before sealing
 const HIDE_MS = 230;
 const GLOW_MS = 640;
 const DIGITS = "0123456789";
@@ -41,6 +41,7 @@ export function RevealAmount({
   className = "",
   charClassName = "",
   label = "amount",
+  tabular = true,
 }: {
   /** Formatted plaintext, e.g. "4.5K" or "22,350.50". Undefined = unknown yet. */
   value: string | undefined;
@@ -53,8 +54,11 @@ export function RevealAmount({
   className?: string;
   charClassName?: string;
   label?: string;
+  /** Tabular figures (monospaced digits). Off for large display numbers. */
+  tabular?: boolean;
 }) {
   const reduced = useReducedMotion();
+  const num = tabular ? "tnum " : "";
   const [phase, setPhase] = useState<Phase>(revealed && value !== undefined ? "shown" : "masked");
   const [resolvedCount, setResolvedCount] = useState(revealed && value !== undefined ? (value?.length ?? 0) : 0);
   const [, setFrame] = useState(0); // ticks re-randomize the unresolved chars
@@ -113,7 +117,7 @@ export function RevealAmount({
     showChars && value !== undefined ? (
       <motion.span
         key="value"
-        className="tnum inline-flex"
+        className={`${num}inline-flex`}
         animate={
           glow && !reduced
             ? { textShadow: ["0 0 0px rgba(120,233,192,0)", "0 0 18px rgba(120,233,192,0.75)", "0 0 0px rgba(120,233,192,0)"] }
@@ -143,7 +147,7 @@ export function RevealAmount({
     ) : (
       <motion.span
         key="stars"
-        className={`tnum inline-flex font-normal ${pending && !reduced ? "animate-pulse" : ""}`}
+        className={`${num}inline-flex font-normal ${pending && !reduced ? "animate-pulse" : ""}`}
         initial={false}
         animate={phase === "hiding" && !reduced ? { filter: ["blur(6px)", "blur(0px)"] } : { filter: "blur(0px)" }}
         transition={{ duration: HIDE_MS / 1000, ease: [0.4, 0, 1, 1] }}
@@ -214,12 +218,20 @@ export function SealAmount({
   const reduced = useReducedMotion();
   const [phase, setPhase] = useState<"clear" | "scrambling" | "sealed">(sealed ? "sealed" : "clear");
   const [, setFrame] = useState(0);
-  const hiddenCount = useRef(0);
+  const timers = useRef<number[]>([]);
+
+  const clearTimers = useCallback(() => {
+    for (const t of timers.current) {
+      window.clearInterval(t);
+      window.clearTimeout(t);
+    }
+    timers.current = [];
+  }, []);
 
   useEffect(() => {
+    clearTimers();
     if (!sealed) {
       setPhase("clear");
-      hiddenCount.current = 0;
       return;
     }
     if (reduced) {
@@ -227,40 +239,44 @@ export function SealAmount({
       return;
     }
     setPhase("scrambling");
-    hiddenCount.current = 0;
-    const scramble = window.setInterval(() => setFrame((f) => f + 1), SEAL_FRAME_MS);
-    const resolver = window.setInterval(() => {
-      hiddenCount.current += 1;
-      if (hiddenCount.current >= value.length) {
-        window.clearInterval(scramble);
-        window.clearInterval(resolver);
-        setPhase("sealed");
-      }
-    }, SEAL_STAGGER_MS);
-    return () => {
-      window.clearInterval(scramble);
-      window.clearInterval(resolver);
-    };
-  }, [sealed, value, reduced]);
+    // Whir every digit for the beat, then snap to the sealed stars.
+    const whir = window.setInterval(() => setFrame((f) => f + 1), SEAL_FRAME_MS);
+    const settle = window.setTimeout(() => {
+      window.clearInterval(whir);
+      setPhase("sealed");
+    }, SEAL_SCRAMBLE_MS);
+    timers.current = [whir, settle];
+    return clearTimers;
+  }, [sealed, value, reduced, clearTimers]);
 
   if (phase === "clear") return <span className={`tnum ${className}`}>{value}</span>;
   if (phase === "sealed")
     return (
       <motion.span
         className={`tnum font-normal ${className}`}
-        initial={reduced ? false : { scale: 0.9, opacity: 0.6 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+        initial={reduced ? false : { scale: 0.82, opacity: 0.4 }}
+        // Same green glow pulse the reveal fires the instant a value lands — here
+        // it fires the instant the amount seals, so the sealing reads as a beat.
+        animate={
+          reduced
+            ? { opacity: 1 }
+            : {
+                scale: 1,
+                opacity: 1,
+                textShadow: ["0 0 0px rgba(120,233,192,0)", "0 0 18px rgba(120,233,192,0.75)", "0 0 0px rgba(120,233,192,0)"],
+              }
+        }
+        transition={{ duration: 0.64, ease: [0.22, 1, 0.36, 1] }}
       >
         {STARS}
       </motion.span>
     );
+  // Scrambling: re-randomize each digit every frame; keep separators (",", ".",
+  // "K", "$") stable so it still reads as the salary being churned, not noise.
   return (
-    <span className={`tnum ${className}`}>
+    <span className={`tnum ${className}`} style={{ opacity: 0.9 }}>
       {value.split("").map((ch, i) => (
-        <span key={i} className="opacity-80">
-          {i < hiddenCount.current ? (i < 3 ? "*" : " ") : /\d|[a-zA-Z]/.test(ch) ? randomDigit() : ch}
-        </span>
+        <span key={i}>{/\d/.test(ch) ? randomDigit() : ch}</span>
       ))}
     </span>
   );
