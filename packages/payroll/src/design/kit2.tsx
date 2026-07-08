@@ -14,15 +14,19 @@ export function GlassCard({
   dim = false,
   className = "",
   style,
+  dataTour,
 }: {
   children: ReactNode;
   dim?: boolean;
   className?: string;
   style?: CSSProperties;
+  /** First-run tour anchor, surfaced as data-tour on the root element. */
+  dataTour?: string;
 }) {
   return (
     <div
       className={className}
+      data-tour={dataTour}
       style={{
         background: dim ? tokens.glass.cardDim : tokens.glass.card,
         boxShadow: tokens.glass.cardShadow,

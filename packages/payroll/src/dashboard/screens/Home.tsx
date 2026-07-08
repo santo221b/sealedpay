@@ -239,7 +239,7 @@ export function Home({ data, tab, setTab, onAddEmployee }: HomeScreenProps) {
 
       {/* Payout Activity card — shown on the overview and the Payouts tab */}
       {(tab === "All" || tab === "Payouts") && (
-      <GlassCard style={{ padding: "20px 23px 16px 23px" }}>
+      <GlassCard dataTour="tour-home-chart" style={{ padding: "20px 23px 16px 23px" }}>
         <div className="flex items-center justify-between">
           <div style={{ fontWeight: 400, fontSize: 17 }}>Payout Activity</div>
           <ViewAll />
@@ -425,7 +425,7 @@ export function Home({ data, tab, setTab, onAddEmployee }: HomeScreenProps) {
       {tab === "All" && (
       <div className="grid" style={{ gridTemplateColumns: "1.35fr 1fr", gap: 20 }}>
         {/* Team donut card */}
-        <GlassCard className="flex flex-col" style={{ padding: "16px 23px" }}>
+        <GlassCard dataTour="tour-home-team-donut" className="flex flex-col" style={{ padding: "16px 23px" }}>
           <div className="flex items-center justify-between">
             <div style={{ fontWeight: 400, fontSize: 17 }}>Team</div>
             <ViewAll />

@@ -35,6 +35,7 @@ import { useAccount, useDisconnect } from "wagmi";
 import type { DashboardData, NavIndex, PopupKind, Person, ToastState } from "./dashboard/contracts";
 import { Rail } from "./dashboard/Rail";
 import { RunPayrollModal } from "./dashboard/RunPayrollModal";
+import { TourOverlay, TOUR_STEPS, TOUR_DEFAULT_ON } from "./dashboard/TourOverlay";
 import { TopBar } from "./dashboard/TopBar";
 import { WalletControl } from "./dashboard/WalletControl";
 import { EmployeeSidebar } from "./dashboard/EmployeeSidebar";
@@ -60,7 +61,7 @@ import { useHistory } from "./lib/history";
 import { useNotifications } from "./lib/notifications";
 import { savePendingRun, useOrphanRun } from "./lib/orphan";
 import { THEME_COLORS, setThemeColor } from "./lib/themeColor";
-import { clearOnboarded, loadIdentity, loadSamplesCleared, setSamplesClearedPref } from "./lib/prefs";
+import { clearOnboarded, loadIdentity, loadSamplesCleared, loadTourSeen, setSamplesClearedPref, setTourSeenPref } from "./lib/prefs";
 import { useSettings } from "./lib/prefs";
 import { rosterToRows } from "./lib/roster";
 import { SEEDED_KEY, SEED_EMPLOYEES, fmtAmount, midWallet, shortWallet } from "./lib/seed";
@@ -184,6 +185,42 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   const [empRows, setEmpRows] = useState<Record<string, boolean>>({});
   const [permPrompt, setPermPrompt] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  /* ── first-run guided tour (dormant unless TOUR_DEFAULT_ON or ?tour=1) ──── */
+  const [tourStep, setTourStep] = useState<number | null>(null);
+  useEffect(() => {
+    let forced = false;
+    try {
+      forced = new URLSearchParams(window.location.search).has("tour");
+    } catch {
+      forced = false;
+    }
+    if (!(forced || TOUR_DEFAULT_ON)) return;
+    if (!forced && loadTourSeen()) return;
+    setNav(0);
+    setPopup(null);
+    setTourStep(0);
+  }, []);
+  const advanceTour = (dir: 1 | -1) => {
+    if (tourStep === null) return;
+    const next = tourStep + dir;
+    if (next < 0) return;
+    if (next >= TOUR_STEPS.length) {
+      setTourSeenPref(true);
+      setTourStep(null);
+      return;
+    }
+    const nextNav = TOUR_STEPS[next].nav;
+    if (nextNav !== undefined) {
+      setNav(nextNav as NavIndex);
+      setPopup(null);
+    }
+    setTourStep(next);
+  };
+  const closeTour = () => {
+    setTourSeenPref(true);
+    setTourStep(null);
+  };
 
   const identity = loadIdentity();
 
@@ -732,6 +769,16 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
         }}
       />
       <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} onValidatePayOne={payrollOnlyId ? validatePayOne : undefined} balance={payrollOnlyId ? data.balance : undefined} myAddress={employer} onViewMyPay={requestRecipientView} />
+      {tourStep !== null && (
+        <TourOverlay
+          step={TOUR_STEPS[tourStep]}
+          index={tourStep}
+          total={TOUR_STEPS.length}
+          onNext={() => advanceTour(1)}
+          onBack={() => advanceTour(-1)}
+          onClose={closeTour}
+        />
+      )}
       <Toast toast={toast} />
     </div>
   );

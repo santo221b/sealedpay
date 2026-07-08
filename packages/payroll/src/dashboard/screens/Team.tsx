@@ -48,20 +48,22 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
           >
             Add employee
           </SecondaryButton>
-          <PrimaryButton
-            onClick={onRunPayroll}
-            style={{
-              borderRadius: tokens.radius.pill,
-              background: tokens.accent.primary,
-              color: "#0b1512",
-              fontSize: 13,
-              fontWeight: 500,
-              padding: "10px 22px",
-            }}
-          >
-            <PlayGlyph size={14} />
-            Run payroll
-          </PrimaryButton>
+          <span data-tour="tour-team-run-payroll" style={{ display: "inline-flex" }}>
+            <PrimaryButton
+              onClick={onRunPayroll}
+              style={{
+                borderRadius: tokens.radius.pill,
+                background: tokens.accent.primary,
+                color: "#0b1512",
+                fontSize: 13,
+                fontWeight: 500,
+                padding: "10px 22px",
+              }}
+            >
+              <PlayGlyph size={14} />
+              Run payroll
+            </PrimaryButton>
+          </span>
         </div>
       </div>
 
@@ -146,7 +148,7 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
       </div>
 
       {/* Employees roster */}
-      <GlassCard style={{ padding: "20px 23px" }}>
+      <GlassCard dataTour="tour-team-roster" style={{ padding: "20px 23px" }}>
         <div className="flex items-center justify-between">
           <div style={{ fontWeight: 400, fontSize: 17 }}>Employees</div>
           <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>

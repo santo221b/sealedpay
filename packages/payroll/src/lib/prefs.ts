@@ -57,6 +57,21 @@ export function setSamplesClearedPref(value: boolean) {
 }
 
 /**
+ * First-run guided tour: shown once after onboarding, then remembered so it
+ * does not reappear on reload. `resetDemo` clears it (fresh visitor gets it).
+ */
+const TOUR_SEEN_KEY = "sealedpay_tour_seen";
+
+export function loadTourSeen(): boolean {
+  return localStorage.getItem(TOUR_SEEN_KEY) === "1";
+}
+
+export function setTourSeenPref(value: boolean) {
+  if (value) localStorage.setItem(TOUR_SEEN_KEY, "1");
+  else localStorage.removeItem(TOUR_SEEN_KEY);
+}
+
+/**
  * Wipe all local demo state (identity, settings, employees, history, seed
  * markers) and reload — so a shared URL starts clean for the next visitor and
  * one judge's edits don't leak into the next.

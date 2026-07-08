@@ -198,6 +198,7 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
                 type="button"
                 title="Fund wallet"
                 aria-label="Fund wallet"
+                data-tour="tour-wallet-fund"
                 onClick={onFund}
                 whileHover={reduced ? undefined : { scale: 1.08 }}
                 whileTap={reduced ? undefined : { scale: 0.94 }}

@@ -121,6 +121,7 @@ export function Rail({
             aria-label="Settings"
             aria-expanded={gearOpen}
             onClick={onGear}
+            data-tour="tour-rail-settings"
             className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors group-hover:bg-[rgba(95,230,175,0.1)]"
           >
             <GearGlyph size={15} />
