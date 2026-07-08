@@ -156,7 +156,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
     if (idle(prev) && (phase === "encrypting" || phase === "authorizing" || phase === "dispersing")) {
       setEncHold(true);
       window.clearTimeout(encHoldTimer.current);
-      const ms = Math.max(1300, running.length * 720 + 500);
+      const ms = Math.max(1900, running.length * 1000 + 900);
       encHoldTimer.current = window.setTimeout(() => setEncHold(false), ms);
     } else if (idle(phase)) {
       // A pre-broadcast error drops us back — release immediately so the error
@@ -183,7 +183,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
         ? 2
         : 3;
 
-  /* Encrypting cascade: one card seals every 720ms for as long as the step is
+  /* Encrypting cascade: one card seals every 1000ms for as long as the step is
      shown (real proof + the minimum-dwell hold). */
   useEffect(() => {
     if (!showEncrypting || reduced) {
@@ -192,7 +192,7 @@ export function RunPayrollModal({ open, people, flow, decimals, autoverify, onSt
       return;
     }
     setEncIdx(0);
-    const t = window.setInterval(() => setEncIdx((k) => k + 1), 720);
+    const t = window.setInterval(() => setEncIdx((k) => k + 1), 1000);
     return () => window.clearInterval(t);
   }, [showEncrypting, reduced, running.length]);
 

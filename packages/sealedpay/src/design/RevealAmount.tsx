@@ -19,8 +19,8 @@ const SCRAMBLE_FRAME_MS = 40;
 const RESOLVE_STAGGER_MS = 60;
 // The encrypt "seal" whirs every digit for a visible beat before it collapses
 // to the stars, so it reads as the number being scrambled rather than a blink.
-const SEAL_FRAME_MS = 45; // digit whir cadence
-const SEAL_SCRAMBLE_MS = 520; // how long the number visibly churns before sealing
+const SEAL_FRAME_MS = 55; // digit whir cadence
+const SEAL_SCRAMBLE_MS = 760; // how long the number visibly churns before sealing
 const HIDE_MS = 230;
 const GLOW_MS = 640;
 const DIGITS = "0123456789";
