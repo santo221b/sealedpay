@@ -132,6 +132,18 @@ export function TourOverlay({
   const tipRef = useRef<HTMLDivElement>(null);
   const [tipH, setTipH] = useState(170);
 
+  // While the tour is up, the window itself must never scroll (a stray
+  // scrollIntoView on a popover would push the fixed top bar off-screen with no
+  // way back). Clamp it to the top now and on any window scroll.
+  useEffect(() => {
+    const clamp = () => {
+      if (window.scrollY || window.scrollX) window.scrollTo(0, 0);
+    };
+    clamp();
+    window.addEventListener("scroll", clamp, { passive: true });
+    return () => window.removeEventListener("scroll", clamp);
+  }, []);
+
   // Measure the target, tracking scroll + resize so the spotlight follows.
   useEffect(() => {
     let raf = 0;
@@ -167,8 +179,12 @@ export function TourOverlay({
         // jerky re-center scroll for elements already comfortably in view.
         const r = el.getBoundingClientRect();
         const m = 72;
-        if (!step.noScroll && (r.top < m || r.bottom > window.innerHeight - m)) {
-          el.scrollIntoView({ block: "center", behavior: "smooth" });
+        const scroller = step.noScroll ? null : (el.closest(".slim-scroll") as HTMLElement | null);
+        if (scroller && (r.top < m || r.bottom > window.innerHeight - m)) {
+          // Scroll only the content container, never the window. Scrolling the
+          // window would push the fixed top bar off-screen with no way back.
+          const sr = scroller.getBoundingClientRect();
+          scroller.scrollBy({ top: r.top + r.height / 2 - (sr.top + sr.height / 2), behavior: "smooth" });
         }
         setRadius(parseFloat(getComputedStyle(el).borderRadius) || 14);
         settle();
