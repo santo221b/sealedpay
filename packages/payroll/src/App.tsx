@@ -190,6 +190,8 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [tourRipple, setTourRipple] = useState<{ x: number; y: number; key: number } | null>(null);
   const tourRippleId = useRef(0);
+  const tourTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(tourTimer.current), []);
   // A translucent click pulse centered on a data-tour element, so the tour's
   // auto-clicks read as deliberate before a screen or popover transition.
   const pulseAnchor = (anchor: string) => {
@@ -226,18 +228,29 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   }, []);
   const advanceTour = (dir: 1 | -1) => {
     if (tourStep === null) return;
+    window.clearTimeout(tourTimer.current);
     const next = tourStep + dir;
     if (next < 0) return;
     if (next >= TOUR_STEPS.length) {
-      setTourSeenPref(true);
-      setTourStep(null);
-      setPopup(null);
+      closeTour();
       return;
     }
-    applyStepContext(TOUR_STEPS[next], dir === 1);
-    setTourStep(next);
+    const s = TOUR_STEPS[next];
+    if (dir === 1 && s.clickAnchor) {
+      // Show the click, then perform the change a beat later so the ripple is
+      // clearly seen before the screen or popover transitions.
+      pulseAnchor(s.clickAnchor);
+      tourTimer.current = window.setTimeout(() => {
+        applyStepContext(s, false);
+        setTourStep(next);
+      }, 560);
+    } else {
+      applyStepContext(s, false);
+      setTourStep(next);
+    }
   };
   const closeTour = () => {
+    window.clearTimeout(tourTimer.current);
     setTourSeenPref(true);
     setTourStep(null);
     setPopup(null);

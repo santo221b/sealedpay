@@ -238,11 +238,11 @@ export function TourOverlay({
       {ripple && (
         <motion.span
           key={ripple.key}
-          initial={{ scale: 0, opacity: 0.55 }}
-          animate={{ scale: 1, opacity: 0 }}
-          transition={{ duration: 0.65, ease: motionTokens.easeEnter }}
+          initial={{ scale: 0.3, opacity: 0.6 }}
+          animate={{ scale: 1.1, opacity: 0 }}
+          transition={{ duration: 0.8, ease: motionTokens.easeEnter }}
           className="pointer-events-none absolute"
-          style={{ left: ripple.x - 34, top: ripple.y - 34, width: 68, height: 68, borderRadius: 999, background: "radial-gradient(circle, rgba(120,233,192,0.55), rgba(120,233,192,0) 70%)" }}
+          style={{ left: ripple.x - 58, top: ripple.y - 58, width: 116, height: 116, borderRadius: 999, background: "radial-gradient(circle, rgba(120,233,192,0.5), rgba(120,233,192,0.12) 58%, rgba(120,233,192,0) 74%)", border: "1.5px solid rgba(120,233,192,0.45)" }}
         />
       )}
 
