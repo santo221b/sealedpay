@@ -1004,22 +1004,22 @@ function Finale(props: {
           <button
             type="button"
             onClick={props.onVerify}
-            className="mx-auto mt-4 flex items-center justify-center gap-2 rounded-full transition-colors hover:bg-[rgba(232,150,133,0.17)]"
-            style={{ background: "rgba(232,150,133,0.10)", border: "1px solid rgba(232,150,133,0.40)", color: "#e6a091", fontSize: 12, fontWeight: 600, padding: "9px 17px" }}
+            className="mx-auto mt-4 flex items-center justify-center gap-2 rounded-[11px] bg-[rgba(232,150,133,0.12)] transition-colors hover:bg-[rgba(232,150,133,0.2)]"
+            style={{ color: "#e6a091", fontSize: 12, fontWeight: 400, padding: "10px 16px" }}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M3 2v6h6" />
               <path d="M3 13a9 9 0 1 0 3-7.7L3 8" />
             </svg>
-            {verifyDeclined ? "Verify signature declined · retry" : "Couldn't verify amounts · retry"}
+            {verifyDeclined ? "Verify signature declined · Retry" : "Couldn't verify amounts · Retry"}
           </button>
         ) : props.onVerify && !props.autoverify ? (
           // Manual mode, not yet attempted — a neutral actionable chip.
           <button
             type="button"
             onClick={props.onVerify}
-            className="mx-auto mt-4 flex items-center justify-center gap-2 rounded-full transition-colors hover:bg-[rgba(120,233,192,0.15)]"
-            style={{ background: "rgba(120,233,192,0.08)", border: "1px solid rgba(120,233,192,0.32)", color: "#78e9c0", fontSize: 12, fontWeight: 600, padding: "9px 17px" }}
+            className="mx-auto mt-4 flex items-center justify-center gap-2 rounded-[11px] bg-[rgba(120,233,192,0.1)] transition-colors hover:bg-[rgba(120,233,192,0.18)]"
+            style={{ color: "#78e9c0", fontSize: 12, fontWeight: 400, padding: "10px 16px" }}
           >
             {props.single ? "Verify the payment was delivered" : "Verify salaries were delivered"}
           </button>
