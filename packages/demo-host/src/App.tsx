@@ -563,9 +563,14 @@ export function App() {
             <Card style={{ padding: "26px 28px", position: "relative", overflow: "hidden" }}>
               <div aria-hidden className="pointer-events-none absolute" style={{ right: -60, top: -80, width: 260, height: 260, background: "radial-gradient(circle, rgba(255,255,255,0.05), rgba(0,0,0,0) 68%)" }} />
               <div className="relative">
-                <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.4, color: T.accentText }}>Case study</div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: T.heading, marginTop: 7 }}>SealedPay, built entirely on the SDK</div>
-                <p style={{ fontSize: 13.5, color: T.muted, lineHeight: 1.62, marginTop: 9, maxWidth: 640 }}>
+                <div className="flex items-center" style={{ gap: 13 }}>
+                  <img src="/seal.svg" alt="SealedPay" width={42} height={42} style={{ flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.4, color: T.accentText }}>Case study</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: T.heading, marginTop: 3 }}>SealedPay, built entirely on the SDK</div>
+                  </div>
+                </div>
+                <p style={{ fontSize: 13.5, color: T.muted, lineHeight: 1.62, marginTop: 12, maxWidth: 640 }}>
                   A full confidential payroll dashboard, built on the same calls above. Its own design, zero
                   re-implementation of a single on-chain or cryptographic step.
                 </p>
