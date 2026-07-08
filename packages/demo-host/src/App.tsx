@@ -12,7 +12,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 
+// SealedPay motion signatures (packages/payroll/src/design/tokens.ts).
 const EASE = [0.22, 1, 0.36, 1] as const;
+const SPRING = { type: "spring", stiffness: 400, damping: 30 } as const;
+const SPRING_POP = { type: "spring", stiffness: 500, damping: 30 } as const;
+const LIST_V = { hidden: {}, show: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } } };
+const ITEM_V = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } };
 
 const T = {
   // Neutral dark. A whisper of light at the top for depth, otherwise flat.
@@ -91,9 +96,9 @@ function Code({ code, lang = "tsx" }: { code: string; lang?: string }) {
     <div style={{ marginTop: 14, borderRadius: 14, overflow: "hidden", border: `1px solid ${T.cardBorder}`, background: T.codeBg, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
       <div className="flex items-center justify-between" style={{ padding: "8px 13px", borderBottom: `1px solid ${T.cardBorder}` }}>
         <span style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 0.6, color: T.dim, textTransform: "uppercase" }}>{lang}</span>
-        <button onClick={copy} className="inline-flex items-center" style={{ gap: 5, fontSize: 11, fontWeight: 600, color: copied ? T.accent : T.muted, background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
+        <motion.button onClick={copy} whileTap={{ scale: 0.88 }} className="inline-flex items-center" style={{ gap: 5, fontSize: 11, fontWeight: 600, color: copied ? T.accent : T.muted, background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
           {copied ? "Copied" : "Copy"}
-        </button>
+        </motion.button>
       </div>
       <pre className="overflow-x-auto" style={{ margin: 0, padding: "15px 17px", fontSize: 12, lineHeight: 1.72, fontFamily: T.mono }}>
         <code>
@@ -287,11 +292,16 @@ function BrandMark({ size = 26, fill = T.accent }: { size?: number; fill?: strin
   );
 }
 
-function Card({ children, style, soft }: { children: React.ReactNode; style?: React.CSSProperties; soft?: boolean }) {
+function Card({ children, style, soft, hover = true, variants }: { children: React.ReactNode; style?: React.CSSProperties; soft?: boolean; hover?: boolean; variants?: unknown }) {
   return (
-    <div style={{ background: soft ? T.glassBgSoft : T.glassBg, border: `1px solid ${T.cardBorder}`, borderRadius: 18, boxShadow: T.glassShadow, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", ...style }}>
+    <motion.div
+      variants={variants as never}
+      whileHover={hover ? { y: -4 } : undefined}
+      transition={SPRING}
+      style={{ background: soft ? T.glassBgSoft : T.glassBg, border: `1px solid ${T.cardBorder}`, borderRadius: 18, boxShadow: T.glassShadow, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", ...style }}
+    >
       {children}
-    </div>
+    </motion.div>
   );
 }
 
@@ -370,7 +380,7 @@ export function App() {
       <div className="relative z-0 mx-auto max-w-6xl px-6 md:grid" style={{ gridTemplateColumns: "212px minmax(0,1fr)", columnGap: 48 }}>
         {/* Sidebar */}
         <aside className="hidden md:block" style={{ position: "sticky", top: 0, alignSelf: "start", maxHeight: "100vh", overflowY: "auto", paddingTop: 26, paddingBottom: 40 }}>
-          <nav className="flex flex-col" style={{ gap: 20 }}>
+          <motion.nav className="flex flex-col" style={{ gap: 20 }} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.12, ease: EASE }}>
             {NAV.map((g) => (
               <div key={g.group}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: T.dim, marginBottom: 8, paddingLeft: 10 }}>{g.group}</div>
@@ -378,49 +388,54 @@ export function App() {
                   {g.items.map(([id, label]) => {
                     const on = active === id;
                     return (
-                      <a key={id} href={`#${id}`} style={{ fontSize: 13, fontWeight: on ? 600 : 500, color: on ? T.accentText : T.muted, padding: "5px 10px", borderRadius: 8, borderLeft: `2px solid ${on ? T.accent : "transparent"}`, background: on ? "rgba(255,255,255,0.07)" : "transparent", textDecoration: "none", transition: "color .15s, background .15s" }}>{label}</a>
+                      <motion.a key={id} href={`#${id}`} whileHover={{ x: on ? 0 : 2 }} transition={SPRING} className="relative" style={{ fontSize: 13, fontWeight: on ? 600 : 500, color: on ? T.accentText : T.muted, padding: "5px 10px", textDecoration: "none", transition: "color .15s" }}>
+                        {on && <motion.span layoutId="nav-active" transition={SPRING} className="absolute inset-0" style={{ borderRadius: 8, background: "rgba(255,255,255,0.07)", borderLeft: `2px solid ${T.accent}` }} />}
+                        <span className="relative">{label}</span>
+                      </motion.a>
                     );
                   })}
                 </div>
               </div>
             ))}
-          </nav>
+          </motion.nav>
         </aside>
 
-        {/* Content — on a frosted dark-glass panel so the glow stays behind it */}
-        <main style={{ minWidth: 0, marginTop: 12, marginBottom: 28, padding: "30px 32px 60px", background: T.panelBg, border: `1px solid ${T.panelBorder}`, borderRadius: 24, boxShadow: T.panelShadow, backdropFilter: "blur(22px)", WebkitBackdropFilter: "blur(22px)" }}>
+        {/* Content */}
+        <main style={{ minWidth: 0, paddingTop: 26, paddingBottom: 72 }}>
           {/* Overview */}
-          <motion.section id="overview" style={{ scrollMarginTop: 20 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: EASE, delay: 0.05 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4, color: T.accentText }}>Confidential disperse SDK</div>
-            <h1 style={{ fontSize: 42, fontWeight: 700, letterSpacing: -1, lineHeight: 1.06, marginTop: 12, maxWidth: 640, color: T.heading }}>
+          <motion.section id="overview" style={{ scrollMarginTop: 20 }} variants={LIST_V} initial="hidden" animate="show">
+            <motion.div variants={ITEM_V} style={{ fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4, color: T.accentText }}>Confidential disperse SDK</motion.div>
+            <motion.h1 variants={ITEM_V} style={{ fontSize: 42, fontWeight: 700, letterSpacing: -1, lineHeight: 1.06, marginTop: 12, maxWidth: 640, color: T.heading }}>
               Pay everyone in one transaction, with amounts nobody can see.
-            </h1>
-            <Lead>The SDK for confidential token disperse. Zama FHE encryption and TokenOps transfers behind a few hooks, so you build the UI and never touch the cryptography.</Lead>
-            <div className="flex flex-wrap items-center" style={{ gap: 9, marginTop: 18 }}>
+            </motion.h1>
+            <motion.div variants={ITEM_V}>
+              <Lead>The SDK for confidential token disperse. Zama FHE encryption and TokenOps transfers behind a few hooks, so you build the UI and never touch the cryptography.</Lead>
+            </motion.div>
+            <motion.div variants={ITEM_V} className="flex flex-wrap items-center" style={{ gap: 9, marginTop: 18 }}>
               <span style={{ fontSize: 12, fontWeight: 500, color: T.dim }}>Built on</span>
               {["Zama FHE", "TokenOps"].map((l) => (
-                <span key={l} className="inline-flex items-center" style={{ gap: 6, background: T.glassBg, border: `1px solid ${T.cardBorder}`, borderRadius: 999, padding: "5px 12px 5px 10px", fontSize: 12, fontWeight: 600, color: T.secondary }}>
+                <motion.span key={l} whileHover={{ y: -2 }} transition={SPRING} className="inline-flex items-center" style={{ gap: 6, background: T.glassBg, border: `1px solid ${T.cardBorder}`, borderRadius: 999, padding: "5px 12px 5px 10px", fontSize: 12, fontWeight: 600, color: T.secondary }}>
                   <span aria-hidden style={{ width: 6, height: 6, borderRadius: 999, background: T.accent, boxShadow: "0 0 8px rgba(255,255,255,0.5)" }} />
                   {l}
-                </span>
+                </motion.span>
               ))}
-            </div>
-            <div className="flex flex-wrap items-center" style={{ gap: 11, marginTop: 24 }}>
-              <a href="#quickstart" className="inline-flex items-center rounded-full" style={{ gap: 7, background: T.accentGrad, color: T.onAccent, fontSize: 13, fontWeight: 700, padding: "11px 22px", boxShadow: T.buttonGlow, textDecoration: "none" }}>Quick start</a>
-              <a href="#confidential" className="inline-flex items-center rounded-full" style={{ gap: 7, background: "transparent", color: T.secondary, border: `1px solid ${T.cardBorder}`, fontSize: 13, fontWeight: 600, padding: "11px 20px", textDecoration: "none" }}>How it stays private</a>
-            </div>
+            </motion.div>
+            <motion.div variants={ITEM_V} className="flex flex-wrap items-center" style={{ gap: 11, marginTop: 24 }}>
+              <motion.a href="#quickstart" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} transition={SPRING_POP} className="inline-flex items-center rounded-full" style={{ gap: 7, background: T.accentGrad, color: T.onAccent, fontSize: 13, fontWeight: 700, padding: "11px 22px", boxShadow: T.buttonGlow, textDecoration: "none" }}>Quick start</motion.a>
+              <motion.a href="#confidential" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} transition={SPRING_POP} className="inline-flex items-center rounded-full" style={{ gap: 7, background: "transparent", color: T.secondary, border: `1px solid ${T.cardBorder}`, fontSize: 13, fontWeight: 600, padding: "11px 20px", textDecoration: "none" }}>How it stays private</motion.a>
+            </motion.div>
           </motion.section>
 
           {/* Architecture */}
           <Reveal id="architecture">
             <H2>Architecture</H2>
             <Lead>A thin layer over two foundations. You call hooks, they do the hard part.</Lead>
-            <div className="grid gap-5 md:grid-cols-2" style={{ marginTop: 16 }}>
+            <motion.div className="grid gap-5 md:grid-cols-2" style={{ marginTop: 16 }} variants={LIST_V} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }}>
               {[
                 { name: "Zama FHE", role: "Encryption layer", desc: "Amounts are encrypted with Zama's FHEVM. The SDK wraps the instance, the encryption, and user-decryption.", tags: ["getFhevmInstance", "encryptAmounts", "userDecryptHandles"] },
                 { name: "TokenOps", role: "Transfer layer", desc: "ERC-7984 confidential transfers, dispersed to every recipient in one transaction. ABIs and flow included.", tags: ["disperseAbi", "erc7984Abi", "useDisperseFlow"] },
               ].map((f) => (
-                <Card key={f.name} style={{ padding: 22, height: "100%" }}>
+                <Card key={f.name} variants={ITEM_V} style={{ padding: 22, height: "100%" }}>
                   <div style={{ fontSize: 16, fontWeight: 700, color: T.heading }}>{f.name}</div>
                   <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.3, color: T.accentText, marginTop: 3 }}>{f.role}</div>
                   <p style={{ fontSize: 13, color: T.muted, lineHeight: 1.6, marginTop: 13 }}>{f.desc}</p>
@@ -431,7 +446,7 @@ export function App() {
                   </div>
                 </Card>
               ))}
-            </div>
+            </motion.div>
           </Reveal>
 
           {/* Install */}
@@ -502,15 +517,15 @@ export function App() {
           <Reveal id="confidential">
             <H2>How it stays confidential</H2>
             <Lead>Zama FHE for the secrecy, TokenOps for the transfer. The SDK sequences both.</Lead>
-            <div className="grid gap-4 md:grid-cols-2" style={{ marginTop: 18 }}>
+            <motion.div className="grid gap-4 md:grid-cols-2" style={{ marginTop: 18 }} variants={LIST_V} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }}>
               {STEPS.map(([title, body], i) => (
-                <Card key={title} soft style={{ padding: 18 }}>
+                <Card key={title} soft variants={ITEM_V} style={{ padding: 18 }}>
                   <span className="flex items-center justify-center rounded-full" style={{ width: 26, height: 26, background: T.accentGrad, color: T.onAccent, fontSize: 11.5, fontWeight: 700 }}>{i + 1}</span>
                   <div style={{ fontSize: 14, fontWeight: 700, marginTop: 12, color: T.heading }}>{title}</div>
                   <div style={{ fontSize: 12.5, color: T.muted, lineHeight: 1.55, marginTop: 5 }}>{body}</div>
                 </Card>
               ))}
-            </div>
+            </motion.div>
           </Reveal>
 
           {/* API reference */}
@@ -518,7 +533,7 @@ export function App() {
             <H2>API reference</H2>
             <Lead>The full public surface, grouped by layer.</Lead>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", color: T.dim, marginTop: 20 }}>The engine</div>
-            <Card style={{ padding: "6px 20px 16px", marginTop: 10 }}>
+            <Card hover={false} style={{ padding: "6px 20px 16px", marginTop: 10 }}>
               {ENGINE_REF.map(([name, sig, desc]) => (
                 <div key={name} style={{ padding: "13px 0", borderTop: `1px solid ${T.cardBorder}` }}>
                   <div className="flex flex-wrap items-baseline" style={{ gap: 9 }}>
@@ -530,7 +545,7 @@ export function App() {
               ))}
             </Card>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", color: T.dim, marginTop: 22 }}>Ready-made parts</div>
-            <Card style={{ padding: "6px 20px 16px", marginTop: 10 }}>
+            <Card hover={false} style={{ padding: "6px 20px 16px", marginTop: 10 }}>
               {PARTS_REF.map(([name, sig, desc]) => (
                 <div key={name} style={{ padding: "13px 0", borderTop: `1px solid ${T.cardBorder}` }}>
                   <div className="flex flex-wrap items-baseline" style={{ gap: 9 }}>
