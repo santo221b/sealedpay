@@ -26,3 +26,4 @@ deployments/localhost/
 
 # Private notes (talking points, drafts) — never committed
 *.private.md
+.data/

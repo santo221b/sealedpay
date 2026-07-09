@@ -93,8 +93,9 @@ export function useHistory() {
     if (!userId || loadedFor.current === userId) return;
     loadedFor.current = userId;
     setLoaded(false);
+    // ALWAYS reset on a tenant switch (never show the previous account's runs).
     const cached = loadCache(userId);
-    if (cached.length) setRuns(cached);
+    setRuns(cached);
     let cancelled = false;
     void (async () => {
       try {
@@ -129,14 +130,25 @@ export function useHistory() {
       /* best-effort cache */
     }
     if (!dirty.current) return;
-    window.clearTimeout(syncTimer.current);
-    syncTimer.current = window.setTimeout(() => {
+    const flush = () => {
       dirty.current = false;
       api
         .putRuns(runs.map(toRecord))
         .then(() => setSyncError(undefined))
         .catch((e: unknown) => setSyncError(e instanceof Error ? e.message : String(e)));
-    }, SYNC_DEBOUNCE_MS);
+    };
+    window.clearTimeout(syncTimer.current);
+    syncTimer.current = window.setTimeout(flush, SYNC_DEBOUNCE_MS);
+    // A recorded payout is money — flush the moment the tab hides rather than
+    // risking the debounce window (cache + txHash-union merge backstop a kill).
+    const onHide = () => {
+      if (document.visibilityState === "hidden" && dirty.current) {
+        window.clearTimeout(syncTimer.current);
+        flush();
+      }
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
   }, [runs, userId, loaded]);
   useEffect(() => () => window.clearTimeout(syncTimer.current), []);
 

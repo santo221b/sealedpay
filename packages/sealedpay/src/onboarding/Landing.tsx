@@ -8,9 +8,9 @@
  * Visual language is the onboarding's (aurora background, seal logo, the
  * decrypt-scramble headline) so landing → onboarding reads as one flow.
  */
-import { usePrivy } from "@privy-io/react-auth";
+import { useLogin, usePrivy } from "@privy-io/react-auth";
 import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { SealLogo } from "../design/SealLogo";
 import { THEME_COLORS, setThemeColor } from "../lib/themeColor";
@@ -77,12 +77,25 @@ function Item({ i, children, center = false }: { i: number; children: ReactNode;
 
 export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
   const reduced = useReducedMotion();
-  const { ready, authenticated, login } = usePrivy();
+  const { ready, authenticated } = usePrivy();
   useEffect(() => setThemeColor(THEME_COLORS.onboarding), []);
   const headline = useDecryptScramble("Payroll that stays sealed", 280);
   // Remember the chosen door across the async login so the post-auth gate
-  // routes to the right surface even after a full redirect/reload.
+  // routes to the right surface. Held in a ref for the login callbacks AND in
+  // state for the DoorCard spinner.
   const [waiting, setWaiting] = useState<Door | null>(null);
+  const waitingRef = useRef<Door | null>(null);
+  const { login } = useLogin({
+    onComplete: () => {
+      if (waitingRef.current) onEnter(waitingRef.current);
+    },
+    // Fires on a dismissed modal ("exited_auth_flow") or a genuine failure —
+    // either way the spinner must never stick.
+    onError: () => {
+      waitingRef.current = null;
+      setWaiting(null);
+    },
+  });
 
   const enter = (door: Door) => {
     saveDoor(door);
@@ -90,14 +103,10 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
       onEnter(door);
       return;
     }
+    waitingRef.current = door;
     setWaiting(door);
     login();
   };
-  // Privy's modal resolves out-of-band; when auth lands, continue through the
-  // door that was clicked.
-  useEffect(() => {
-    if (waiting && authenticated) onEnter(waiting);
-  }, [waiting, authenticated, onEnter]);
 
   return (
     <div
