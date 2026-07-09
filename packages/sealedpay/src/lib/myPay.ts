@@ -33,6 +33,26 @@ const SCAN_RPCS = [
 // so a modest range finds it while staying inside every RPC's limits.
 const SCAN_SPANS = [9_000n, 2_000n, 500n];
 
+// The reveal round-trips the Zama relayer over fetch (no built-in timeout) —
+// bound it so a stalled relayer surfaces as a calm retryable error instead of
+// an infinite "Decrypting" spinner. A late resolution is harmless (read-only).
+const REVEAL_TIMEOUT_MS = 60_000;
+function withTimeout<T>(p: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    p.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
+
 export interface MyPayment {
   txHash: `0x${string}`;
   from: `0x${string}`;
@@ -139,7 +159,11 @@ export function useMyPay() {
     setPhase("revealing");
     setError(undefined);
     try {
-      const instance = await getFhevmInstance(FHE_NETWORK);
+      const instance = await withTimeout(
+        getFhevmInstance(FHE_NETWORK),
+        45_000,
+        "Couldn't reach Zama's encryption service in time. Check your connection and try again.",
+      );
       // Every handle came from the token contract → one ACL scope, one signature.
       const requests = [
         ...payments.map((p) => ({ handle: p.handle, contractAddress: TOKEN })),
@@ -150,14 +174,18 @@ export function useMyPay() {
         setPhase("revealed");
         return;
       }
-      const results = await userDecryptHandles({
-        instance,
-        requests,
-        userAddress: me,
-        signTypedData: (args) =>
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          walletClient.signTypedData({ ...args, account: me } as any),
-      });
+      const results = await withTimeout(
+        userDecryptHandles({
+          instance,
+          requests,
+          userAddress: me,
+          signTypedData: (args) =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            walletClient.signTypedData({ ...args, account: me } as any),
+        }),
+        REVEAL_TIMEOUT_MS,
+        "Zama's decryption service took too long to respond. Your pay is safe on-chain · try the reveal again.",
+      );
       setPayments((ps) => ps?.map((p) => ({ ...p, amount: results[p.handle] })));
       setBalance(balanceHandle ? results[balanceHandle] : 0n);
       setPhase("revealed");

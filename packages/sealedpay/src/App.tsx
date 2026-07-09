@@ -19,7 +19,6 @@
  */
 import {
   DEMO_TOKEN_ADDRESS,
-  DisperseProviders,
   SEPOLIA_CHAIN_ID,
   formatAmount,
   isValidAmountText,
@@ -27,6 +26,7 @@ import {
   useTokenMeta,
   type DeliveryResult,
 } from "@dispersekit/widget";
+import { usePrivy } from "@privy-io/react-auth";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatUnits, isAddress, parseUnits } from "viem";
@@ -52,7 +52,6 @@ import { SettingsPanel } from "./dashboard/modals/SettingsPanel";
 import { Toast } from "./dashboard/modals/Toast";
 import { EmployeeView } from "./dashboard/screens/EmployeeView";
 import { Home } from "./dashboard/screens/Home";
-import { MyPay } from "./dashboard/screens/MyPay";
 import { Insights } from "./dashboard/screens/Insights";
 import { Team } from "./dashboard/screens/Team";
 import { tokens } from "./design/tokens";
@@ -61,7 +60,7 @@ import { useHistory } from "./lib/history";
 import { useNotifications } from "./lib/notifications";
 import { savePendingRun, useOrphanRun } from "./lib/orphan";
 import { THEME_COLORS, setThemeColor } from "./lib/themeColor";
-import { clearOnboarded, loadIdentity, loadSamplesCleared, loadTourSeen, setSamplesClearedPref, setTourSeenPref } from "./lib/prefs";
+import { clearDoor, clearOnboarded, loadDoor, loadEmployeeOnboarded, loadIdentity, loadSamplesCleared, loadTourSeen, saveDoor, setEmployeeOnboarded, setSamplesClearedPref, setTourSeenPref, type Door } from "./lib/prefs";
 import { useSettings } from "./lib/prefs";
 import { humanizeError } from "./lib/humanizeError";
 import { rosterToRows } from "./lib/roster";
@@ -70,8 +69,10 @@ import { SEEDED_KEY, SEED_EMPLOYEES, fmtAmount, midWallet, shortWallet } from ".
 import { useVerifyRun } from "./lib/verifyRun";
 import { activityRows, employeeRows, encryptedAmountsCount, toPerson, toRunViews, type FundingEvent } from "./lib/views";
 import { useFundWallet, useWalletBalance } from "./lib/wallet";
+import { Landing } from "./onboarding/Landing";
 import { Onboarding } from "./onboarding/Onboarding";
-import { sealedTheme } from "./theme";
+import { EmployeePortal } from "./portal/EmployeePortal";
+import { SealedPayProviders } from "./providers";
 
 const TOKEN = DEMO_TOKEN_ADDRESS;
 // Real deposits persist across reloads (cleared by Reset demo, which wipes the
@@ -88,35 +89,92 @@ function compactAmount(v: number): string {
 }
 
 export function App() {
-  const [onboarded, setOnboarded] = useState(() => loadIdentity().onboarded);
-  // A ?view=mypay deep link opens the recipient view directly — shareable, works
-  // on any device, and needs no employer login (the real recipient use case).
-  const [recipient, setRecipient] = useState(() => {
+  return (
+    <SealedPayProviders>
+      <Gate />
+    </SealedPayProviders>
+  );
+}
+
+/**
+ * Post-auth routing. The landing page owns login; this gate owns what an
+ * authenticated user sees:
+ *   employer door → employer onboarding (once) → payroll dashboard
+ *   employee door → employee onboarding (once) → employee portal
+ * A ?view=mypay deep link keeps working as the employee door.
+ */
+function Gate() {
+  const { ready, authenticated } = usePrivy();
+  const [door, setDoor] = useState<Door | null>(() => {
     try {
-      return new URLSearchParams(window.location.search).get("view") === "mypay";
+      if (new URLSearchParams(window.location.search).get("view") === "mypay") return "employee";
     } catch {
-      return false;
+      /* no url access */
     }
+    return loadDoor();
   });
-  // Logout un-onboards you (clears the flag, keeps the identity), so it lands
-  // back on the onboarding front door — pre-filled for a returning employer,
-  // blank on a genuine first run.
+  const [onboarded, setOnboarded] = useState(() => loadIdentity().onboarded);
+  const [employeeOnboarded, setEmployeeOnboardedState] = useState(() => loadEmployeeOnboarded());
+
+  // Logout (from either surface) → clear the door → back to the landing page.
+  const onLoggedOut = useCallback(() => {
+    clearOnboarded();
+    clearDoor();
+    setOnboarded(false);
+    setDoor(null);
+  }, []);
+
+  const enter = useCallback((d: Door) => {
+    saveDoor(d);
+    setDoor(d);
+  }, []);
+
+  // Switch surface without logging out (for people who are both).
+  const switchDoor = useCallback((d: Door) => {
+    saveDoor(d);
+    setDoor(d);
+  }, []);
+
   const identity = loadIdentity();
   const returning = identity.name.trim().length > 0;
-  return (
-    <DisperseProviders theme={sealedTheme} appName="SealedPay">
-      {recipient ? (
-        <MyPay onExit={() => setRecipient(false)} />
-      ) : onboarded ? (
-        <Dashboard onViewMyPay={() => setRecipient(true)} onLoggedOut={() => { clearOnboarded(); setOnboarded(false); }} />
-      ) : (
-        <Onboarding
-          onDone={() => setOnboarded(true)}
-          initialName={returning ? identity.name : ""}
-          initialAvatar={returning ? identity.avatar : ""}
-        />
-      )}
-    </DisperseProviders>
+
+  // Wait for Privy to restore the session before routing, so a reload of an
+  // authenticated user never flashes the landing page.
+  if (!ready) {
+    return (
+      <div className="flex min-h-screen items-center justify-center" style={{ background: "#070c0a" }}>
+        <span aria-hidden style={{ width: 22, height: 22, borderRadius: "50%", border: "2.4px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }} />
+      </div>
+    );
+  }
+
+  if (!authenticated || !door) return <Landing onEnter={enter} />;
+
+  if (door === "employee") {
+    return employeeOnboarded ? (
+      <EmployeePortal onLoggedOut={onLoggedOut} onSwitchDoor={() => switchDoor("employer")} />
+    ) : (
+      <Onboarding
+        variant="employee"
+        onDone={() => {
+          setEmployeeOnboarded(true);
+          setEmployeeOnboardedState(true);
+        }}
+        initialName={returning ? identity.name : ""}
+        initialAvatar={returning ? identity.avatar : ""}
+      />
+    );
+  }
+
+  return onboarded ? (
+    <Dashboard onViewMyPay={() => switchDoor("employee")} onLoggedOut={onLoggedOut} />
+  ) : (
+    <Onboarding
+      variant="employer"
+      onDone={() => setOnboarded(true)}
+      initialName={returning ? identity.name : ""}
+      initialAvatar={returning ? identity.avatar : ""}
+    />
   );
 }
 
@@ -134,6 +192,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   /* ── data hooks ────────────────────────────────────────────────────────── */
   const { address: employer } = useAccount();
   const { disconnect } = useDisconnect();
+  const { logout: privyLogout } = usePrivy();
   const { employees, add, update, remove, replaceAll } = useEmployees();
   const [editEmp, setEditEmp] = useState<Employee | null>(null); // employee being edited
   const { runs: liveRuns, addRun, markVerified } = useHistory();
@@ -845,7 +904,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
           setFundOpen(false);
         }}
       />
-      <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); disconnect(); onLoggedOut(); }} />
+      <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); disconnect(); void privyLogout(); onLoggedOut(); }} />
       <RecipientNoticeModal open={recipientNoticeOpen} onClose={() => setRecipientNoticeOpen(false)} onConfirm={() => { setRecipientNoticeOpen(false); onViewMyPay(); }} />
       <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} />
       <ReminderModal

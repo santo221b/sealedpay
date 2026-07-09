@@ -47,6 +47,22 @@ textarea:focus-visible {
   background-image: repeating-linear-gradient(135deg, #87a69a 0 1.35px, #28382f 1.35px 5.85px);
 }
 
+/* Loading skeleton shimmer (employee portal payment rows). */
+.dc-shimmer {
+  position: relative;
+  overflow: hidden;
+  animation: dc-shimmer-pulse 1.6s ease-in-out infinite;
+}
+@keyframes dc-shimmer-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 /* Onboarding ambient animations (verbatim from the design prototype). */
 @keyframes dc-spin {
   to {

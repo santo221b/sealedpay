@@ -47,6 +47,40 @@ export function clearOnboarded() {
  */
 const SAMPLES_CLEARED_KEY = "sealedpay_samples_cleared";
 
+/**
+ * Which door the user came through on the landing page. One email can be both
+ * an employer and an employee; the door only picks the default surface — a
+ * switcher in the profile menu flips it any time.
+ */
+export type Door = "employer" | "employee";
+const DOOR_KEY = "sealedpay_door";
+
+export function loadDoor(): Door | null {
+  const v = localStorage.getItem(DOOR_KEY);
+  return v === "employer" || v === "employee" ? v : null;
+}
+
+export function saveDoor(door: Door) {
+  localStorage.setItem(DOOR_KEY, door);
+}
+
+export function clearDoor() {
+  localStorage.removeItem(DOOR_KEY);
+}
+
+/** Employee-side onboarding flag — separate from the employer's, so someone
+ * who is both sees each flow exactly once. */
+const EMPLOYEE_ONBOARDED_KEY = "sealedpay_employee_onboarded";
+
+export function loadEmployeeOnboarded(): boolean {
+  return localStorage.getItem(EMPLOYEE_ONBOARDED_KEY) === "1";
+}
+
+export function setEmployeeOnboarded(v: boolean) {
+  if (v) localStorage.setItem(EMPLOYEE_ONBOARDED_KEY, "1");
+  else localStorage.removeItem(EMPLOYEE_ONBOARDED_KEY);
+}
+
 export function loadSamplesCleared(): boolean {
   return localStorage.getItem(SAMPLES_CLEARED_KEY) === "1";
 }

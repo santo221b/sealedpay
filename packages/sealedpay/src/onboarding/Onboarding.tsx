@@ -1,18 +1,23 @@
 /**
- * Onboarding — 6 steps, rebuilt from docs/design/extracted/onboarding.md
- * (values and copy verbatim from the design prototype).
+ * Onboarding — rebuilt from docs/design/extracted/onboarding.md (values and
+ * copy verbatim from the design prototype), now in two variants that share
+ * every screen:
  *
- * Real wiring: step 4 uses the actual wallet (RainbowKit modal + wagmi state)
- * instead of the prototype's 1250ms simulated connect; the connected chip
- * shows the real address. Everything else is presentation. `finish()`
- * persists name + avatar (design-mandated localStorage keys) and hands off
- * to the dashboard.
+ *   employer: welcome · name · role · avatar · wallet · fund · all set
+ *   employee: welcome · name · how-it-works · avatar · your wallet · all set
+ *
+ * Auth happens BEFORE this flow (the landing page's Privy login), so the
+ * wallet step confirms the signed-in wallet — the email-embedded one Privy
+ * created, or a connected external wallet — rather than opening a connect
+ * modal. Employees skip funding entirely: revealing pay is a gasless
+ * signature. `finish()` persists name + avatar (design-mandated localStorage
+ * keys) and hands off to the dashboard/portal.
  */
-import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import { DEMO_TOKEN_ADDRESS, SEPOLIA_CHAIN_ID, useTokenMeta } from "@dispersekit/widget";
+import { usePrivy } from "@privy-io/react-auth";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
 import { useEffect, useState, type ReactNode } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 
 import { SealLogo } from "../design/SealLogo";
 import { saveIdentity } from "../lib/prefs";
@@ -21,8 +26,9 @@ import { useFundWallet, useUnfundedWallet } from "../lib/wallet";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const EXIT_EASE = [0.4, 0, 1, 1] as const;
-const TOTAL = 7;
 export const AVATARS = ["/avatars/avatar-1.svg", "/avatars/avatar-2.svg", "/avatars/avatar-3.svg", "/avatars/avatar-profile.svg"];
+
+export type OnboardingVariant = "employer" | "employee";
 
 /**
  * The "Skip for now, explore with demo data" escape hatch on the wallet step
@@ -114,23 +120,40 @@ const stageVariants = (reduced: boolean): Variants => ({
 
 /* ── The component ───────────────────────────────────────────────────────── */
 
-export function Onboarding({ onDone, initialName = "", initialAvatar = "" }: { onDone: () => void; initialName?: string; initialAvatar?: string }) {
+export function Onboarding({
+  onDone,
+  variant = "employer",
+  initialName = "",
+  initialAvatar = "",
+}: {
+  onDone: () => void;
+  variant?: OnboardingVariant;
+  initialName?: string;
+  initialAvatar?: string;
+}) {
   const reduced = useReducedMotion();
+  const employee = variant === "employee";
+  // employer: welcome · name · role · avatar · wallet · fund · all set (7)
+  // employee: welcome · name · how-it-works · avatar · wallet · all set (6)
+  const TOTAL = employee ? 6 : 7;
   useEffect(() => setThemeColor(THEME_COLORS.onboarding), []);
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
-  // Pre-filled when signing back in (returning employer) so it is a quick
+  // Pre-filled when signing back in (returning user) so it is a quick
   // welcome-back click-through; blank for a genuine first run.
   const [name, setName] = useState(initialName);
   const [avatar, setAvatar] = useState(initialAvatar);
   const [understood, setUnderstood] = useState(false);
 
-  // Real wallet state replaces the prototype's simulated connect.
+  // Auth already happened on the landing page — the wallet step CONFIRMS the
+  // signed-in wallet (embedded or external) instead of opening a connect modal.
   const { address, isConnected, chain } = useAccount();
-  const { openConnectModal, connectModalOpen } = useConnectModal();
-  const { openChainModal } = useChainModal();
+  const { connectWallet, user } = usePrivy();
+  const { switchChain, isPending: switching } = useSwitchChain();
   const onSepolia = chain?.id === SEPOLIA_CHAIN_ID;
   const walletReady = isConnected && onSepolia;
+  const embedded = user?.wallet?.walletClientType === "privy";
+  const email = user?.email?.address;
 
   // Onboarding-local error toast: wallet + funding errors surface here (never
   // inline in a block) and auto-dismiss after a few seconds.
@@ -144,11 +167,14 @@ export function Onboarding({ onDone, initialName = "", initialAvatar = "" }: { o
 
   const first = name.trim().split(" ")[0] || "";
   const nameComma = first ? `, ${first}.` : ".";
-  const welcome = useDecryptScramble("Welcome to SealedPay", 280);
+  const welcome = useDecryptScramble(employee ? "Your pay, sealed" : "Welcome to SealedPay", 280);
 
-  // Steps: 0 welcome · 1 name · 2 privacy · 3 avatar · 4 connect · 5 fund · 6 all set.
-  const canContinue = [true, first.length > 0, understood, Boolean(avatar), walletReady, true, true][step];
-  const continueLabel = step === 0 ? "Let's get started" : step === 6 ? "Let's go" : "Continue";
+  const canContinue = (
+    employee
+      ? [true, first.length > 0, understood, Boolean(avatar), walletReady, true]
+      : [true, first.length > 0, understood, Boolean(avatar), walletReady, true, true]
+  )[step];
+  const continueLabel = step === 0 ? "Let's get started" : step === TOTAL - 1 ? "Let's go" : "Continue";
 
   function go(next: number) {
     if (next < 0 || next >= TOTAL) return;
@@ -255,26 +281,29 @@ export function Onboarding({ onDone, initialName = "", initialAvatar = "" }: { o
               initial="initial"
               animate="enter"
               exit="exit"
-              className={`flex flex-1 flex-col justify-center ${step === 0 || step === 6 ? "items-center text-center" : ""}`}
+              className={`flex flex-1 flex-col justify-center ${step === 0 || step === TOTAL - 1 ? "items-center text-center" : ""}`}
             >
-              {step === 0 && <StepWelcome welcome={welcome} />}
+              {step === 0 && <StepWelcome welcome={welcome} employee={employee} />}
               {step === 1 && <StepName name={name} setName={setName} />}
-              {step === 2 && <StepRole nameComma={nameComma} understood={understood} setUnderstood={setUnderstood} />}
-              {step === 3 && <StepAvatar avatar={avatar} setAvatar={setAvatar} />}
+              {step === 2 && <StepRole nameComma={nameComma} understood={understood} setUnderstood={setUnderstood} employee={employee} />}
+              {step === 3 && <StepAvatar avatar={avatar} setAvatar={setAvatar} employee={employee} />}
               {step === 4 && (
                 <StepWallet
+                  employee={employee}
+                  embedded={Boolean(embedded)}
+                  email={email}
                   isConnected={isConnected}
                   onSepolia={onSepolia}
-                  connecting={connectModalOpen ?? false}
+                  switching={switching}
                   address={address}
-                  onConnect={() => openConnectModal?.()}
-                  onSwitch={() => openChainModal?.()}
+                  onUseDifferent={() => connectWallet()}
+                  onSwitch={() => switchChain({ chainId: SEPOLIA_CHAIN_ID })}
                   onSkip={finish}
-                  allowSkip={ALLOW_DEMO_DATA}
+                  allowSkip={ALLOW_DEMO_DATA && !employee}
                 />
               )}
-              {step === 5 && <StepFund onError={showToast} />}
-              {step === 6 && <StepAllSet nameComma={nameComma} avatar={avatar || AVATARS[0]} />}
+              {!employee && step === 5 && <StepFund onError={showToast} />}
+              {step === TOTAL - 1 && <StepAllSet nameComma={nameComma} avatar={avatar || AVATARS[0]} employee={employee} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -340,7 +369,7 @@ export function Onboarding({ onDone, initialName = "", initialAvatar = "" }: { o
 
 /* ── Steps ───────────────────────────────────────────────────────────────── */
 
-function StepWelcome({ welcome }: { welcome: string }) {
+function StepWelcome({ welcome, employee }: { welcome: string; employee: boolean }) {
   return (
     <>
       <Item i={0} center>
@@ -356,7 +385,7 @@ function StepWelcome({ welcome }: { welcome: string }) {
       </Item>
       <Item i={1}>
         <p className="mt-5" style={eyebrow(400)}>
-          Confidential payroll
+          {employee ? "Confidential pay" : "Confidential payroll"}
         </p>
       </Item>
       <Item i={2}>
@@ -366,7 +395,9 @@ function StepWelcome({ welcome }: { welcome: string }) {
       </Item>
       <Item i={3}>
         <p className="mt-3.5" style={{ fontSize: 15, fontWeight: 400, color: "#9db3aa", maxWidth: 400, lineHeight: 1.55 }}>
-          Pay your whole team in one transaction. Salaries stay encrypted, on-chain, end to end.
+          {employee
+            ? "Your salary arrives encrypted on-chain. Only you can reveal it · right here, with just your email."
+            : "Pay your whole team in one transaction. Salaries stay encrypted, on-chain, end to end."}
         </p>
       </Item>
     </>
@@ -416,23 +447,43 @@ function StepName({ name, setName }: { name: string; setName: (v: string) => voi
   );
 }
 
-function StepRole({ nameComma, understood, setUnderstood }: { nameComma: string; understood: boolean; setUnderstood: (v: boolean) => void }) {
+function StepRole({
+  nameComma,
+  understood,
+  setUnderstood,
+  employee,
+}: {
+  nameComma: string;
+  understood: boolean;
+  setUnderstood: (v: boolean) => void;
+  employee: boolean;
+}) {
   const reduced = useReducedMotion();
   return (
     <>
       <Item i={0}>
-        <p style={eyebrow()}>Your role</p>
+        <p style={eyebrow()}>{employee ? "How it works" : "Your role"}</p>
       </Item>
       <Item i={1}>
         <h1 className="mt-3" style={{ fontWeight: 700, fontSize: 29, lineHeight: 1.25 }}>
-          You’re the payroll administrator{nameComma}
+          {employee ? `Only you can see your pay${nameComma}` : `You’re the payroll administrator${nameComma}`}
         </h1>
       </Item>
       <Item i={2}>
         <p className="mt-4" style={{ fontSize: 14.5, color: "#9db3aa", lineHeight: 1.6 }}>
-          You run confidential payroll for a team of 5. Salaries are encrypted on-chain with Zama FHE. You approve{" "}
-          <span style={{ color: "#cfe0d8" }}>one transaction</span>, and everyone gets paid without exposing a single
-          amount.
+          {employee ? (
+            <>
+              Your employer seals every salary with Zama FHE before it touches the chain. The transaction is public ·
+              the amounts are not. Revealing yours takes <span style={{ color: "#cfe0d8" }}>one signature</span> from
+              the wallet tied to your email.
+            </>
+          ) : (
+            <>
+              You run confidential payroll for a team of 5. Salaries are encrypted on-chain with Zama FHE. You approve{" "}
+              <span style={{ color: "#cfe0d8" }}>one transaction</span>, and everyone gets paid without exposing a
+              single amount.
+            </>
+          )}
         </p>
       </Item>
       <Item i={3}>
@@ -460,10 +511,20 @@ function StepRole({ nameComma, understood, setUnderstood }: { nameComma: string;
             </svg>
           </motion.span>
           <span style={{ fontSize: 13.5, color: "#c2d0c9", lineHeight: 1.55 }}>
-            We’ve pre-loaded a demo team and{" "}
-            <span style={{ color: "#f2f7f4", fontWeight: 600 }}>6 months of payroll history</span> so you can explore
-            right away. Any real payroll you run settles live on Sepolia, and those transactions appear here in the UI
-            with their own Etherscan links, on top of the sample data.
+            {employee ? (
+              <>
+                Your pay arrives in a wallet <span style={{ color: "#f2f7f4", fontWeight: 600 }}>created from your email</span>{" "}
+                · no extension, no seed phrase. Sign in on any device and your payments are there, sealed until you
+                reveal them.
+              </>
+            ) : (
+              <>
+                We’ve pre-loaded a demo team and{" "}
+                <span style={{ color: "#f2f7f4", fontWeight: 600 }}>6 months of payroll history</span> so you can
+                explore right away. Any real payroll you run settles live on Sepolia, and those transactions appear here
+                in the UI with their own Etherscan links, on top of the sample data.
+              </>
+            )}
           </span>
         </button>
       </Item>
@@ -471,7 +532,7 @@ function StepRole({ nameComma, understood, setUnderstood }: { nameComma: string;
   );
 }
 
-function StepAvatar({ avatar, setAvatar }: { avatar: string; setAvatar: (v: string) => void }) {
+function StepAvatar({ avatar, setAvatar, employee }: { avatar: string; setAvatar: (v: string) => void; employee: boolean }) {
   return (
     <>
       <Item i={0}>
@@ -484,7 +545,7 @@ function StepAvatar({ avatar, setAvatar }: { avatar: string; setAvatar: (v: stri
       </Item>
       <Item i={2}>
         <p className="mt-3" style={{ fontSize: 14, color: "#9db3aa" }}>
-          Pick a face for your admin profile.
+          {employee ? "Pick a face for your profile." : "Pick a face for your admin profile."}
         </p>
       </Item>
       <Item i={3}>
@@ -522,20 +583,26 @@ function StepAvatar({ avatar, setAvatar }: { avatar: string; setAvatar: (v: stri
 }
 
 function StepWallet({
+  employee,
+  embedded,
+  email,
   isConnected,
   onSepolia,
-  connecting,
+  switching,
   address,
-  onConnect,
+  onUseDifferent,
   onSwitch,
   onSkip,
   allowSkip,
 }: {
+  employee: boolean;
+  embedded: boolean;
+  email?: string;
   isConnected: boolean;
   onSepolia: boolean;
-  connecting: boolean;
+  switching: boolean;
   address?: `0x${string}`;
-  onConnect: () => void;
+  onUseDifferent: () => void;
   onSwitch: () => void;
   onSkip: () => void;
   allowSkip: boolean;
@@ -546,52 +613,43 @@ function StepWallet({
   return (
     <>
       <Item i={0}>
-        <p style={eyebrow()}>Connect</p>
+        <p style={eyebrow()}>{employee ? "Your wallet" : "Payroll wallet"}</p>
       </Item>
       <Item i={1}>
         <h1 className="mt-3" style={{ fontWeight: 700, fontSize: 29 }}>
-          Connect your wallet
+          {employee ? "Your pay lands here" : "Your payroll wallet"}
         </h1>
       </Item>
       <Item i={2}>
         <p className="mt-3" style={{ fontSize: 14, color: "#9db3aa", lineHeight: 1.5 }}>
-          Payroll settles from your wallet on Sepolia, with free test money and a little Sepolia ETH for gas from any faucet.
+          {employee
+            ? "This wallet was created from your email when you signed in. Payments sent to it are sealed · only your signature can reveal them."
+            : embedded
+              ? "This wallet was created from your email · payroll settles from it on Sepolia. Prefer a wallet you already fund? Connect it instead."
+              : "Payroll settles from your connected wallet on Sepolia, with free test money and a little Sepolia ETH for gas from any faucet."}
         </p>
       </Item>
       <Item i={3}>
         <div className="mt-[26px]">
-          {!isConnected && !connecting && (
-            <motion.button
-              type="button"
-              onClick={onConnect}
-              whileHover={reduced ? undefined : { scale: 1.02 }}
-              whileTap={reduced ? undefined : { scale: 0.98 }}
-              className="flex w-full cursor-pointer items-center justify-center gap-2.5 font-medium"
-              style={{ background: "#5fe3ab", color: "#08331f", fontSize: 15, borderRadius: 85, padding: "16px 0" }}
-            >
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#08331f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <rect x="2" y="6" width="20" height="13" rx="2.5" />
-                <path d="M16 12h.01" />
-                <path d="M2 9h16a2 2 0 0 1 2 2" />
-              </svg>
-              Connect wallet
-            </motion.button>
-          )}
-          {!isConnected && connecting && (
+          {/* The signed-in wallet, confirmed. Privy restores the session before
+              this renders, so the pending state is a brief settle at most. */}
+          {!isConnected && (
             <div className="flex items-center justify-center gap-[11px] font-semibold" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#cfdcd6", fontSize: 15, borderRadius: 15, padding: "16px 0" }}>
               <span style={{ width: 18, height: 18, borderRadius: "50%", border: "2.5px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0", animation: "dc-spin 0.7s linear infinite" }} />
-              Connecting
+              Preparing your wallet
             </div>
           )}
           {isConnected && !onSepolia && (
             <motion.button
               type="button"
               onClick={onSwitch}
-              whileHover={reduced ? undefined : { scale: 1.02 }}
-              className="flex w-full cursor-pointer items-center justify-center gap-2.5 font-medium"
-              style={{ background: "#5fe3ab", color: "#08331f", fontSize: 15, borderRadius: 85, padding: "16px 0" }}
+              disabled={switching}
+              whileHover={reduced || switching ? undefined : { scale: 1.02 }}
+              className="flex w-full cursor-pointer items-center justify-center gap-2.5 font-medium disabled:cursor-not-allowed"
+              style={{ background: "#5fe3ab", color: "#08331f", fontSize: 15, borderRadius: 85, padding: "16px 0", opacity: switching ? 0.7 : 1 }}
             >
-              Switch to Sepolia
+              {switching && <span aria-hidden style={{ width: 16, height: 16, borderRadius: "50%", border: "2.2px solid rgba(8,51,31,0.25)", borderTopColor: "#08331f", animation: "dc-spin .7s linear infinite" }} />}
+              {switching ? "Switching" : "Switch to Sepolia"}
             </motion.button>
           )}
           {walletReady && (
@@ -603,15 +661,35 @@ function StepWallet({
               style={{ background: "rgba(110,196,186,0.14)", border: "1px solid rgba(95,230,175,0.35)", borderRadius: 86, padding: "16px 18px" }}
             >
               <span className="flex shrink-0 items-center justify-center" style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(95,230,175,0.18)" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
+                {embedded ? (
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <rect x="3" y="5" width="18" height="14" rx="3" />
+                    <path d="m3 8 7.9 5.3a2 2 0 0 0 2.2 0L21 8" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block font-semibold" style={{ fontSize: 14, color: "#eef4f1" }}>Wallet connected</span>
+                <span className="block font-semibold" style={{ fontSize: 14, color: "#eef4f1" }}>
+                  {embedded ? (email ? `Created from ${email}` : "Created from your email") : "Wallet connected"}
+                </span>
                 <span className="tnum mt-0.5 block" style={{ fontSize: 12, color: "#9db3aa" }}>{shortDisplay} · Sepolia</span>
               </span>
             </motion.div>
+          )}
+          {/* Employers can settle from an already-funded external wallet instead. */}
+          {!employee && walletReady && (
+            <button
+              type="button"
+              onClick={onUseDifferent}
+              className="mt-3.5 w-full cursor-pointer text-center transition-colors hover:text-[#cfe0d8]"
+              style={{ fontSize: 12.5, color: "#9db3aa", background: "none" }}
+            >
+              {embedded ? "Use MetaMask or another wallet instead" : "Connect a different wallet"}
+            </button>
           )}
           {allowSkip && !walletReady && (
             <button
@@ -640,6 +718,7 @@ const FUND_PRESETS = ["10000", "25000", "100000"] as const;
 
 function StepFund({ onError }: { onError: (msg: string) => void }) {
   const reduced = useReducedMotion();
+  const { address } = useAccount();
   const { empty, refresh } = useUnfundedWallet();
   const { decimals } = useTokenMeta(DEMO_TOKEN_ADDRESS);
   const [amount, setAmount] = useState<string>("25000");
@@ -684,7 +763,7 @@ function StepFund({ onError }: { onError: (msg: string) => void }) {
               Checking your balance
             </div>
           ) : (
-            <FundControls amount={amount} setAmount={setAmount} onFund={() => void fund(amount)} label={label} busy={busy} decimals={decimals} reduced={Boolean(reduced)} />
+            <FundControls amount={amount} setAmount={setAmount} onFund={() => void fund(amount)} label={label} busy={busy} decimals={decimals} reduced={Boolean(reduced)} address={address} />
           )}
         </div>
       </Item>
@@ -700,6 +779,7 @@ function FundControls({
   busy,
   decimals,
   reduced,
+  address,
 }: {
   amount: string;
   setAmount: (v: string) => void;
@@ -708,7 +788,19 @@ function FundControls({
   busy: boolean;
   decimals: number | undefined;
   reduced: boolean;
+  address?: `0x${string}`;
 }) {
+  const [copied, setCopied] = useState(false);
+  const copyAddress = () => {
+    if (!address) return;
+    try {
+      void navigator.clipboard.writeText(address);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
   return (
     <motion.div
       initial={reduced ? false : { opacity: 0, y: 6 }}
@@ -751,7 +843,18 @@ function FundControls({
         <a href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia" target="_blank" rel="noreferrer" style={{ color: "#5fe3ab", textDecoration: "none" }}>
           Get some free
         </a>
-        , or fund later from the dashboard.
+        {address ? (
+          <>
+            {" "}for{" "}
+            <button type="button" onClick={copyAddress} className="tnum cursor-pointer transition-colors hover:text-[#cfe0d8]" style={{ color: "#9db3aa", background: "none" }} title="Copy address">
+              {copied ? "copied ✓" : `${address.slice(0, 6)}…${address.slice(-4)}`}
+            </button>
+            ,
+          </>
+        ) : (
+          ","
+        )}{" "}
+        or fund later from the dashboard.
       </p>
     </motion.div>
   );
@@ -779,7 +882,10 @@ function FundReceipt({ title, sub, reduced }: { title: string; sub: string; redu
   );
 }
 
-function StepAllSet({ nameComma, avatar }: { nameComma: string; avatar: string }) {
+function StepAllSet({ nameComma, avatar, employee }: { nameComma: string; avatar: string; employee: boolean }) {
+  const chips = employee
+    ? (["Email wallet ready", "Pay arrives sealed", "Reveal any time"] as const)
+    : (["Wallet connected", "Team of 5 loaded", "6 months history"] as const);
   return (
     <>
       <Item i={0} center>
@@ -805,12 +911,14 @@ function StepAllSet({ nameComma, avatar }: { nameComma: string; avatar: string }
       </Item>
       <Item i={3}>
         <p className="mt-3" style={{ fontSize: 14.5, color: "#9db3aa", maxWidth: 380, lineHeight: 1.55 }}>
-          Your workspace is ready. Everything below is live. Reveal amounts, run payroll, explore the team.
+          {employee
+            ? "Your pay space is ready. Reveal your balance, browse every payment, download payslips."
+            : "Your workspace is ready. Everything below is live. Reveal amounts, run payroll, explore the team."}
         </p>
       </Item>
       <Item i={4}>
         <div className="mt-[22px] flex flex-wrap justify-center gap-2.5">
-          {(["Wallet connected", "Team of 5 loaded", "6 months history"] as const).map((label, i) => (
+          {chips.map((label, i) => (
             <span key={label} className="flex items-center gap-1.5" style={{ border: "1px solid rgba(95,230,175,0.5)", color: "#78e9c0", fontSize: 12, borderRadius: 999, padding: "6px 13px" }}>
               {i === 0 && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399" }} />}
               {label}
