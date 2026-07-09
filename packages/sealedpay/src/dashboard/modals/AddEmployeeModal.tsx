@@ -1,15 +1,26 @@
 /**
- * Add Employee modal (modals.md §3) — centered glass modal on ModalShell.
- * Fields are local state; the shell validates + persists via onAdd and the
- * returned error string renders inline. Add is hard-disabled until name and
- * wallet are non-empty (spec gap #5: gate for real, not opacity-only).
+ * Add Employee modal — email-first (modals.md §3, evolved for Privy).
+ *
+ * The employee's EMAIL is their payroll identity: on Add, SealedPay asks the
+ * backend to resolve it to a wallet (Privy pregenerates an embedded wallet if
+ * that email has never signed in), so pay can be sent before the employee's
+ * first login. A manual-address mode stays available for people who prefer
+ * their own external wallet — exactly one of the two identities is required.
+ *
+ * The pregen round-trip runs on Add with a busy state ("Creating their wallet
+ * from email"); failures render inline with the server's service-named
+ * message. Fields are local state; the shell validates + persists via onAdd.
  */
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 import { ModalShell, StaggerItem } from "../../design/kit2";
+import { api } from "../../lib/api";
+import { shortWallet } from "../../lib/seed";
 import type { AddEmployeeModalProps } from "../contracts";
 
 const DEPTS = ["Engineering", "Design", "Operations"] as const;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const inputStyle = {
   width: "100%",
@@ -25,13 +36,18 @@ const inputStyle = {
 const labelStyle = { display: "block", fontSize: 10, color: "#9db3aa", marginBottom: 5 } as const;
 
 export function AddEmployeeModal({ open, onClose, onAdd, initial, onRemove }: AddEmployeeModalProps) {
+  const reduced = useReducedMotion();
   const editing = Boolean(initial);
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [salary, setSalary] = useState("");
   const [dept, setDept] = useState<string>("Engineering");
+  const [email, setEmail] = useState("");
   const [wallet, setWallet] = useState("");
+  // "email" = wallet is derived from the email (pregen); "manual" = typed address.
+  const [walletMode, setWalletMode] = useState<"email" | "manual">("email");
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
 
   useEffect(() => {
@@ -40,19 +56,46 @@ export function AddEmployeeModal({ open, onClose, onAdd, initial, onRemove }: Ad
       setRole(initial?.role ?? "");
       setSalary(initial?.salary ?? "");
       setDept(initial?.dept || "Engineering");
+      setEmail(initial?.email ?? "");
       setWallet(initial?.wallet ?? "");
+      // An existing row with an address but no email was added manually.
+      setWalletMode(initial && initial.wallet && !initial.email ? "manual" : "email");
       setError(null);
+      setBusy(false);
       setConfirmRemove(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const valid = name.trim().length > 0 && wallet.trim().length > 0;
+  const emailValid = EMAIL_RE.test(email.trim());
+  const valid =
+    name.trim().length > 0 &&
+    (walletMode === "email" ? emailValid : wallet.trim().length > 0) &&
+    !busy;
 
-  function handleAdd() {
+  async function handleAdd() {
     if (!valid) return;
-    const err = onAdd({ name, role, salary, dept, wallet });
-    setError(err);
+    setError(null);
+    if (walletMode === "manual") {
+      setError(onAdd({ name, role, salary, dept, email: emailValid ? email.trim().toLowerCase() : undefined, wallet }));
+      return;
+    }
+    // Email mode: resolve (or create) their wallet first, then persist. If the
+    // email is unchanged while editing, the existing address is already theirs.
+    const cleanEmail = email.trim().toLowerCase();
+    if (editing && initial?.email === cleanEmail && initial.wallet) {
+      setError(onAdd({ name, role, salary, dept, email: cleanEmail, wallet: initial.wallet }));
+      return;
+    }
+    setBusy(true);
+    try {
+      const { address } = await api.pregen(cleanEmail);
+      setError(onAdd({ name, role, salary, dept, email: cleanEmail, wallet: address }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -63,7 +106,9 @@ export function AddEmployeeModal({ open, onClose, onAdd, initial, onRemove }: Ad
             {editing ? "Edit employee" : "Add employee"}
           </h2>
           <p style={{ fontSize: 12, color: "#9db3aa", marginTop: 5, lineHeight: 1.5 }}>
-            {editing ? "Update their details, including the wallet their pay goes to." : "They view their salary privately from the My pay page."}
+            {editing
+              ? "Update their details, including where their pay goes."
+              : "Their email is all you need · a wallet is created from it, and they sign in with it to see their pay."}
           </p>
         </StaggerItem>
 
@@ -126,17 +171,68 @@ export function AddEmployeeModal({ open, onClose, onAdd, initial, onRemove }: Ad
           </StaggerItem>
 
           <StaggerItem index={4}>
-            <label style={labelStyle} htmlFor="add-emp-wallet">
-              Wallet address
-            </label>
-            <input
-              id="add-emp-wallet"
-              style={inputStyle}
-              placeholder="0x71C0…8a4E"
-              spellCheck={false}
-              value={wallet}
-              onChange={(e) => setWallet(e.target.value)}
-            />
+            <AnimatePresence mode="wait" initial={false}>
+              {walletMode === "email" ? (
+                <motion.div
+                  key="email"
+                  initial={reduced ? false : { opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                  transition={{ duration: 0.24 }}
+                >
+                  <label style={labelStyle} htmlFor="add-emp-email">
+                    Work email
+                  </label>
+                  <input
+                    id="add-emp-email"
+                    style={inputStyle}
+                    placeholder="jane@company.com"
+                    type="email"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  <p style={{ fontSize: 10, color: "#7f9a8f", marginTop: 6, lineHeight: 1.5 }}>
+                    {editing && initial?.email === email.trim().toLowerCase() && initial.wallet ? (
+                      <>
+                        Their wallet <span className="tnum" style={{ color: "#9db3aa" }}>{shortWallet(initial.wallet)}</span> stays linked to this email.
+                      </>
+                    ) : (
+                      "A private wallet is created from this email · they sign in with it to reveal their pay. No extension needed."
+                    )}
+                  </p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="manual"
+                  initial={reduced ? false : { opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                  transition={{ duration: 0.24 }}
+                >
+                  <label style={labelStyle} htmlFor="add-emp-wallet">
+                    Wallet address
+                  </label>
+                  <input
+                    id="add-emp-wallet"
+                    style={inputStyle}
+                    placeholder="0x71C0…8a4E"
+                    spellCheck={false}
+                    value={wallet}
+                    onChange={(e) => setWallet(e.target.value)}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <button
+              type="button"
+              onClick={() => setWalletMode((m) => (m === "email" ? "manual" : "email"))}
+              className="mt-2 cursor-pointer transition-colors hover:text-[#cfe0d8]"
+              style={{ fontSize: 10.5, color: "#9db3aa", background: "none" }}
+            >
+              {walletMode === "email" ? "They have their own wallet? Enter an address instead" : "Use their email instead (recommended)"}
+            </button>
           </StaggerItem>
         </div>
 
@@ -144,7 +240,7 @@ export function AddEmployeeModal({ open, onClose, onAdd, initial, onRemove }: Ad
           <p
             role="alert"
             className="mt-3 rounded-xl p-2.5"
-            style={{ background: "rgba(224,110,98,0.1)", border: "1px solid rgba(224,110,98,0.4)", color: "#eb8f85", fontSize: 11.5 }}
+            style={{ background: "rgba(224,110,98,0.1)", border: "1px solid rgba(224,110,98,0.4)", color: "#eb8f85", fontSize: 11.5, lineHeight: 1.5 }}
           >
             {error}
           </p>
@@ -155,7 +251,8 @@ export function AddEmployeeModal({ open, onClose, onAdd, initial, onRemove }: Ad
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 cursor-pointer rounded-full text-center transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+              disabled={busy}
+              className="flex-1 cursor-pointer rounded-full text-center transition-colors hover:bg-[rgba(95,230,175,0.1)] disabled:cursor-not-allowed disabled:opacity-50"
               style={{
                 background: "rgba(255,255,255,0.06)",
                 border: "1px solid rgba(255,255,255,0.09)",
@@ -169,12 +266,15 @@ export function AddEmployeeModal({ open, onClose, onAdd, initial, onRemove }: Ad
             </button>
             <button
               type="button"
-              onClick={handleAdd}
+              onClick={() => void handleAdd()}
               disabled={!valid}
-              className="flex-1 cursor-pointer rounded-full text-center font-medium transition-transform hover:scale-[1.03] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
+              className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full text-center font-medium transition-transform hover:scale-[1.03] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
               style={{ background: "#f5f8f6", color: "#14503b", fontSize: 12.6, padding: "11px 0" }}
             >
-              {editing ? "Save changes" : "Add employee"}
+              {busy && (
+                <span aria-hidden style={{ width: 13, height: 13, borderRadius: "50%", border: "2px solid rgba(20,80,59,0.25)", borderTopColor: "#14503b", animation: "dc-spin .7s linear infinite" }} />
+              )}
+              {busy ? "Creating their wallet" : editing ? "Save changes" : "Add employee"}
             </button>
           </div>
         </StaggerItem>

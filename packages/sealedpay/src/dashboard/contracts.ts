@@ -21,6 +21,8 @@ export interface Person {
   dept: string;
   /** Full checksummed address (display with shortWallet()). */
   wallet: string;
+  /** Login email (the payroll identity), when the row was added by email. */
+  email?: string;
   /** Monthly salary in cUSDd, numeric (format with fmtAmount()). */
   salary: number;
   joined: string;
@@ -166,9 +168,9 @@ export interface AddEmployeeModalProps {
   open: boolean;
   onClose: () => void;
   /** Returns an error string to display, or null on success (shell validates + persists). */
-  onAdd: (values: { name: string; role: string; salary: string; dept: string; wallet: string }) => string | null;
+  onAdd: (values: { name: string; role: string; salary: string; dept: string; email?: string; wallet: string }) => string | null;
   /** Present → edit mode: prefills the form and switches the copy to "Save". */
-  initial?: { name: string; role: string; salary: string; dept: string; wallet: string };
+  initial?: { name: string; role: string; salary: string; dept: string; email?: string; wallet: string };
   /** Edit mode only: remove this employee (rendered as a confirm inside the modal). */
   onRemove?: () => void;
 }

@@ -60,12 +60,13 @@ import { useHistory } from "./lib/history";
 import { useNotifications } from "./lib/notifications";
 import { savePendingRun, useOrphanRun } from "./lib/orphan";
 import { THEME_COLORS, setThemeColor } from "./lib/themeColor";
-import { clearDoor, clearOnboarded, loadDoor, loadEmployeeOnboarded, loadIdentity, loadSamplesCleared, loadTourSeen, saveDoor, setEmployeeOnboarded, setSamplesClearedPref, setTourSeenPref, type Door } from "./lib/prefs";
+import { api } from "./lib/api";
+import { clearDoor, clearOnboarded, loadDoor, loadEmployeeOnboarded, loadIdentity, loadTourSeen, saveDoor, setEmployeeOnboarded, setTourSeenPref, type Door } from "./lib/prefs";
 import { useSettings } from "./lib/prefs";
 import { humanizeError } from "./lib/humanizeError";
 import { rosterToRows } from "./lib/roster";
 import { useTxTimes } from "./lib/txTime";
-import { SEEDED_KEY, SEED_EMPLOYEES, fmtAmount, midWallet, shortWallet } from "./lib/seed";
+import { fmtAmount, midWallet, shortWallet } from "./lib/seed";
 import { useVerifyRun } from "./lib/verifyRun";
 import { activityRows, employeeRows, encryptedAmountsCount, toPerson, toRunViews, type FundingEvent } from "./lib/views";
 import { useFundWallet, useWalletBalance } from "./lib/wallet";
@@ -193,9 +194,9 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   const { address: employer } = useAccount();
   const { disconnect } = useDisconnect();
   const { logout: privyLogout } = usePrivy();
-  const { employees, add, update, remove, replaceAll } = useEmployees();
+  const { employees, add, update, remove, hasSamples, clearSamples: clearSampleRows, syncError: rosterSyncError } = useEmployees();
   const [editEmp, setEditEmp] = useState<Employee | null>(null); // employee being edited
-  const { runs: liveRuns, addRun, markVerified } = useHistory();
+  const { runs: liveRuns, addRun, markVerified, syncError: runsSyncError } = useHistory();
   const { settings, set: setSetting } = useSettings();
   const { notifs, unread, add: addNotif, markRead, markAllRead } = useNotifications();
   const { decimals } = useTokenMeta(TOKEN);
@@ -322,23 +323,36 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   };
 
   const identity = loadIdentity();
+  // Seeding is owned by useEmployees now (per-tenant, server-backed): a brand
+  // new employer gets the demo team from the hook itself.
 
-  /* ── seed / migrate the demo roster once per seed version ──────────────── */
-  // On a new SEEDED_KEY version this REPLACES any prior roster (e.g. the older
-  // 8-person seed) with the current SEED_EMPLOYEES — so a roster change lands
-  // without the user having to clear localStorage by hand.
-  const seededRef = useRef(false);
+  /* ── backend sync failures → one calm toast each (deduped) ─────────────── */
+  const toastedSync = useRef<string>(undefined);
   useEffect(() => {
-    if (seededRef.current) return;
-    seededRef.current = true;
-    if (!localStorage.getItem(SEEDED_KEY)) {
-      replaceAll(
-        SEED_EMPLOYEES.map((s) => ({ name: s.name, role: s.role, dept: s.dept, address: s.address, salary: s.salary })),
-      );
-      localStorage.setItem(SEEDED_KEY, "1");
+    const e = rosterSyncError ?? runsSyncError;
+    if (!e) {
+      toastedSync.current = undefined;
+      return;
     }
+    if (toastedSync.current === e) return;
+    toastedSync.current = e;
+    showToast("err", e);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [rosterSyncError, runsSyncError]);
+
+  /* ── keep the server profile current (names the employer for employees) ── */
+  useEffect(() => {
+    if (!identity.name) return;
+    const t = window.setTimeout(() => {
+      api
+        .putProfile({ name: identity.name, avatar: identity.avatar, walletAddress: employer })
+        .catch(() => {
+          /* display-only metadata — a failed push just retries next visit */
+        });
+    }, 1200);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [identity.name, identity.avatar, employer]);
 
   /* ── notification permission prompt (design: 900ms after first load) ───── */
   useEffect(() => {
@@ -562,13 +576,12 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   }, [empId]);
 
   /* ── derived views ─────────────────────────────────────────────────────── */
-  // Sample (demo) data is hidden once the employer clears it, leaving only
-  // their real employees, runs, and deposits — so a real transaction never
-  // blends into the seed data.
-  const [samplesCleared, setSamplesCleared] = useState(() => loadSamplesCleared());
+  // Sample (demo) rows now live IN the server roster (flagged), so clearing
+  // them is a roster edit that syncs across the employer's devices. Cleared =
+  // no sample rows left; the derived flag keeps the old filters working.
+  const samplesCleared = !hasSamples;
   const clearSamples = () => {
-    setSamplesClearedPref(true);
-    setSamplesCleared(true);
+    clearSampleRows();
     setNav(0);
   };
   const people = useMemo(() => {
@@ -857,9 +870,9 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onAdd={(values) => {
-          const problem = validateEmployee({ name: values.name, role: values.role, dept: values.dept, address: values.wallet, salary: values.salary || "0" }, decimals);
+          const problem = validateEmployee({ name: values.name, role: values.role, dept: values.dept, email: values.email, address: values.wallet, salary: values.salary || "0" }, decimals);
           if (problem) return problem;
-          add({ name: values.name, role: values.role || "Employee", dept: values.dept, address: values.wallet, salary: values.salary || "0" });
+          add({ name: values.name, role: values.role || "Employee", dept: values.dept, email: values.email, address: values.wallet, salary: values.salary || "0" });
           addNotif({ title: "Employee added", sub: `${values.name.trim()} · ${values.dept}`, color: "#9db3aa", tone: "info" });
           setAddOpen(false);
           return null;
@@ -868,12 +881,12 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
       <AddEmployeeModal
         open={Boolean(editEmp)}
         onClose={() => setEditEmp(null)}
-        initial={editEmp ? { name: editEmp.name, role: editEmp.role ?? "", salary: editEmp.salary, dept: editEmp.dept ?? "Engineering", wallet: editEmp.address } : undefined}
+        initial={editEmp ? { name: editEmp.name, role: editEmp.role ?? "", salary: editEmp.salary, dept: editEmp.dept ?? "Engineering", email: editEmp.email, wallet: editEmp.address } : undefined}
         onAdd={(values) => {
           if (!editEmp) return null;
-          const problem = validateEmployee({ name: values.name, role: values.role, dept: values.dept, address: values.wallet, salary: values.salary || "0" }, decimals);
+          const problem = validateEmployee({ name: values.name, role: values.role, dept: values.dept, email: values.email, address: values.wallet, salary: values.salary || "0" }, decimals);
           if (problem) return problem;
-          update(editEmp.id, { name: values.name, role: values.role || "Employee", dept: values.dept, address: values.wallet, salary: values.salary || "0" });
+          update(editEmp.id, { name: values.name, role: values.role || "Employee", dept: values.dept, email: values.email, address: values.wallet, salary: values.salary || "0" });
           addNotif({ title: "Employee updated", sub: `${values.name.trim()} · ${values.dept}`, color: "#9db3aa", tone: "info" });
           setEditEmp(null);
           return null;

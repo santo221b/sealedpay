@@ -1,5 +1,15 @@
 /**
- * Employee roster — browser-local only (localStorage), no backend.
+ * Employee roster — server-backed, per employer (Privy user).
+ *
+ * The SealedPay backend (Upstash via /api/roster) is the source of truth so an
+ * employer sees the same team on every device. A per-tenant localStorage copy
+ * paints instantly while the fetch is in flight; every mutation is optimistic
+ * with a debounced PUT behind it, and sync failures surface as one calm,
+ * deduped message (the shell toasts it).
+ *
+ * A brand-new tenant (server returns null) is seeded with the demo team ONCE,
+ * flagged `sample: true` — "clear demo data" simply removes those rows, which
+ * makes the cleared state itself sync across devices.
  *
  * Salaries are stored as the human-entered string ("2500.5") and only
  * converted to base units at payroll time, through the widget's validated
@@ -7,7 +17,11 @@
  */
 import { getAddress, isAddress } from "viem";
 import { isValidAmountText } from "@dispersekit/widget";
-import { useCallback, useEffect, useState } from "react";
+import { usePrivy } from "@privy-io/react-auth";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { api, type RosterEmployee } from "./api";
+import { SEED_EMPLOYEES } from "./seed";
 
 export interface Employee {
   id: string;
@@ -16,52 +30,41 @@ export interface Employee {
   role?: string;
   /** Team, e.g. Engineering / Design / Operations. */
   dept?: string;
+  /** Login email — the payroll identity; the wallet was derived from it. */
+  email?: string;
   address: `0x${string}`;
   /** Human units, e.g. "2500.5" (cUSDd). */
   salary: string;
+  /** Demo-seed row (clearable, never pregenerated). */
+  sample?: boolean;
 }
 
-export type EmployeeInput = { name: string; role?: string; dept?: string; address: string; salary: string };
+export type EmployeeInput = { name: string; role?: string; dept?: string; email?: string; address: string; salary: string };
 
-const STORAGE_KEY = "dispersekit.payroll.employees.v1";
+const CACHE_PREFIX = "dispersekit.payroll.employees.v2:";
 
-function load(): Employee[] {
+function loadCache(userId: string): Employee[] | undefined {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
+    const raw = localStorage.getItem(CACHE_PREFIX + userId);
+    if (!raw) return undefined;
     const parsed = JSON.parse(raw) as Employee[];
-    // Structural check only. Content problems (bad address, bad amount) are
-    // surfaced in the UI at run time — dropping rows here would silently and
-    // PERMANENTLY delete an employee (the persistence effect writes the
-    // filtered list straight back).
     return parsed.filter(
-      (e) =>
-        e &&
-        typeof e.id === "string" &&
-        typeof e.name === "string" &&
-        typeof e.address === "string" &&
-        typeof e.salary === "string",
+      (e) => e && typeof e.id === "string" && typeof e.name === "string" && typeof e.address === "string" && typeof e.salary === "string",
     );
   } catch {
-    return [];
+    return undefined;
   }
 }
 
 /** Checksum when the address is well-formed; otherwise keep exactly what was
- *  entered. Address verification is intentionally NOT enforced at add/edit
- *  time, so this never throws (plain getAddress would on a bad address). */
+ *  entered — address problems surface at run time, never by silent drops. */
 function normalizeAddress(address: string): `0x${string}` {
   const trimmed = address.trim();
   return (isAddress(trimmed) ? getAddress(trimmed) : trimmed) as `0x${string}`;
 }
 
-/** Validation shared by add + edit. Returns a problem string or null if OK.
- *  Note: the wallet address is deliberately NOT verified here — only name and
- *  salary formatting are checked. */
-export function validateEmployee(
-  input: EmployeeInput,
-  decimals?: number,
-): string | null {
+/** Validation shared by add + edit. Returns a problem string or null if OK. */
+export function validateEmployee(input: EmployeeInput, decimals?: number): string | null {
   if (!input.name.trim()) return "Name is required.";
   if (!isValidAmountText(input.salary)) return "Salary must be a plain decimal, e.g. 2500.50";
   const fraction = input.salary.trim().split(".")[1];
@@ -71,61 +74,129 @@ export function validateEmployee(
   return null;
 }
 
+function fromInput(input: EmployeeInput, extra?: Partial<Employee>): Employee {
+  return {
+    id: crypto.randomUUID(),
+    name: input.name.trim(),
+    role: input.role?.trim() || undefined,
+    dept: input.dept?.trim() || undefined,
+    email: input.email?.trim().toLowerCase() || undefined,
+    address: normalizeAddress(input.address),
+    salary: input.salary.trim(),
+    ...extra,
+  };
+}
+
+const SYNC_DEBOUNCE_MS = 700;
+
 export function useEmployees() {
-  const [employees, setEmployees] = useState<Employee[]>(load);
+  const { user, ready, authenticated } = usePrivy();
+  const userId = ready && authenticated ? (user?.id ?? null) : null;
 
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [syncError, setSyncError] = useState<string>();
+  const syncTimer = useRef<number>(undefined);
+  const loadedFor = useRef<string>(undefined);
+
+  /* Load: instant cache paint, then the server truth; seed a brand-new tenant. */
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(employees));
-  }, [employees]);
+    if (!userId || loadedFor.current === userId) return;
+    loadedFor.current = userId;
+    setLoaded(false);
+    const cached = loadCache(userId);
+    if (cached) setEmployees(cached);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { employees: server } = await api.getRoster();
+        if (cancelled) return;
+        if (server === null) {
+          // First visit ever for this employer: seed the demo team (sample rows).
+          const seeded = SEED_EMPLOYEES.map((s) =>
+            fromInput({ name: s.name, role: s.role, dept: s.dept, email: s.email, address: s.address, salary: s.salary }, { sample: true }),
+          );
+          setEmployees(seeded);
+          try {
+            await api.putRoster(seeded as RosterEmployee[]);
+          } catch (e) {
+            if (!cancelled) setSyncError(e instanceof Error ? e.message : String(e));
+          }
+        } else {
+          setEmployees(server as Employee[]);
+        }
+      } catch (e) {
+        // Offline / server down: the cached roster (if any) stays usable.
+        if (!cancelled) setSyncError(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (!cancelled) setLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
-  const add = useCallback((input: EmployeeInput) => {
-    setEmployees((list) => [
-      ...list,
-      {
-        id: crypto.randomUUID(),
-        name: input.name.trim(),
-        role: input.role?.trim() || undefined,
-        dept: input.dept?.trim() || undefined,
-        address: normalizeAddress(input.address),
-        salary: input.salary.trim(),
-      },
-    ]);
+  /* Cache locally + debounce the server PUT after any mutation. */
+  const dirty = useRef(false);
+  useEffect(() => {
+    if (!userId || !loaded) return;
+    try {
+      localStorage.setItem(CACHE_PREFIX + userId, JSON.stringify(employees));
+    } catch {
+      /* cache is best-effort */
+    }
+    if (!dirty.current) return; // don't echo the initial load back to the server
+    window.clearTimeout(syncTimer.current);
+    syncTimer.current = window.setTimeout(() => {
+      dirty.current = false;
+      api
+        .putRoster(employees as RosterEmployee[])
+        .then(() => setSyncError(undefined))
+        .catch((e: unknown) => setSyncError(e instanceof Error ? e.message : String(e)));
+    }, SYNC_DEBOUNCE_MS);
+  }, [employees, userId, loaded]);
+  useEffect(() => () => window.clearTimeout(syncTimer.current), []);
+
+  const mutate = useCallback((fn: (list: Employee[]) => Employee[]) => {
+    dirty.current = true;
+    setEmployees(fn);
   }, []);
 
-  const update = useCallback((id: string, input: EmployeeInput) => {
-    setEmployees((list) =>
-      list.map((e) =>
-        e.id === id
-          ? {
-              ...e,
-              name: input.name.trim(),
-              role: input.role?.trim() || undefined,
-        dept: input.dept?.trim() || undefined,
-              address: normalizeAddress(input.address),
-              salary: input.salary.trim(),
-            }
-          : e,
+  const add = useCallback((input: EmployeeInput) => mutate((list) => [...list, fromInput(input)]), [mutate]);
+
+  const update = useCallback(
+    (id: string, input: EmployeeInput) =>
+      mutate((list) =>
+        list.map((e) =>
+          e.id === id
+            ? {
+                ...e,
+                name: input.name.trim(),
+                role: input.role?.trim() || undefined,
+                dept: input.dept?.trim() || undefined,
+                email: input.email?.trim().toLowerCase() || e.email,
+                address: normalizeAddress(input.address),
+                salary: input.salary.trim(),
+              }
+            : e,
+        ),
       ),
-    );
-  }, []);
+    [mutate],
+  );
 
-  const remove = useCallback((id: string) => {
-    setEmployees((list) => list.filter((e) => e.id !== id));
-  }, []);
+  const remove = useCallback((id: string) => mutate((list) => list.filter((e) => e.id !== id)), [mutate]);
 
-  /** Replace the whole roster (used by the versioned seed migration). */
-  const replaceAll = useCallback((inputs: EmployeeInput[]) => {
-    setEmployees(
-      inputs.map((input) => ({
-        id: crypto.randomUUID(),
-        name: input.name.trim(),
-        role: input.role?.trim() || undefined,
-        dept: input.dept?.trim() || undefined,
-        address: normalizeAddress(input.address),
-        salary: input.salary.trim(),
-      })),
-    );
-  }, []);
+  /** Remove the demo rows (per-tenant; syncs across devices like any edit). */
+  const clearSamples = useCallback(() => mutate((list) => list.filter((e) => !e.sample)), [mutate]);
 
-  return { employees, add, update, remove, replaceAll };
+  /** Replace the whole roster (kept for edge/migration paths). */
+  const replaceAll = useCallback(
+    (inputs: EmployeeInput[]) => mutate(() => inputs.map((input) => fromInput(input))),
+    [mutate],
+  );
+
+  const hasSamples = employees.some((e) => e.sample);
+
+  return { employees, loaded, hasSamples, syncError, add, update, remove, replaceAll, clearSamples };
 }

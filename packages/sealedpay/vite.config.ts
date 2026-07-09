@@ -2,8 +2,11 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
+import { sealedpayApi } from "./server/vite-api";
+
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  // The api bridge serves the SAME Vercel functions at /api in dev.
+  plugins: [react(), tailwindcss(), sealedpayApi("../../")],
   // VITE_* vars live in the repo-root .env, shared by the whole monorepo.
   envDir: "../../",
   optimizeDeps: {

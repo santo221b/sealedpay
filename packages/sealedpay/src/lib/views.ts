@@ -36,9 +36,12 @@ export function toPerson(e: Employee): Person {
     role: e.role ?? "Employee",
     dept: e.dept ?? "Engineering",
     wallet: e.address,
+    email: e.email,
     salary: Number.parseFloat(e.salary) || 0,
     joined: seed?.joined ?? "Jul 2026",
-    sample: seed !== undefined,
+    // The roster row's own flag is the truth (server-backed); the seed-name
+    // match keeps rows from a pre-flag cache classified correctly.
+    sample: e.sample ?? seed !== undefined,
   };
 }
 

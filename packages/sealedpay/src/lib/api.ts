@@ -103,6 +103,8 @@ export interface RunRecord {
 export interface Profile {
   name: string;
   avatar: string;
+  /** The employer's last-connected payroll wallet (labels the employee's payments). */
+  walletAddress?: `0x${string}`;
   /** In-app notification prefs (employee portal). */
   notifyPayments?: boolean;
   notifyVerifications?: boolean;
