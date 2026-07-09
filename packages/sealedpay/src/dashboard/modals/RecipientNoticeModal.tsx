@@ -1,8 +1,8 @@
 /**
- * Recipient-view notice — a one-off explainer shown before jumping into the
- * recipient's "My pay" screen (from Settings or the pay finale). It makes
- * explicit that this door is a TESTING convenience: a real product would never
- * let an employer open an employee's private pay.
+ * Switch-to-employee notice — a one-off explainer shown before switching to
+ * the employee surface (from Settings or the pay finale). Since email login,
+ * this is a real product feature: the employee view shows THE SIGNED-IN
+ * ACCOUNT's own pay — never someone else's (private pay stays private).
  */
 import { ModalShell, StaggerItem } from "../../design/kit2";
 
@@ -33,15 +33,15 @@ export function RecipientNoticeModal({
 
         <StaggerItem index={1}>
           <h2 id="recipient-notice-title" style={{ fontSize: 19, fontWeight: 700, color: "#f2f7f4", marginTop: 14 }}>
-            A testing shortcut
+            Switch to the employee view
           </h2>
         </StaggerItem>
 
         <StaggerItem index={2}>
           <p style={{ fontSize: 12.5, color: "#9db3aa", marginTop: 8, lineHeight: 1.6 }}>
-            This opens the recipient&rsquo;s My pay view. In a real product it would not be here, because an employer
-            can never open an employee&rsquo;s private pay. It is included only to make testing the recipient flow
-            easy, without a second wallet or device.
+            This switches to the employee surface for YOUR account · the pay received by the wallet you are signed
+            in with. An employer can never open an employee&rsquo;s private pay; every reveal needs that person&rsquo;s
+            own signature.
           </p>
         </StaggerItem>
 
@@ -61,7 +61,7 @@ export function RecipientNoticeModal({
               className="flex-1 cursor-pointer rounded-full text-center font-medium transition-transform hover:scale-[1.03] active:scale-[0.97]"
               style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 12.6, padding: "11px 0" }}
             >
-              Continue
+              Switch view
             </button>
           </div>
         </StaggerItem>

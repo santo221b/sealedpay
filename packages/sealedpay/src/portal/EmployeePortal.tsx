@@ -47,6 +47,69 @@ function fmtPaymentTime(ms: number): string {
   return `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })} ${h}:${m}${ampm}`;
 }
 
+/**
+ * Server profile: pushes the onboarding identity up once (so the employer's
+ * roster name and this profile agree), and owns the in-app notification
+ * preferences with optimistic toggles + a debounced PUT.
+ */
+function usePortalProfile(onError: (msg: string) => void) {
+  const identity = loadIdentity();
+  const [prefs, setPrefs] = useState({ payments: true, verifications: true });
+  const pushed = useRef(false);
+  const syncTimer = useRef<number>(undefined);
+
+  useEffect(() => {
+    if (pushed.current) return;
+    pushed.current = true;
+    void (async () => {
+      try {
+        const { profile } = await api.getProfile();
+        setPrefs({
+          payments: profile?.notifyPayments ?? true,
+          verifications: profile?.notifyVerifications ?? true,
+        });
+        // First visit (or a fresher local identity): push name + avatar up.
+        if (identity.name && (!profile || profile.name !== identity.name || profile.avatar !== identity.avatar)) {
+          await api.putProfile({
+            name: identity.name,
+            avatar: identity.avatar,
+            notifyPayments: profile?.notifyPayments ?? true,
+            notifyVerifications: profile?.notifyVerifications ?? true,
+          });
+        }
+      } catch {
+        /* profile is display metadata — quiet failure, defaults stay on */
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggle = useCallback(
+    (key: "payments" | "verifications") => {
+      setPrefs((p) => {
+        const next = { ...p, [key]: !p[key] };
+        window.clearTimeout(syncTimer.current);
+        syncTimer.current = window.setTimeout(() => {
+          api
+            .putProfile({
+              name: identity.name || "You",
+              avatar: identity.avatar,
+              notifyPayments: next.payments,
+              notifyVerifications: next.verifications,
+            })
+            .catch((e: unknown) => onError(e instanceof Error ? e.message : String(e)));
+        }, 600);
+        return next;
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onError],
+  );
+  useEffect(() => () => window.clearTimeout(syncTimer.current), []);
+
+  return { prefs, toggle };
+}
+
 /** Employments from the SealedPay backend, with quiet failure (inline note). */
 function useEmployments() {
   const [employments, setEmployments] = useState<Employment[]>();
@@ -110,6 +173,7 @@ export function EmployeePortal({ onLoggedOut, onSwitchDoor }: { onLoggedOut: () 
 
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const profile = usePortalProfile((msg) => showToast("err", msg));
   const fmt = (v: bigint) => (pay.decimals !== undefined ? formatAmount(v, pay.decimals) : undefined);
   const revealed = pay.phase === "revealed";
 
@@ -430,6 +494,28 @@ export function EmployeePortal({ onLoggedOut, onSwitchDoor }: { onLoggedOut: () 
                 </div>
               )}
             </motion.div>
+
+            {/* In-app notification preferences (synced to the profile) */}
+            <motion.div
+              initial={reduced ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: reduced ? 0 : 0.24, ease: EASE }}
+              style={{ background: tokens.glass.card, boxShadow: tokens.glass.cardShadow, borderRadius: 18, padding: "18px 20px" }}
+            >
+              <div style={{ fontWeight: 400, fontSize: 14.5 }}>Notifications</div>
+              <PrefRow
+                label="New payments"
+                sub="Alert in-app when pay arrives"
+                on={profile.prefs.payments}
+                onToggle={() => profile.toggle("payments")}
+              />
+              <PrefRow
+                label="Verifications"
+                sub="Alert when a payment is verified"
+                on={profile.prefs.verifications}
+                onToggle={() => profile.toggle("verifications")}
+              />
+            </motion.div>
           </aside>
         </div>
 
@@ -479,6 +565,33 @@ function CenterNote({ icon, title, sub, spinner }: { icon: React.ReactNode; titl
       </span>
       <p style={{ fontSize: 14, fontWeight: 500, color: "#eef4f1", marginTop: 13 }}>{title}</p>
       <p style={{ fontSize: 12, color: tokens.text.muted, marginTop: 5, maxWidth: 340, lineHeight: 1.55 }}>{sub}</p>
+    </div>
+  );
+}
+
+function PrefRow({ label, sub, on, onToggle }: { label: string; sub: string; on: boolean; onToggle: () => void }) {
+  const reduced = useReducedMotion();
+  return (
+    <div className="flex items-center justify-between" style={{ marginTop: 13 }}>
+      <span className="min-w-0">
+        <span className="block" style={{ fontSize: 12, color: "#e2ede8" }}>{label}</span>
+        <span className="block" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>{sub}</span>
+      </span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        onClick={onToggle}
+        className="relative shrink-0 cursor-pointer"
+        style={{ width: 36, height: 21, borderRadius: 999, background: on ? "#3bbf8e" : "rgba(255,255,255,0.12)", transition: "background .2s" }}
+      >
+        <motion.span
+          className="absolute rounded-full"
+          style={{ top: 2.5, width: 16, height: 16, background: "#fff" }}
+          animate={{ left: on ? 17.5 : 2.5 }}
+          transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 550, damping: 32 }}
+        />
+      </button>
     </div>
   );
 }
