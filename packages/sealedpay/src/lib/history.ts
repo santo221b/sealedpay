@@ -100,6 +100,7 @@ export function useHistory() {
     const cached = loadCache(userId);
     setRuns(cached);
     let cancelled = false;
+    let settled = false;
     void (async () => {
       try {
         const { runs: server } = await api.getRuns();
@@ -121,11 +122,17 @@ export function useHistory() {
       } catch (e) {
         if (!cancelled) setSyncError(e instanceof Error ? e.message : String(e));
       } finally {
+        settled = true;
         if (!cancelled) setLoaded(true);
       }
     })();
     return () => {
       cancelled = true;
+      // StrictMode-safe: a load cancelled before settling must release the
+      // loadedFor guard, or the double-mount's second pass early-returns and
+      // `loaded` stays false — silently disabling cache writes and PUTs
+      // (recorded payouts would then vanish on reload).
+      if (!settled) loadedFor.current = undefined;
     };
   }, [userId]);
 

@@ -113,14 +113,23 @@ export function useEmployees() {
     const cached = loadCache(userId);
     setEmployees(cached ?? []);
     let cancelled = false;
+    let settled = false;
     void (async () => {
       try {
         const { employees: server } = await api.getRoster();
         if (cancelled) return;
         if (server === null) {
-          // First visit ever for this employer: start EMPTY. Sample data is
-          // opt-in from the dashboard's empty states (see loadSamples).
-          setEmployees([]);
+          // Nothing stored server-side. A non-empty local cache means an
+          // earlier session's PUT never landed — adopt it and arm a sync
+          // (self-heal) instead of blanking real data. A truly fresh tenant
+          // starts empty; sample data is opt-in (see loadSamples).
+          setEmployees((prev) => {
+            if (prev.length > 0) {
+              dirty.current = true;
+              return prev;
+            }
+            return [];
+          });
         } else {
           // A local edit made WHILE the fetch was in flight wins (dirty) — the
           // scheduled PUT reconciles the server; otherwise adopt server truth.
@@ -130,11 +139,18 @@ export function useEmployees() {
         // Offline / server down: the cached roster (if any) stays usable.
         if (!cancelled) setSyncError(e instanceof Error ? e.message : String(e));
       } finally {
+        settled = true;
         if (!cancelled) setLoaded(true);
       }
     })();
     return () => {
       cancelled = true;
+      // StrictMode-safe: this cleanup runs between the double-mount's two
+      // effect passes. A load that was cancelled BEFORE settling must release
+      // the loadedFor guard, or the second pass early-returns and `loaded`
+      // stays false forever — which silently disables every cache write and
+      // server PUT (real data then vanishes on reload).
+      if (!settled) loadedFor.current = undefined;
     };
   }, [userId]);
 
