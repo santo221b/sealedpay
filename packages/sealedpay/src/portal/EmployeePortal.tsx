@@ -1474,8 +1474,8 @@ function EmploymentRow({ job, sym }: { job: Employment; sym: string }) {
       type="button"
       onClick={() => setSalaryShown((s) => !s)}
       title={salaryShown ? "Hide salary" : "Show salary"}
-      className="flex w-full cursor-pointer items-center text-left transition-colors hover:bg-[rgba(95,230,175,0.08)]"
-      style={{ gap: 11, padding: "8px 16px 8px 13px", margin: "0 -13px", borderRadius: 999 }}
+      className="flex cursor-pointer items-center text-left transition-colors hover:bg-[rgba(95,230,175,0.08)]"
+      style={{ gap: 11, padding: "8px 16px 8px 13px", width: "calc(100% + 26px)", marginLeft: -13, borderRadius: 999 }}
     >
       <span className="flex shrink-0 items-center justify-center rounded-full" style={{ width: 34, height: 34, background: "rgba(59,191,142,0.18)", fontSize: 11, fontWeight: 800, color: "#d3ecdd" }}>
         {(job.employerName || "E").slice(0, 1).toUpperCase()}
