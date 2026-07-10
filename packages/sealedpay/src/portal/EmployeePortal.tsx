@@ -14,11 +14,12 @@
  * any browser, Safari included. Errors surface as service-named toasts; every
  * async surface has an empty, loading, and failed state.
  */
-import { formatAmount } from "@dispersekit/widget";
+import { formatAmount, SEPOLIA_CHAIN_ID } from "@dispersekit/widget";
 import { usePrivy } from "@privy-io/react-auth";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { zeroAddress } from "viem";
+import { useSwitchChain } from "wagmi";
 
 import { LogoutModal } from "../dashboard/modals/LogoutModal";
 import { Toast } from "../dashboard/modals/Toast";
@@ -136,6 +137,7 @@ function useEmployments() {
 export function EmployeePortal({ onLoggedOut, onSwitchDoor }: { onLoggedOut: () => void; onSwitchDoor: () => void }) {
   const reduced = useReducedMotion();
   const pay = useMyPay();
+  const { switchChain, isPending: switchingChain } = useSwitchChain();
   const { user, logout } = usePrivy();
   const identity = loadIdentity();
   const jobs = useEmployments();
@@ -179,7 +181,7 @@ export function EmployeePortal({ onLoggedOut, onSwitchDoor }: { onLoggedOut: () 
 
   const payslip = (p: MyPayment) => {
     if (p.amount === undefined || pay.decimals === undefined) return;
-    exportPayslip({
+    const opened = exportPayslip({
       payment: p,
       amountText: formatAmount(p.amount, pay.decimals),
       symbol: sym,
@@ -187,6 +189,7 @@ export function EmployeePortal({ onLoggedOut, onSwitchDoor }: { onLoggedOut: () 
       recipientName: identity.name,
       employerName: jobs.employments?.find((j) => j.employerAddress?.toLowerCase() === p.from.toLowerCase())?.employerName,
     });
+    if (!opened) showToast("err", "Allow pop-ups for this site to download your payslip.");
   };
 
   return (
@@ -298,14 +301,53 @@ export function EmployeePortal({ onLoggedOut, onSwitchDoor }: { onLoggedOut: () 
                 </div>
               </div>
 
-              {/* States: preparing wallet → scanning skeleton → empty → rows */}
-              {!pay.ready ? (
+              {/* States: wrong-network → preparing wallet → scan error →
+                  scanning skeleton → empty → rows */}
+              {pay.connected && !pay.onSepolia ? (
+                <div className="mt-2 flex flex-col items-center text-center" style={{ padding: "28px 20px" }}>
+                  <span className="flex items-center justify-center rounded-full" style={{ width: 52, height: 52, background: "rgba(224,122,106,0.14)" }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#eb9a8d" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d="M12 9v4" /><path d="M12 17h.01" />
+                      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                    </svg>
+                  </span>
+                  <p style={{ fontSize: 14, fontWeight: 500, color: "#eef4f1", marginTop: 13 }}>Wrong network</p>
+                  <p style={{ fontSize: 12, color: tokens.text.muted, marginTop: 5, maxWidth: 320, lineHeight: 1.55 }}>
+                    Your pay lives on Sepolia. Switch networks to see and reveal it.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => switchChain({ chainId: SEPOLIA_CHAIN_ID })}
+                    disabled={switchingChain}
+                    className="mt-4 cursor-pointer rounded-full font-medium disabled:opacity-60"
+                    style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 12.5, padding: "9px 20px" }}
+                  >
+                    {switchingChain ? "Switching" : "Switch to Sepolia"}
+                  </button>
+                </div>
+              ) : !pay.ready ? (
                 <CenterNote
                   icon={<PadlockGlyph size={22} color="#78e9c0" />}
                   title="Preparing your wallet"
                   sub="Your email wallet is connecting. This takes a moment on first sign-in."
                   spinner
                 />
+              ) : pay.error && pay.payments === undefined ? (
+                <div className="mt-2 flex flex-col items-center text-center" style={{ padding: "28px 20px" }}>
+                  <span className="flex items-center justify-center rounded-full" style={{ width: 52, height: 52, background: "rgba(224,122,106,0.12)" }}>
+                    <PadlockGlyph size={22} color="#eb9a8d" />
+                  </span>
+                  <p style={{ fontSize: 14, fontWeight: 500, color: "#eef4f1", marginTop: 13 }}>Couldn't read your payments</p>
+                  <p style={{ fontSize: 12, color: tokens.text.muted, marginTop: 5, maxWidth: 340, lineHeight: 1.55 }}>{pay.error}</p>
+                  <button
+                    type="button"
+                    onClick={() => void pay.scan()}
+                    className="mt-4 cursor-pointer rounded-full font-medium"
+                    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.13)", color: "#cfe0d8", fontSize: 12.5, padding: "9px 20px" }}
+                  >
+                    Try again
+                  </button>
+                </div>
               ) : pay.payments === undefined ? (
                 <div className="mt-4 flex flex-col" style={{ gap: 7 }}>
                   {[0, 1, 2].map((i) => (

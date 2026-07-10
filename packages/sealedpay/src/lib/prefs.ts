@@ -68,6 +68,18 @@ export function clearDoor() {
   localStorage.removeItem(DOOR_KEY);
 }
 
+/** The last Privy user id seen on this browser — so the Gate can detect an
+ * account switch (the design's global identity keys belong to one account). */
+const LAST_USER_KEY = "sealedpay_last_user";
+
+export function loadLastUser(): string | null {
+  return localStorage.getItem(LAST_USER_KEY);
+}
+
+export function saveLastUser(userId: string) {
+  localStorage.setItem(LAST_USER_KEY, userId);
+}
+
 /** Employee-side onboarding flag — separate from the employer's, so someone
  * who is both sees each flow exactly once. */
 const EMPLOYEE_ONBOARDED_KEY = "sealedpay_employee_onboarded";

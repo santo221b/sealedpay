@@ -121,20 +121,23 @@ export async function handleRoster(authorization: string | undefined, method: st
   }
   if (method === "PUT") {
     const employees = validateRoster((body as { employees?: unknown })?.employees);
-    // Maintain the email → employers reverse index (drives the employee's /me).
+    // Maintain the email → employers reverse index (drives the employee's /me)
+    // with ATOMIC set membership, so two concurrent roster writes can't lose an
+    // index update. Update the index FIRST; commit the roster LAST — a mid-way
+    // failure then leaves index ⊇ roster, which /me tolerates (it re-checks the
+    // roster), and the client's next PUT retries the same idempotent diff.
     const prev = (await store.get<RosterEmployee[]>(keys.roster(userId))) ?? [];
     const prevEmails = new Set(prev.filter((e) => e.email && !e.sample).map((e) => e.email as string));
     const nextEmails = new Set(employees.filter((e) => e.email && !e.sample).map((e) => e.email as string));
-    await store.set(keys.roster(userId), employees);
     const touched = [...new Set([...prevEmails, ...nextEmails])];
     for (const email of touched) {
       const had = prevEmails.has(email);
       const has = nextEmails.has(email);
       if (had === has) continue;
-      const idx = (await store.get<string[]>(keys.empIndex(email))) ?? [];
-      const next = has ? [...new Set([...idx, userId])] : idx.filter((id) => id !== userId);
-      await store.set(keys.empIndex(email), next);
+      if (has) await store.sadd(keys.empIndex(email), userId);
+      else await store.srem(keys.empIndex(email), userId);
     }
+    await store.set(keys.roster(userId), employees);
     return ok({ ok: true });
   }
   throw new ApiFail(405, "That method isn't supported here.");
@@ -148,8 +151,16 @@ export async function handleRuns(authorization: string | undefined, method: stri
     return ok({ runs });
   }
   if (method === "PUT") {
-    const runs = validateRuns((body as { runs?: unknown })?.runs);
-    await store.set(keys.runs(userId), runs);
+    const incoming = validateRuns((body as { runs?: unknown })?.runs);
+    // A payout run is money — MERGE by txHash (incoming wins, so a verified flag
+    // propagates) instead of blindly replacing, so a run recorded on one device
+    // is never erased by a slightly-stale full-list PUT from another.
+    const prev = (await store.get<RunRecord[]>(keys.runs(userId))) ?? [];
+    const byHash = new Map<string, RunRecord>();
+    for (const r of prev) byHash.set(r.txHash, r);
+    for (const r of incoming) byHash.set(r.txHash, r);
+    const merged = [...byHash.values()].sort((a, b) => b.dateISO.localeCompare(a.dateISO)).slice(0, MAX_RUNS);
+    await store.set(keys.runs(userId), merged);
     return ok({ ok: true });
   }
   throw new ApiFail(405, "That method isn't supported here.");
@@ -167,12 +178,22 @@ export async function handleProfile(authorization: string | undefined, method: s
     if (!p || !str(p.name, 120) || !str(p.avatar, 300)) {
       throw new ApiFail(400, "That profile update looks malformed. Reload and try again.");
     }
+    // Field-presence MERGE: the employer surface writes name/avatar/wallet; the
+    // employee portal writes name/avatar/notify prefs. Absent keys keep their
+    // stored value (JSON.stringify drops undefined, so "missing" is reliable),
+    // so the two surfaces don't clobber each other's fields.
+    const prev = (await store.get<Profile>(keys.profile(userId))) ?? ({} as Profile);
     const profile: Profile = {
       name: p.name as string,
       avatar: p.avatar as string,
-      walletAddress: str(p.walletAddress, 42) && ADDR_RE.test(p.walletAddress as string) ? (p.walletAddress as `0x${string}`) : undefined,
-      notifyPayments: typeof p.notifyPayments === "boolean" ? p.notifyPayments : undefined,
-      notifyVerifications: typeof p.notifyVerifications === "boolean" ? p.notifyVerifications : undefined,
+      walletAddress:
+        "walletAddress" in p
+          ? str(p.walletAddress, 42) && ADDR_RE.test(p.walletAddress as string)
+            ? (p.walletAddress as `0x${string}`)
+            : undefined
+          : prev.walletAddress,
+      notifyPayments: typeof p.notifyPayments === "boolean" ? p.notifyPayments : prev.notifyPayments,
+      notifyVerifications: typeof p.notifyVerifications === "boolean" ? p.notifyVerifications : prev.notifyVerifications,
     };
     await store.set(keys.profile(userId), profile);
     return ok({ ok: true });
@@ -180,16 +201,28 @@ export async function handleProfile(authorization: string | undefined, method: s
   throw new ApiFail(405, "That method isn't supported here.");
 }
 
+const PREGEN_WINDOW_SECONDS = 3600;
+const PREGEN_MAX_PER_WINDOW = 40;
+
 export async function handlePregen(authorization: string | undefined, method: string, body: unknown): Promise<HandlerResult> {
-  await requireUser(authorization); // any signed-in user may resolve an email to a wallet
+  const userId = await requireUser(authorization);
   if (method !== "POST") throw new ApiFail(405, "That method isn't supported here.");
   const raw = (body as { email?: unknown })?.email;
   if (!str(raw, 254) || !EMAIL_RE.test(raw as string)) {
     throw new ApiFail(400, `"${String(raw ?? "").slice(0, 40)}" doesn't look like a valid email address.`);
   }
+  const store = getStore();
+  // Rate-limit BEFORE the (billable, user-creating) Privy call, so failed
+  // attempts still count — one throwaway account can't mass-create wallets.
+  const count = await store.incrWithTtl(keys.pregenRate(userId), PREGEN_WINDOW_SECONDS);
+  if (count > PREGEN_MAX_PER_WINDOW) {
+    throw new ApiFail(429, "You've added a lot of employees very quickly. Give it a few minutes and try again.");
+  }
   const email = (raw as string).toLowerCase();
-  const { address, existed } = await pregenerateWallet(email);
-  return ok({ address, existed });
+  // Return ONLY the address — never whether the account already existed, so
+  // this endpoint can't be used to enumerate who has a SealedPay login.
+  const { address } = await pregenerateWallet(email);
+  return ok({ address });
 }
 
 export async function handleMe(authorization: string | undefined, method: string): Promise<HandlerResult> {
@@ -201,7 +234,7 @@ export async function handleMe(authorization: string | undefined, method: string
   const address = embeddedAddressOf(user);
   if (!email) return ok({ email: undefined, address, employments: [] });
 
-  const employerIds = (await store.get<string[]>(keys.empIndex(email))) ?? [];
+  const employerIds = await store.smembers(keys.empIndex(email));
   const employments = [];
   for (const employerId of employerIds.slice(0, 20)) {
     const roster = (await store.get<RosterEmployee[]>(keys.roster(employerId))) ?? [];

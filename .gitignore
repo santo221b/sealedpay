@@ -27,3 +27,6 @@ deployments/localhost/
 # Private notes (talking points, drafts) — never committed
 *.private.md
 .data/
+
+# tsc incremental build artifacts
+*.tsbuildinfo

@@ -14,6 +14,7 @@ import { sepolia } from "viem/chains";
 import { useAccount, useWalletClient } from "wagmi";
 
 import { humanizeError } from "./humanizeError";
+import { withTimeout } from "./withTimeout";
 
 const TOKEN = DEMO_TOKEN_ADDRESS;
 const FHE_NETWORK = "https://ethereum-sepolia-rpc.publicnode.com";
@@ -37,21 +38,6 @@ const SCAN_SPANS = [9_000n, 2_000n, 500n];
 // bound it so a stalled relayer surfaces as a calm retryable error instead of
 // an infinite "Decrypting" spinner. A late resolution is harmless (read-only).
 const REVEAL_TIMEOUT_MS = 60_000;
-function withTimeout<T>(p: Promise<T>, ms: number, message: string): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(message)), ms);
-    p.then(
-      (v) => {
-        clearTimeout(timer);
-        resolve(v);
-      },
-      (e) => {
-        clearTimeout(timer);
-        reject(e);
-      },
-    );
-  });
-}
 
 export interface MyPayment {
   txHash: `0x${string}`;

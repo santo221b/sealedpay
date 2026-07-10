@@ -93,7 +93,10 @@ export function useHistory() {
     if (!userId || loadedFor.current === userId) return;
     loadedFor.current = userId;
     setLoaded(false);
-    // ALWAYS reset on a tenant switch (never show the previous account's runs).
+    // ALWAYS reset on a tenant switch (never show the previous account's runs),
+    // and drop any unflushed dirty payload so it can't PUT into the new tenant.
+    dirty.current = false;
+    window.clearTimeout(syncTimer.current);
     const cached = loadCache(userId);
     setRuns(cached);
     let cancelled = false;
@@ -101,15 +104,20 @@ export function useHistory() {
       try {
         const { runs: server } = await api.getRuns();
         if (cancelled) return;
-        const merged = new Map<string, PayoutRun>();
-        for (const r of (server ?? []).map(fromRecord)) merged.set(r.txHash, r);
-        for (const r of cached) if (!merged.has(r.txHash)) merged.set(r.txHash, r);
-        const list = [...merged.values()].sort((a, b) => b.date.localeCompare(a.date));
-        setRuns(list);
-        // Push back only when the cache held something the server lacked.
-        if ((server ?? []).length !== list.length) {
-          dirty.current = true;
-        }
+        const serverRuns = (server ?? []).map(fromRecord);
+        // Merge over LIVE state (functional update), not the stale `cached`
+        // closure — a run recorded by addRun WHILE this fetch was in flight
+        // (e.g. orphan recovery) is in `prev` and must survive. A payout is
+        // money; losing it here would be unrecoverable once the pending record
+        // is cleared.
+        setRuns((prev) => {
+          const merged = new Map<string, PayoutRun>();
+          for (const r of serverRuns) merged.set(r.txHash, r);
+          for (const r of prev) if (!merged.has(r.txHash)) merged.set(r.txHash, r);
+          const list = [...merged.values()].sort((a, b) => b.date.localeCompare(a.date));
+          if (list.length !== serverRuns.length) dirty.current = true; // prev had runs the server lacked → push back
+          return list;
+        });
       } catch (e) {
         if (!cancelled) setSyncError(e instanceof Error ? e.message : String(e));
       } finally {
@@ -135,7 +143,12 @@ export function useHistory() {
       api
         .putRuns(runs.map(toRecord))
         .then(() => setSyncError(undefined))
-        .catch((e: unknown) => setSyncError(e instanceof Error ? e.message : String(e)));
+        .catch((e: unknown) => {
+          // Re-arm so the failed payload retries on the next mutation / hide,
+          // rather than being silently dropped (a payout must not be lost).
+          dirty.current = true;
+          setSyncError(e instanceof Error ? e.message : String(e));
+        });
     };
     window.clearTimeout(syncTimer.current);
     syncTimer.current = window.setTimeout(flush, SYNC_DEBOUNCE_MS);

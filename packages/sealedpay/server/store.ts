@@ -12,6 +12,7 @@
  */
 import { Redis } from "@upstash/redis";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 
 import { env } from "./env";
@@ -23,6 +24,13 @@ const STORE_DOWN = "The SealedPay database didn't respond. Try again in a moment
 export interface Store {
   get<T>(key: string): Promise<T | null>;
   set(key: string, value: unknown): Promise<void>;
+  /** Atomic set-membership (the email→employers reverse index) — no lost
+   * updates under concurrent writers, unlike a get/modify/set on a JSON array. */
+  sadd(key: string, member: string): Promise<void>;
+  srem(key: string, member: string): Promise<void>;
+  smembers(key: string): Promise<string[]>;
+  /** Atomic counter with TTL — the rate-limit primitive. Returns the new count. */
+  incrWithTtl(key: string, ttlSeconds: number): Promise<number>;
 }
 
 class UpstashStore implements Store {
@@ -30,21 +38,33 @@ class UpstashStore implements Store {
   constructor(url: string, token: string) {
     this.redis = new Redis({ url, token });
   }
-  async get<T>(key: string): Promise<T | null> {
+  private async guard<T>(p: Promise<T>): Promise<T> {
     try {
-      return await withTimeout(this.redis.get<T>(key), STORE_TIMEOUT_MS, STORE_DOWN);
+      return await withTimeout(p, STORE_TIMEOUT_MS, STORE_DOWN);
     } catch (e) {
       if (e instanceof ApiFail) throw e;
       throw new ApiFail(502, STORE_DOWN);
     }
   }
+  get<T>(key: string): Promise<T | null> {
+    return this.guard(this.redis.get<T>(key));
+  }
   async set(key: string, value: unknown): Promise<void> {
-    try {
-      await withTimeout(this.redis.set(key, value), STORE_TIMEOUT_MS, STORE_DOWN);
-    } catch (e) {
-      if (e instanceof ApiFail) throw e;
-      throw new ApiFail(502, STORE_DOWN);
-    }
+    await this.guard(this.redis.set(key, value));
+  }
+  async sadd(key: string, member: string): Promise<void> {
+    await this.guard(this.redis.sadd(key, member));
+  }
+  async srem(key: string, member: string): Promise<void> {
+    await this.guard(this.redis.srem(key, member));
+  }
+  smembers(key: string): Promise<string[]> {
+    return this.guard(this.redis.smembers(key));
+  }
+  async incrWithTtl(key: string, ttlSeconds: number): Promise<number> {
+    const n = await this.guard(this.redis.incr(key));
+    if (n === 1) await this.guard(this.redis.expire(key, ttlSeconds));
+    return n;
   }
 }
 
@@ -76,6 +96,28 @@ class FileStore implements Store {
     this.data[key] = value;
     this.flush();
   }
+  async sadd(key: string, member: string): Promise<void> {
+    const arr = Array.isArray(this.data[key]) ? (this.data[key] as string[]) : [];
+    if (!arr.includes(member)) {
+      this.data[key] = [...arr, member];
+      this.flush();
+    }
+  }
+  async srem(key: string, member: string): Promise<void> {
+    const arr = Array.isArray(this.data[key]) ? (this.data[key] as string[]) : [];
+    this.data[key] = arr.filter((m) => m !== member);
+    this.flush();
+  }
+  async smembers(key: string): Promise<string[]> {
+    return Array.isArray(this.data[key]) ? (this.data[key] as string[]) : [];
+  }
+  async incrWithTtl(key: string): Promise<number> {
+    // Dev: no TTL bookkeeping needed; counts reset on restart.
+    const n = ((this.data[key] as number | undefined) ?? 0) + 1;
+    this.data[key] = n;
+    this.flush();
+    return n;
+  }
 }
 
 let store: Store | undefined;
@@ -91,7 +133,10 @@ export function getStore(): Store {
     if (env("VERCEL")) {
       throw new ApiFail(503, "The server is missing its database configuration. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.");
     }
-    store = new FileStore(resolve(process.cwd(), ".data/sealedpay-store.json"));
+    // Keep the dev store OUTSIDE the vite-served project root (never web-reachable)
+    // and stable across HMR module reloads via a globalThis singleton.
+    const g = globalThis as typeof globalThis & { __spDevStore?: Store };
+    store = g.__spDevStore ?? (g.__spDevStore = new FileStore(resolve(tmpdir(), "sealedpay-dev-store.json")));
   }
   return store;
 }
@@ -102,5 +147,8 @@ export const keys = {
   roster: (userId: string) => `sp:roster:${userId}`,
   runs: (userId: string) => `sp:runs:${userId}`,
   profile: (userId: string) => `sp:profile:${userId}`,
-  empIndex: (email: string) => `sp:empidx:${email.toLowerCase()}`,
+  /** A Redis SET of employer userIds (atomic membership; see Store.sadd). */
+  empIndex: (email: string) => `sp:empidx2:${email.toLowerCase()}`,
+  /** Per-user pregen rate-limit counter (fixed window). */
+  pregenRate: (userId: string) => `sp:pregenrate:${userId}`,
 };

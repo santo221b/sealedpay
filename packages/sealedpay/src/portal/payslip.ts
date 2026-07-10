@@ -8,6 +8,8 @@
  */
 import type { MyPayment } from "../lib/myPay";
 
+/** Returns false only when the popup was genuinely blocked (so the caller can
+ * prompt the user), true once the payslip window opened. */
 export function exportPayslip(opts: {
   payment: MyPayment;
   amountText: string;
@@ -15,7 +17,7 @@ export function exportPayslip(opts: {
   recipient: string;
   recipientName?: string;
   employerName?: string;
-}) {
+}): boolean {
   const { payment, amountText, symbol, recipient, recipientName, employerName } = opts;
   const when = payment.timestamp
     ? new Date(payment.timestamp).toLocaleString("en-US", { dateStyle: "long", timeStyle: "short" })
@@ -78,8 +80,14 @@ export function exportPayslip(opts: {
 </body>
 </html>`;
 
-  const w = window.open("", "_blank", "noopener,width=760,height=920");
-  if (!w) return; // popup blocked — the button stays, the user can retry
+  // NOTE: a `noopener` feature makes window.open() return null even when the
+  // popup opens (per spec) — which would make us think it was blocked and never
+  // write the document. Open normally, then sever the opener ourselves to keep
+  // the tab-nabbing protection.
+  const w = window.open("", "_blank", "width=760,height=920");
+  if (!w) return false; // genuinely popup-blocked
+  w.opener = null;
   w.document.write(html);
   w.document.close();
+  return true;
 }

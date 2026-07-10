@@ -12,7 +12,7 @@
  * message. Fields are local state; the shell validates + persists via onAdd.
  */
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ModalShell, StaggerItem } from "../../design/kit2";
 import { api } from "../../lib/api";
@@ -50,6 +50,10 @@ export function AddEmployeeModal({ open, onClose, onAdd, initial, onRemove }: Ad
   const [busy, setBusy] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
 
+  // Track open across the async pregen so a late resolve after Cancel can't
+  // add a phantom row.
+  const openRef = useRef(open);
+  openRef.current = open;
   useEffect(() => {
     if (open) {
       setName(initial?.name ?? "");
@@ -90,11 +94,12 @@ export function AddEmployeeModal({ open, onClose, onAdd, initial, onRemove }: Ad
     setBusy(true);
     try {
       const { address } = await api.pregen(cleanEmail);
+      if (!openRef.current) return; // cancelled mid-request — don't add a phantom row
       setError(onAdd({ name, role, salary, dept, email: cleanEmail, wallet: address }));
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      if (openRef.current) setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setBusy(false);
+      if (openRef.current) setBusy(false);
     }
   }
 
@@ -251,8 +256,7 @@ export function AddEmployeeModal({ open, onClose, onAdd, initial, onRemove }: Ad
             <button
               type="button"
               onClick={onClose}
-              disabled={busy}
-              className="flex-1 cursor-pointer rounded-full text-center transition-colors hover:bg-[rgba(95,230,175,0.1)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex-1 cursor-pointer rounded-full text-center transition-colors hover:bg-[rgba(95,230,175,0.1)]"
               style={{
                 background: "rgba(255,255,255,0.06)",
                 border: "1px solid rgba(255,255,255,0.09)",

@@ -61,7 +61,7 @@ import { useNotifications } from "./lib/notifications";
 import { savePendingRun, useOrphanRun } from "./lib/orphan";
 import { THEME_COLORS, setThemeColor } from "./lib/themeColor";
 import { api } from "./lib/api";
-import { clearDoor, clearOnboarded, loadDoor, loadEmployeeOnboarded, loadIdentity, loadTourSeen, saveDoor, setEmployeeOnboarded, setTourSeenPref, type Door } from "./lib/prefs";
+import { clearDoor, clearOnboarded, loadDoor, loadEmployeeOnboarded, loadIdentity, loadLastUser, loadTourSeen, saveDoor, saveLastUser, setEmployeeOnboarded, setTourSeenPref, type Door } from "./lib/prefs";
 import { useSettings } from "./lib/prefs";
 import { humanizeError } from "./lib/humanizeError";
 import { rosterToRows } from "./lib/roster";
@@ -105,7 +105,7 @@ export function App() {
  * A ?view=mypay deep link keeps working as the employee door.
  */
 function Gate() {
-  const { ready, authenticated } = usePrivy();
+  const { ready, authenticated, user } = usePrivy();
   const [door, setDoor] = useState<Door | null>(() => {
     try {
       if (new URLSearchParams(window.location.search).get("view") === "mypay") return "employee";
@@ -116,6 +116,43 @@ function Gate() {
   });
   const [onboarded, setOnboarded] = useState(() => loadIdentity().onboarded);
   const [employeeOnboarded, setEmployeeOnboardedState] = useState(() => loadEmployeeOnboarded());
+
+  // Consume the ?view=mypay deep link ONCE: persist the door, then strip the
+  // param so a later in-app switch to the employer view isn't bounced back to
+  // the employee surface on the next render/reload.
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("view") === "mypay") {
+        saveDoor("employee");
+        params.delete("view");
+        const qs = params.toString();
+        window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
+      }
+    } catch {
+      /* no history access */
+    }
+  }, []);
+
+  // Detect an ACCOUNT SWITCH on the same browser (different Privy user signs in):
+  // the design's global identity/onboarded keys belong to the previous account,
+  // so reset the door + onboarding flags and let the new account onboard fresh.
+  const lastUser = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!ready) return;
+    const uid = authenticated ? user?.id : undefined;
+    const seen = loadLastUser();
+    if (uid && seen && seen !== uid) {
+      clearOnboarded();
+      setEmployeeOnboarded(false);
+      clearDoor();
+      setOnboarded(false);
+      setEmployeeOnboardedState(false);
+      setDoor(null);
+    }
+    if (uid) saveLastUser(uid);
+    lastUser.current = uid;
+  }, [ready, authenticated, user?.id]);
 
   // Logout (from either surface) → clear the door → back to the landing page.
   const onLoggedOut = useCallback(() => {
@@ -130,11 +167,20 @@ function Gate() {
     setDoor(d);
   }, []);
 
-  // Switch surface without logging out (for people who are both).
-  const switchDoor = useCallback((d: Door) => {
-    saveDoor(d);
-    setDoor(d);
-  }, []);
+  // Switch surface without logging out (for people who are both). An employer
+  // who has already onboarded shouldn't be forced through the whole employee
+  // onboarding just to peek at their own pay — mark it done on the way over.
+  const switchDoor = useCallback(
+    (d: Door) => {
+      if (d === "employee" && onboarded && !employeeOnboarded) {
+        setEmployeeOnboarded(true);
+        setEmployeeOnboardedState(true);
+      }
+      saveDoor(d);
+      setDoor(d);
+    },
+    [onboarded, employeeOnboarded],
+  );
 
   const identity = loadIdentity();
   const returning = identity.name.trim().length > 0;
@@ -191,12 +237,13 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   const onRevealError = useCallback((msg: string) => showToast("err", msg), [showToast]);
 
   /* ── data hooks ────────────────────────────────────────────────────────── */
-  const { address: employer } = useAccount();
+  const { address: employer, chain, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  const { logout: privyLogout } = usePrivy();
+  const { logout: privyLogout, user: privyUser } = usePrivy();
+  const privyUserId = privyUser?.id;
   const { employees, add, update, remove, hasSamples, clearSamples: clearSampleRows, syncError: rosterSyncError } = useEmployees();
   const [editEmp, setEditEmp] = useState<Employee | null>(null); // employee being edited
-  const { runs: liveRuns, addRun, markVerified, syncError: runsSyncError } = useHistory();
+  const { runs: liveRuns, loaded: historyLoaded, addRun, markVerified, syncError: runsSyncError } = useHistory();
   const { settings, set: setSetting } = useSettings();
   const { notifs, unread, add: addNotif, markRead, markAllRead } = useNotifications();
   const { decimals } = useTokenMeta(TOKEN);
@@ -470,12 +517,13 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [retro.error]);
 
-  // Persist a recovery record the moment a tx hash exists (orphan safety).
+  // Persist a recovery record the moment a tx hash exists (orphan safety),
+  // keyed to THIS employer so it can't surface for another account.
   useEffect(() => {
-    if (flow.pendingTxHash && pendingRun.current) {
-      savePendingRun({ txHash: flow.pendingTxHash, names: pendingRun.current.names, totalText: pendingRun.current.totalText, startedAt: new Date().toISOString() });
+    if (flow.pendingTxHash && pendingRun.current && privyUserId) {
+      savePendingRun(privyUserId, { txHash: flow.pendingTxHash, names: pendingRun.current.names, totalText: pendingRun.current.totalText, startedAt: new Date().toISOString() });
     }
-  }, [flow.pendingTxHash]);
+  }, [flow.pendingTxHash, privyUserId]);
 
   // Immediate post-run verification → history ✓ badge + its OWN toast (only now
   // is a run truly "verified" — the delivery toast said "confirmed").
@@ -508,6 +556,11 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
         return msg;
       };
       if (decimals === undefined) return block("Token details are still loading, try again in a second.");
+      // Guard the network explicitly, so a wrong-chain run fails with a clear
+      // instruction instead of a misleading "not enough funds" (the balance
+      // read on the wrong chain would come back empty).
+      if (!isConnected) return block("Connect your wallet to run payroll.");
+      if (chain?.id !== SEPOLIA_CHAIN_ID) return block("Wrong network. Switch your wallet to Sepolia, then run payroll.");
       const pseudo = selected.map((p, i) => ({ id: String(i), name: p.name, address: p.wallet as `0x${string}`, salary: String(p.salary) }));
       const parsed = rosterToRows(pseudo, decimals);
       if (parsed.issues.length > 0) return block(parsed.namedProblems.join(" · "));
@@ -531,7 +584,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
       await flow.goToReview(parsed.rows);
       return null;
     },
-    [decimals, flow, balance, showToast],
+    [decimals, flow, balance, showToast, isConnected, chain],
   );
   useEffect(() => {
     if (executeWhenReady.current > 0 && flow.phase === "review" && flow.rows.length === executeWhenReady.current) {
@@ -818,7 +871,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
                 </motion.div>
               </AnimatePresence>
 
-              {orphanRecord && flow.phase === "input" && (
+              {orphanRecord && flow.phase === "input" && historyLoaded && (
                 <div className="mt-5 rounded-2xl p-3.5" style={{ background: "rgba(224,178,95,0.08)", border: "1px solid rgba(224,178,95,0.35)", color: "#e6c082", fontSize: 12 }}>
                   <p className="mb-2">
                     An earlier payroll run was sent (

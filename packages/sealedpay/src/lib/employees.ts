@@ -105,7 +105,10 @@ export function useEmployees() {
     loadedFor.current = userId;
     setLoaded(false);
     // ALWAYS reset on a tenant switch — carrying the previous account's roster
-    // in state until the fetch returns would flash tenant A's data at tenant B.
+    // in state until the fetch returns would flash tenant A's data at tenant B —
+    // and drop any unflushed dirty payload so it can't PUT into the new tenant.
+    dirty.current = false;
+    window.clearTimeout(syncTimer.current);
     const cached = loadCache(userId);
     setEmployees(cached ?? []);
     let cancelled = false;
@@ -125,7 +128,9 @@ export function useEmployees() {
             if (!cancelled) setSyncError(e instanceof Error ? e.message : String(e));
           }
         } else {
-          setEmployees(server as Employee[]);
+          // A local edit made WHILE the fetch was in flight wins (dirty) — the
+          // scheduled PUT reconciles the server; otherwise adopt server truth.
+          setEmployees((prev) => (dirty.current ? prev : (server as Employee[])));
         }
       } catch (e) {
         // Offline / server down: the cached roster (if any) stays usable.
@@ -154,7 +159,11 @@ export function useEmployees() {
       api
         .putRoster(employees as RosterEmployee[])
         .then(() => setSyncError(undefined))
-        .catch((e: unknown) => setSyncError(e instanceof Error ? e.message : String(e)));
+        .catch((e: unknown) => {
+          // Re-arm so a failed sync retries on the next mutation / tab hide.
+          dirty.current = true;
+          setSyncError(e instanceof Error ? e.message : String(e));
+        });
     };
     window.clearTimeout(syncTimer.current);
     syncTimer.current = window.setTimeout(flush, SYNC_DEBOUNCE_MS);

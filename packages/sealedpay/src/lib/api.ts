@@ -23,7 +23,10 @@ async function call<T>(method: "GET" | "POST" | "PUT", path: string, body?: unkn
   try {
     token = await getAccessToken();
   } catch {
-    token = null;
+    // getAccessToken throws on a network hiccup during token refresh — that's a
+    // connectivity problem, not an expired session, so don't tell the user to
+    // sign in again (which they can't while offline).
+    throw new ApiError("Couldn't reach the sign-in service to refresh your session. Check your connection and try again.", 0);
   }
   if (!token) throw new ApiError("Your session expired. Sign in again to continue.", 401);
 
@@ -139,8 +142,9 @@ export const api = {
   putProfile: (profile: Profile) => call<{ ok: true }>("PUT", "/api/profile", { profile }),
 
   /** Employer: email → pregenerated wallet address (creates the Privy user +
-   * embedded wallet if the email has never signed in). */
-  pregen: (email: string) => call<{ address: `0x${string}`; existed: boolean }>("POST", "/api/pregen", { email }),
+   * embedded wallet if the email has never signed in). Never reveals whether
+   * the account pre-existed (no membership enumeration). */
+  pregen: (email: string) => call<{ address: `0x${string}` }>("POST", "/api/pregen", { email }),
 
   /** Employee: who employs me (rosters containing my login email). */
   me: () => call<MeResponse>("GET", "/api/me"),
