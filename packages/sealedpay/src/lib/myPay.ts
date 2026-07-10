@@ -8,7 +8,7 @@
  * handles (token ACL scope). Nobody else can perform this read.
  */
 import { DEMO_TOKEN_ADDRESS, SEPOLIA_CHAIN_ID, erc7984Abi, getFhevmInstance, userDecryptHandles, useTokenMeta } from "@dispersekit/widget";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPublicClient, http, parseAbiItem, zeroHash } from "viem";
 import { sepolia } from "viem/chains";
 import { useAccount, useWalletClient } from "wagmi";
@@ -83,40 +83,57 @@ export function useMyPay() {
   }, [me]);
 
   // Backfill missing block times. The scan's per-block read is best-effort —
-  // when it fails (RPC hiccup) a row would render dateless, and the UI must
-  // never show a tx hash where a date belongs. Retries across the scan RPCs
-  // and merges what it finds; rows already timestamped are untouched.
+  // when it fails a row would render dateless, and the UI must never show a
+  // tx hash where a date belongs. Public Sepolia RPCs rate-limit HARD (we
+  // measured 4 of 5 returning 403 in one sitting), so each lookup RACES all
+  // of them in parallel — first success wins, no retry stalls — and a fully
+  // blocked moment re-tries a few seconds later, bounded per session.
+  const backfillTries = useRef(0);
   useEffect(() => {
     const missing = (payments ?? []).filter((p) => p.timestamp === undefined);
-    if (missing.length === 0) return;
+    if (missing.length === 0) {
+      backfillTries.current = 0;
+      return;
+    }
+    if (backfillTries.current >= 5) return;
     let cancelled = false;
+    let timer: number | undefined;
+    const clients = SCAN_RPCS.map((rpc) =>
+      createPublicClient({ chain: sepolia, transport: http(rpc, { retryCount: 0, timeout: 8_000 }) }),
+    );
     void (async () => {
       const found = new Map<string, number>();
-      for (const rpc of SCAN_RPCS) {
-        const client = createPublicClient({ chain: sepolia, transport: http(rpc) });
-        await Promise.all(
-          missing
-            .filter((p) => !found.has(p.txHash))
-            .map(async (p) => {
-              try {
+      await Promise.all(
+        missing.map(async (p) => {
+          try {
+            const ts = await Promise.any(
+              clients.map(async (client) => {
                 const tx = await client.getTransaction({ hash: p.txHash });
-                if (tx.blockNumber == null) return;
+                if (tx.blockNumber == null) throw new Error("pending");
                 const block = await client.getBlock({ blockNumber: tx.blockNumber });
-                found.set(p.txHash, Number(block.timestamp) * 1000);
-              } catch {
-                /* try the next RPC */
-              }
-            }),
-        );
-        if (found.size === missing.length) break;
-      }
-      if (cancelled || found.size === 0) return;
-      setPayments((ps) =>
-        ps?.map((p) => (p.timestamp === undefined && found.has(p.txHash) ? { ...p, timestamp: found.get(p.txHash) } : p)),
+                return Number(block.timestamp) * 1000;
+              }),
+            );
+            found.set(p.txHash, ts);
+          } catch {
+            /* every RPC refused — the retry below picks it up */
+          }
+        }),
       );
+      if (cancelled) return;
+      if (found.size > 0) {
+        setPayments((ps) =>
+          ps?.map((p) => (p.timestamp === undefined && found.has(p.txHash) ? { ...p, timestamp: found.get(p.txHash) } : p)),
+        );
+      } else {
+        backfillTries.current += 1;
+        // New array identity re-fires this effect for another pass.
+        timer = window.setTimeout(() => setPayments((ps) => (ps ? [...ps] : ps)), 9_000);
+      }
     })();
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [payments]);
 
