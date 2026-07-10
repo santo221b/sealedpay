@@ -181,7 +181,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
           {headline}
         </h1>
         <p className="mt-3" style={{ fontSize: 14.5, color: "#9db3aa" }}>
-          Confidential on-chain payroll. Sign in with your email to continue.
+          Confidential on-chain payroll. No wallet needed, only your email.
         </p>
       </motion.div>
 
