@@ -515,7 +515,7 @@ function HomeScreen({
           <GlassCard className="flex-1" style={{ padding: "13.5px 22px" }}>
             <div style={{ fontWeight: 400, fontSize: 17 }}>Last payment</div>
             <div className="tnum whitespace-nowrap" style={{ fontWeight: 700, fontSize: 27, marginTop: 7 }}>
-              {lastPay ? (lastPay.timestamp ? fmtPaymentDate(lastPay.timestamp) : shortHash(lastPay.txHash)) : "None yet"}
+              {lastPay ? (lastPay.timestamp ? fmtPaymentDate(lastPay.timestamp) : "Recently") : "None yet"}
             </div>
             <div className="flex items-center justify-between" style={{ marginTop: 9 }}>
               <span className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>

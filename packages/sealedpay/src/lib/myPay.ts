@@ -82,6 +82,44 @@ export function useMyPay() {
     setError(undefined);
   }, [me]);
 
+  // Backfill missing block times. The scan's per-block read is best-effort —
+  // when it fails (RPC hiccup) a row would render dateless, and the UI must
+  // never show a tx hash where a date belongs. Retries across the scan RPCs
+  // and merges what it finds; rows already timestamped are untouched.
+  useEffect(() => {
+    const missing = (payments ?? []).filter((p) => p.timestamp === undefined);
+    if (missing.length === 0) return;
+    let cancelled = false;
+    void (async () => {
+      const found = new Map<string, number>();
+      for (const rpc of SCAN_RPCS) {
+        const client = createPublicClient({ chain: sepolia, transport: http(rpc) });
+        await Promise.all(
+          missing
+            .filter((p) => !found.has(p.txHash))
+            .map(async (p) => {
+              try {
+                const tx = await client.getTransaction({ hash: p.txHash });
+                if (tx.blockNumber == null) return;
+                const block = await client.getBlock({ blockNumber: tx.blockNumber });
+                found.set(p.txHash, Number(block.timestamp) * 1000);
+              } catch {
+                /* try the next RPC */
+              }
+            }),
+        );
+        if (found.size === missing.length) break;
+      }
+      if (cancelled || found.size === 0) return;
+      setPayments((ps) =>
+        ps?.map((p) => (p.timestamp === undefined && found.has(p.txHash) ? { ...p, timestamp: found.get(p.txHash) } : p)),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [payments]);
+
   const scan = useCallback(async () => {
     if (!me) return;
     setPhase("scanning");
