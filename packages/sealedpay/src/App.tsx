@@ -61,7 +61,7 @@ import { savePendingRun, useOrphanRun } from "./lib/orphan";
 import { THEME_COLORS, setThemeColor } from "./lib/themeColor";
 import { setPreferExternal, useActiveWalletSync } from "./lib/activeWallet";
 import { api } from "./lib/api";
-import { clearDoor, clearOnboarded, loadDoor, loadEmployeeOnboarded, loadIdentity, loadLastUser, loadTourSeen, saveDoor, saveLastUser, setEmployeeOnboarded, setTourSeenPref, type Door } from "./lib/prefs";
+import { clearDoor, clearOnboarded, loadDoor, loadEmployeeOnboarded, loadIdentity, loadLastUser, loadTourSeen, saveDoor, saveIdentity, saveLastUser, setEmployeeOnboarded, setTourSeenPref, type Door } from "./lib/prefs";
 import { useSettings } from "./lib/prefs";
 import { humanizeError } from "./lib/humanizeError";
 import { rosterToRows } from "./lib/roster";
@@ -227,6 +227,20 @@ function Gate() {
         // First time through this door: claim the role (server makes it
         // permanent — first write wins).
         if (!profile?.role) void api.putProfile({ role: door }).catch(() => undefined);
+        // Returning account: the server profile is the identity source of
+        // truth. A fresh browser (new device, cleared storage, session-epoch
+        // reset) must not re-ask what the account already answered — hydrate
+        // the local identity and skip onboarding. The wizard remains only
+        // for accounts that never saved a name.
+        if (profile?.name) {
+          saveIdentity(profile.name, profile.avatar || "/avatars/avatar-profile.svg", profile.companyName);
+          if (door === "employer") {
+            setOnboarded(true);
+          } else {
+            setEmployeeOnboarded(true);
+            setEmployeeOnboardedState(true);
+          }
+        }
         setRoleOk(true);
       } catch {
         // Connectivity must never lock the app out — the check reruns on the
