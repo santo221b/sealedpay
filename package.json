@@ -2,7 +2,7 @@
   "name": "dispersekit",
   "private": true,
   "version": "0.1.0",
-  "description": "White-label confidential disperse widget \u2014 one-import React component for confidential bulk payouts on the Zama Protocol (TokenOps \u00d7 Zama bounty)",
+  "description": "White-label confidential disperse widget — one-import React component for confidential bulk payouts on the Zama Protocol (TokenOps × Zama bounty)",
   "workspaces": [
     "packages/smart-contracts",
     "packages/dispersekit",
@@ -45,6 +45,7 @@
   },
   "devDependencies": {
     "@lavamoat/allow-scripts": "2.5.1",
+    "axios": "1.18.1",
     "lockfile-lint": "5.0.0",
     "simple-git-hooks": "2.13.1"
   }

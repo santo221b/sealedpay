@@ -41,29 +41,50 @@ function deref(path) {
   return entry?.link && entry.resolved && pkgs[entry.resolved] ? entry.resolved : path;
 }
 
-// BFS over PROD dependency edges from the root and every workspace.
+// BFS over PROD dependency edges from the root and every workspace. Peer
+// edges count too: an installed peer is loadable at runtime, so it is part
+// of the production attack surface (resolveDep returns null for uninstalled
+// optional peers, which skips them naturally).
 const prodReachable = new Set();
 const queue = [];
 for (const [path, entry] of Object.entries(pkgs)) {
-  if (path.startsWith("node_modules/")) continue; // root ("") + workspaces only
-  for (const name of Object.keys({ ...entry.dependencies, ...entry.optionalDependencies })) {
+  if (path.includes("node_modules")) continue; // root ("") + true workspace roots only
+  for (const name of Object.keys({ ...entry.dependencies, ...entry.optionalDependencies, ...entry.peerDependencies })) {
     const dep = resolveDep(path, name);
     if (dep) queue.push(dep);
   }
 }
 while (queue.length) {
-  const path = deref(queue.pop());
+  const raw = queue.pop();
+  const path = deref(raw);
   if (prodReachable.has(path)) continue;
+  prodReachable.add(raw); // audit may report the link path itself
   prodReachable.add(path);
   const entry = pkgs[path];
-  for (const name of Object.keys({ ...entry?.dependencies, ...entry?.optionalDependencies })) {
+  for (const name of Object.keys({ ...entry?.dependencies, ...entry?.optionalDependencies, ...entry?.peerDependencies })) {
     const dep = resolveDep(path, name);
     if (dep) queue.push(dep);
   }
 }
 
 const res = spawnSync("npm", ["audit", "--omit=dev", "--json"], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
-const audit = JSON.parse(res.stdout || "{}");
+// Fail CLOSED: a gate that cannot audit must block, not wave through.
+if (res.error) {
+  console.error(`audit:prod ERROR — could not run npm: ${res.error.message}`);
+  process.exit(1);
+}
+let audit;
+try {
+  audit = JSON.parse(res.stdout || "{}");
+} catch {
+  audit = {};
+}
+// npm audit exits 1 WITH a vulnerabilities key when vulns exist — that is
+// normal and proceeds. Error-shaped or keyless output blocks the gate.
+if (audit.error || !audit.vulnerabilities) {
+  console.error(`audit:prod ERROR — npm audit did not produce a vulnerability report: ${audit.error?.summary ?? audit.message ?? "no vulnerabilities key"}`);
+  process.exit(1);
+}
 
 const failing = [];
 const skippedDevOnly = [];

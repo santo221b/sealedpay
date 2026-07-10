@@ -42,6 +42,14 @@ no paragraph, no allowlist.
 
 ## Audit history
 
+- **2026-07-10 — gate hardened after adversarial review**: audit-prod now
+  fails CLOSED when npm itself cannot run or returns error-shaped output,
+  traverses peerDependencies edges (an installed peer is loadable at
+  runtime), and seeds only true workspace roots. The peer pass exposed that
+  the hoisted axios 0.21.4 WAS statically prod-reachable via axios-retry's
+  peer under @coinbase/cdp-sdk — remediated by pinning axios 1.18.1 as a
+  root devDependency so the patched 1.x occupies the hoisted slot and the
+  0.x copy hardhat-deploy insists on nests under it, dev-only.
 - **2026-07-10 — layers bootstrapped** (this document, `.npmrc`, allowlist,
   gates, hooks, Dependabot, headers, `npm ci` install commands).
 - **2026-07-10 — ws consolidated to 8.21.0** (GHSA-58qx-3vcg-4xpx memory
