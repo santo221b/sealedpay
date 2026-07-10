@@ -63,7 +63,9 @@ function useDecryptScramble(target: string, startDelayMs: number) {
 
 interface DoorDef {
   door: Door;
-  title: string;
+  /** Dimmed, lighter-weight lead-in ("For") — the audience word carries the title. */
+  titlePrefix: string;
+  titleMain: string;
   sub: string;
   cta: string;
   icon: ReactNode;
@@ -84,8 +86,8 @@ const EMPLOYEE_ICON = (
 );
 
 const DOORS: DoorDef[] = [
-  { door: "employer", title: "For employers", sub: "Run payroll for your whole team in one confidential transaction.", cta: "Sign in as employer", icon: EMPLOYER_ICON },
-  { door: "employee", title: "For employees", sub: "View your salary and payment history. Only you can decrypt the amounts.", cta: "Sign in as employee", icon: EMPLOYEE_ICON },
+  { door: "employer", titlePrefix: "For", titleMain: "Employers", sub: "Run payroll for your whole team in one confidential transaction.", cta: "Sign in as employer", icon: EMPLOYER_ICON },
+  { door: "employee", titlePrefix: "For", titleMain: "Employees", sub: "View your salary and payment history. Only you can decrypt the amounts.", cta: "Sign in as employee", icon: EMPLOYEE_ICON },
 ];
 
 export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
@@ -319,7 +321,7 @@ function DoorPanel({
           {def.icon}
         </span>
         <span className="mt-4 block" style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
-          {def.title}
+          <span style={{ fontWeight: 600, color: "rgba(242,247,244,0.7)" }}>{def.titlePrefix}</span> {def.titleMain}
         </span>
         <span className="mt-2 block" style={{ fontSize: 12.5, color: "#9db3aa", lineHeight: 1.55 }}>
           {def.sub}
@@ -356,7 +358,7 @@ function DoorPanel({
                   <polyline points="15 18 9 12 15 6" />
                 </svg>
               )}
-              {def.title}
+              {`${def.titlePrefix} ${def.titleMain}`}
               {hint === "right" && (
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <polyline points="9 6 15 12 9 18" />
