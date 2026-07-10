@@ -44,7 +44,7 @@
     }
   },
   "devDependencies": {
-    "@lavamoat/allow-scripts": "2.5.1",
+    "@lavamoat/allow-scripts": "5.1.0",
     "axios": "1.18.1",
     "lockfile-lint": "5.0.0",
     "simple-git-hooks": "2.13.1"
