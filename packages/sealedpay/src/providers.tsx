@@ -78,10 +78,12 @@ function ensurePrivySkin() {
       --privy-color-background-2: rgba(120,233,192,0.08) !important;
     }
     /* The card itself — SealedPay dark-green glass, translucent so the page
-       glows through the blur. */
+       glows through the blur. 20% wider than Privy's 360px default. */
     #privy-modal-content {
       position: relative !important;
       z-index: 1 !important;
+      width: 432px !important;
+      max-width: calc(100vw - 48px) !important;
       background: rgba(16,26,22,0.62) !important;
       -webkit-backdrop-filter: blur(26px) saturate(1.3) !important;
       backdrop-filter: blur(26px) saturate(1.3) !important;
