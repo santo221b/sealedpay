@@ -230,13 +230,22 @@ function Gate() {
         // Returning account: the server profile is the identity source of
         // truth. A fresh browser (new device, cleared storage, session-epoch
         // reset) must not re-ask what the account already answered — hydrate
-        // the local identity and skip onboarding. The wizard remains only
-        // for accounts that never saved a name.
+        // the local identity and skip onboarding. The wizard remains for
+        // accounts that never saved a name, and for employers whose profile
+        // predates the company field: they re-enter onboarding pre-filled,
+        // so the missing company gets captured.
         if (profile?.name) {
-          saveIdentity(profile.name, profile.avatar || "/avatars/avatar-profile.svg", profile.companyName);
+          const avatar = profile.avatar || "/avatars/avatar-profile.svg";
           if (door === "employer") {
-            setOnboarded(true);
+            saveIdentity(profile.name, avatar, profile.companyName ?? "");
+            if (profile.companyName) {
+              setOnboarded(true);
+            } else {
+              clearOnboarded();
+              setOnboarded(false);
+            }
           } else {
+            saveIdentity(profile.name, avatar);
             setEmployeeOnboarded(true);
             setEmployeeOnboardedState(true);
           }
