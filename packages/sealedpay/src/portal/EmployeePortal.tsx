@@ -871,16 +871,14 @@ function SalaryChartCard({ pay, sym }: { pay: MyPay; sym: string }) {
       ) : (
         <>
           <div className="flex" style={{ gap: 13, marginTop: 16 }}>
-            {/* Y axis — matches Payout Activity. Ticks blank ONLY while sealed
-                payments exist (their bar heights hint at counts, not amounts,
-                so a cUSDd scale would mislead). */}
+            {/* Y axis — always rendered, matching Payout Activity. */}
             <div
               className="flex shrink-0 flex-col justify-between"
               style={{ height: CH, fontSize: 10, color: "#8ba297", paddingBottom: 2, width: 29 }}
             >
               {chart.labels.map((l, i) => (
                 <span key={i} className="tnum">
-                  {revealed || (pay.payments?.length ?? 0) === 0 ? l : ""}
+                  {l}
                 </span>
               ))}
             </div>
