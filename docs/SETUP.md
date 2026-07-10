@@ -10,7 +10,7 @@ cd dispersekit
 npm install
 ```
 
-One install at the root covers all three workspaces (`contracts`, `widget`, `demo-host`).
+One install at the root covers all workspaces (`smart-contracts`, `dispersekit`, `sealedpay`, `dispersekit-docs`).
 
 ## 2. Prove the confidential flow locally (no keys, no network)
 
@@ -26,6 +26,16 @@ This runs the Hardhat suite in the **FHEVM mock** — fund a sender, `setOperato
 npm run dev:sealedpay  # SealedPay (the product) → http://localhost:5175
 npm run dev:dispersekit   # widget playground        → http://localhost:5173
 npm run dev:docs     # mock partner app         → http://localhost:5174
+```
+
+SealedPay's email accounts need four extra vars in the repo-root `.env`
+(dev serves its Vercel functions at `/api` via a Vite bridge):
+
+```bash
+VITE_PRIVY_APP_ID=...            # privy.io app (email login + embedded wallets)
+PRIVY_APP_SECRET=...             # server-only — never VITE_-prefixed
+UPSTASH_REDIS_REST_URL=...       # upstash.com Redis (rosters, runs, profiles)
+UPSTASH_REDIS_REST_TOKEN=...     # server-only
 ```
 
 ## 4. Deploy to Sepolia (optional — needed for the live demo)

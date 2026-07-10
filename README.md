@@ -8,7 +8,7 @@
 
 The product is built in two layers:
 
-- **SealedPay** — the product: an employer-only payroll dashboard ([`packages/sealedpay`](packages/sealedpay)). Manage a team, click *Run payroll*, and every salary is delivered in a single confidential transaction — encrypted end-to-end, decryptable only by the employer and each individual employee, with delivery *proven* by decryption rather than assumed.
+- **SealedPay** — the product: a confidential payroll app with email accounts ([`packages/sealedpay`](packages/sealedpay)). Employers sign in with an email, manage a team, and click *Run payroll* — every salary is delivered in a single confidential transaction, encrypted end-to-end and *proven* by decryption rather than assumed. Employees sign in with their email to a dedicated portal and decrypt their own pay — wallets are created from the email (Privy embedded wallets), so neither side needs an extension or a seed phrase.
 - **DisperseKit** — the engine: a white-label confidential disperse widget ([`packages/dispersekit`](packages/dispersekit)). One import, one click, a confidential bulk payout. SealedPay is a skin over it; any partner app can be too.
 
 > Built for the Zama Developer Program Mainnet Season 3 — Special Bounty Track × TokenOps.
@@ -32,25 +32,26 @@ That's the whole integration. Recipients, amounts, encryption, operator approval
 
 ## For judges — running SealedPay end to end
 
-SealedPay runs live on Sepolia; the whole flow takes about two minutes.
+SealedPay runs live on Sepolia; the whole flow takes about two minutes. No wallet extension is needed — accounts are email-based and the wallet is created for you.
 
-1. **Open the app** (URL above) and click **Skip for now** on the connect step, or connect straight away. The dashboard is pre-loaded with a demo team and 6 months of history, so you can explore before connecting.
-2. **Connect a wallet** (top-right). Use MetaMask or scan the WalletConnect QR. If you are on the wrong network the button turns into **Switch to Sepolia**.
-3. **Get Sepolia ETH for gas** (a few writes need it): [Google Cloud faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia) or [sepolia-faucet.pk910.de](https://sepolia-faucet.pk910.de). No real money anywhere.
-4. **Fund the wallet** with demo cUSDd — the **Fund** button on the Payroll Wallet card (open faucet, one mint tx).
-5. **Run Payroll** (Team screen) → watch encrypt → authorize operator → disperse → verify. Every amount is encrypted on-chain; the tx is public on Etherscan but the salaries are not.
-6. **Inspect** — the run appears in Recent activity with an Etherscan link, the Payout Activity / Insights charts update, and each employee's payment history can be decrypted with your wallet signature.
-
-> Note: in this demo build the five sample employees share one recipient wallet so a single tester can verify both sides; edit `packages/sealedpay/src/lib/seed.ts` (`SEED_EMPLOYEES`) to point at distinct addresses for a real team. Use **Settings → Reset demo** to clear local state.
+1. **Open the app** (URL above), pick **For Employers**, and sign in with any email (a one-time code). A short onboarding asks for your name and company; your payroll wallet is created from the email automatically.
+2. **Get Sepolia ETH for gas** into the payroll wallet (address on the Payroll Wallet card — click to copy): [Google Cloud faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia) or [sepolia-faucet.pk910.de](https://sepolia-faucet.pk910.de). No real money anywhere.
+3. **Fund the wallet** with demo cUSDd — the **Fund** button on the Payroll Wallet card (open faucet, one mint tx).
+4. **Add an employee by email** (Team screen). The server pregenerates their wallet, so payroll can run before they ever sign in. Empty states also offer **Load sample data** if you just want to look around.
+5. **Run Payroll** → watch encrypt → authorize operator → disperse → verify. Every amount is encrypted on-chain; the tx is public on Etherscan but the salaries are not.
+6. **See the employee side** — sign in with the employee's email (another browser profile works well), pick **For Employees**, and reveal the salary with one signature: chart, payments ledger, verifications, and payslip export. An email is an employer or an employee, never both.
 
 ### Deploy SealedPay (Vercel)
 
-Create a **new Vercel project** from this repo with **Root Directory = `packages/sealedpay`** — Vercel auto-detects Vite via `packages/sealedpay/vercel.json` and installs the workspace from the repo root. Set these environment variables on the project:
+Create a **new Vercel project** from this repo with **Root Directory = `packages/sealedpay`** — Vercel auto-detects Vite via `packages/sealedpay/vercel.json`, installs the workspace from the repo root, and serves the account backend from `packages/sealedpay/api` as Vercel Functions. Set these environment variables on the project:
 
 | Variable | Value |
 |---|---|
 | `VITE_CTOKEN_ADDRESS` | `0xCE27C522e403FA3d14dC245c0509c2f61AeD17E1` (also the built-in fallback, but set it explicitly) |
-| `VITE_WALLETCONNECT_PROJECT_ID` | your free id from [reown.com](https://reown.com) — makes the WalletConnect QR reliable instead of the shared demo relay |
+| `VITE_PRIVY_APP_ID` | your app id from [privy.io](https://privy.io) (email login + embedded wallets; the id is public by design) |
+| `PRIVY_APP_SECRET` | the matching Privy app secret — **server-only, never `VITE_`-prefixed** |
+| `UPSTASH_REDIS_REST_URL` | from an [Upstash](https://upstash.com) Redis database (stores rosters, runs, profiles) |
+| `UPSTASH_REDIS_REST_TOKEN` | its REST token — **server-only** |
 
 Deploy, then paste the URL into the **Live demos** list above.
 
@@ -108,7 +109,7 @@ Full setup (env, Sepolia deploy): [docs/SETUP.md](docs/SETUP.md) · Embedding gu
 
 ## Tech stack
 
-Solidity `^0.8.27` · [`@fhevm/solidity`](https://docs.zama.org/protocol) · [`@openzeppelin/confidential-contracts`](https://zama.org/erc-7984) (ERC-7984) · Hardhat (fhevm template) · React + TypeScript + Vite · wagmi + viem + RainbowKit · [`@tokenops/sdk`](https://www.npmjs.com/package/@tokenops/sdk) (confidential disperse) · [`@zama-fhe/relayer-sdk`](https://docs.zama.org/protocol/sdk) · Tailwind CSS + Framer Motion
+Solidity `^0.8.27` · [`@fhevm/solidity`](https://docs.zama.org/protocol) · [`@openzeppelin/confidential-contracts`](https://zama.org/erc-7984) (ERC-7984) · Hardhat (fhevm template) · React + TypeScript + Vite · wagmi + viem · [Privy](https://privy.io) email auth + embedded wallets (SealedPay) · RainbowKit (DisperseKit widget) · Vercel Functions + [Upstash Redis](https://upstash.com) (SealedPay backend) · [`@tokenops/sdk`](https://www.npmjs.com/package/@tokenops/sdk) (confidential disperse) · [`@zama-fhe/relayer-sdk`](https://docs.zama.org/protocol/sdk) · Tailwind CSS + Framer Motion
 
 ## Docs
 
