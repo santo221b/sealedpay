@@ -181,7 +181,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
           {headline}
         </h1>
         <p className="mt-3" style={{ fontSize: 14.5, color: "#9db3aa" }}>
-          Confidential on-chain payroll. No wallet needed, only your email.
+          Confidential on-chain payroll.
         </p>
       </motion.div>
 
@@ -244,7 +244,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
       </div>
 
       <p className="absolute inset-x-0 z-[2] text-center" style={{ bottom: 26, fontSize: 11, color: "rgba(233,244,238,0.55)", textShadow: "0 1px 5px rgba(6,20,14,0.55)" }}>
-        SealedPay · Powered by <a href="https://dispersekit-demo.vercel.app" target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: "2px" }}>DisperseKit</a> · TokenOps disperse · Zama FHE
+        SealedPay · Powered by <a href="https://dispersekit-demo.vercel.app" target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "underline", textDecorationColor: "rgba(233,244,238,0.28)", textUnderlineOffset: "2px" }}>DisperseKit</a> · TokenOps disperse · Zama FHE
       </p>
     </div>
   );

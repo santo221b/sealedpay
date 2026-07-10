@@ -368,7 +368,7 @@ export function Onboarding({
 
       {/* Attribution */}
       <p className="absolute inset-x-0 text-center" style={{ bottom: 14, fontSize: 11, color: "rgba(233,244,238,0.62)", textShadow: "0 1px 5px rgba(6,20,14,0.55)" }}>
-        SealedPay · Powered by <a href="https://dispersekit-demo.vercel.app" target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: "2px" }}>DisperseKit</a> · TokenOps disperse · Zama FHE
+        SealedPay · Powered by <a href="https://dispersekit-demo.vercel.app" target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "underline", textDecorationColor: "rgba(233,244,238,0.28)", textUnderlineOffset: "2px" }}>DisperseKit</a> · TokenOps disperse · Zama FHE
       </p>
     </div>
   );
