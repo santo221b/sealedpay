@@ -47,7 +47,7 @@
     "chai": "^4.5.0",
     "chai-as-promised": "^8.0.2",
     "cross-env": "^7.0.3",
-    "eslint": "^9.39.2",
+    "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
     "ethers": "^6.16.0",
     "globals": "^17.6.0",
