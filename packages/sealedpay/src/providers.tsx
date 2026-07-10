@@ -134,6 +134,11 @@ function ensurePrivySkin() {
       width: 15px !important;
       height: 15px !important;
     }
+    /* Icon pucks (email, wallet) are 32px rounded squares in Privy's theme —
+       make them perfect circles like every puck in the app. */
+    #privy-modal-content div:has(> svg) {
+      border-radius: 50% !important;
+    }
     /* The modal logo is our app avatar — give it the exact TopBar hover
        (lift, small counter-tilt, green shadow). Scoped to the avatar asset so
        wallet-brand icons inside the dialog do not inherit it. */
