@@ -9,7 +9,8 @@
  * renders nothing (the address already lives on the wallet card).
  */
 import { SEPOLIA_CHAIN_ID } from "@dispersekit/widget";
-import { usePrivy } from "@privy-io/react-auth";
+import { getEmbeddedConnectedWallet, usePrivy, useWallets } from "@privy-io/react-auth";
+import { useSetActiveWallet } from "@privy-io/wagmi";
 import { useAccount, useSwitchChain } from "wagmi";
 
 import { tokens } from "../design/tokens";
@@ -30,6 +31,8 @@ const PILL: React.CSSProperties = {
 
 export function WalletControl() {
   const { ready, authenticated, connectWallet } = usePrivy();
+  const { wallets } = useWallets();
+  const { setActiveWallet } = useSetActiveWallet();
   const { isConnected, chain } = useAccount();
   const { switchChain, isPending: switching } = useSwitchChain();
 
@@ -37,12 +40,15 @@ export function WalletControl() {
 
   // The gate guarantees authentication before the dashboard renders, but an
   // external wallet can still disconnect out from under us (extension locked,
-  // account removed). Offer the reconnect instead of a dead label.
+  // account removed). Offer the reconnect instead of a dead label. An email
+  // account's embedded wallet just needs ACTIVATING — never send those users
+  // into the external connect modal.
   if (authenticated && !isConnected) {
+    const embedded = getEmbeddedConnectedWallet(wallets);
     return (
       <button
         type="button"
-        onClick={() => connectWallet()}
+        onClick={() => (embedded ? void setActiveWallet(embedded) : connectWallet())}
         style={{ ...PILL, background: tokens.accent.primary, color: "#08130e" }}
       >
         Reconnect wallet

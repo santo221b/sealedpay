@@ -13,7 +13,7 @@
  */
 import { getEmbeddedConnectedWallet, useWallets } from "@privy-io/react-auth";
 import { useSetActiveWallet } from "@privy-io/wagmi";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 
 const PREFER_EXTERNAL_KEY = "sealedpay_prefer_external";
@@ -43,7 +43,9 @@ function loadPreferExternal(): string | null {
 export function useActiveWalletSync() {
   const { wallets } = useWallets();
   const { setActiveWallet } = useSetActiveWallet();
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
+  // Bumping this re-runs the activation attempt (retry after a failure).
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (wallets.length === 0) return;
@@ -52,9 +54,30 @@ export function useActiveWalletSync() {
     const embedded = getEmbeddedConnectedWallet(wallets) ?? undefined;
     // Deliberate external → embedded → whatever's connected (wallet-only login).
     const target = preferred ?? embedded ?? wallets[0];
-    if (target && target.address.toLowerCase() !== address?.toLowerCase()) {
-      void setActiveWallet(target);
-    }
+    if (!target || target.address.toLowerCase() === address?.toLowerCase()) return;
+    let cancelled = false;
+    let timer: number | undefined;
+    // setActiveWallet can reject when the Privy wagmi connector isn't ready
+    // yet (fresh embedded wallets especially). Swallowing that once left the
+    // app disconnected forever — schedule a retry instead.
+    void setActiveWallet(target).catch(() => {
+      if (!cancelled) timer = window.setTimeout(() => setAttempt((n) => n + 1), 900);
+    });
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wallets, address]);
+  }, [wallets, address, attempt]);
+
+  // Watchdog: wallets exist but wagmi still reports disconnected — whatever
+  // the silent cause (a resolved-but-ineffective activation, a connector that
+  // came up late), keep nudging until the connection lands. Stops the moment
+  // isConnected flips.
+  const walletsExist = wallets.length > 0;
+  useEffect(() => {
+    if (!walletsExist || isConnected) return;
+    const t = window.setInterval(() => setAttempt((n) => n + 1), 1400);
+    return () => window.clearInterval(t);
+  }, [walletsExist, isConnected]);
 }
