@@ -164,7 +164,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
       {/* Copy — trimmed to a headline + one line */}
       <motion.div
         className="relative z-[2] flex flex-col items-center text-center"
-        style={{ marginTop: "12vh", padding: "0 24px" }}
+        style={{ marginTop: "8.5vh", padding: "0 24px" }}
         initial={reduced ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: EASE }}
@@ -187,7 +187,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
       {/* The sliding two-door carousel, floating over the orbit */}
       <motion.div
         className="relative z-[2]"
-        style={{ marginTop: 48, width: CARD_W, height: 250 }}
+        style={{ marginTop: 36, width: CARD_W, height: 250 }}
         initial={reduced ? false : { opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.62, delay: 0.12, ease: EASE }}
@@ -227,7 +227,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
       </motion.div>
 
       {/* Which door you're on */}
-      <div className="relative z-[2] mt-7 flex items-center gap-2">
+      <div className="relative z-[2] mt-5 flex items-center gap-2">
         {DOORS.map((_, i) => (
           <button
             key={i}
@@ -240,7 +240,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
         ))}
       </div>
 
-      <p className="absolute inset-x-0 z-[2] text-center" style={{ bottom: 14, fontSize: 11, color: "rgba(233,244,238,0.55)", textShadow: "0 1px 5px rgba(6,20,14,0.55)" }}>
+      <p className="absolute inset-x-0 z-[2] text-center" style={{ bottom: 26, fontSize: 11, color: "rgba(233,244,238,0.55)", textShadow: "0 1px 5px rgba(6,20,14,0.55)" }}>
         SealedPay · Powered by <a href="https://dispersekit-demo.vercel.app" target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: "2px" }}>DisperseKit</a> · TokenOps disperse · Zama FHE
       </p>
     </div>
@@ -313,7 +313,7 @@ function DoorPanel({
             : "0 20px 50px -24px rgba(0,0,0,0.7)",
         }}
       >
-        <span className="flex items-center justify-center" style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(95,230,175,0.12)", border: "1px solid rgba(95,230,175,0.24)", color: "#78e9c0" }}>
+        <span className="sp-glass-card flex items-center justify-center" style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(95,230,175,0.12)", color: "#78e9c0" }}>
           {def.icon}
         </span>
         <span className="mt-4 block" style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
