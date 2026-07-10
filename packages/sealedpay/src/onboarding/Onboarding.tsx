@@ -174,14 +174,14 @@ export function Onboarding({
 
   const first = name.trim().split(" ")[0] || "";
   const nameComma = first ? `, ${first}.` : ".";
-  const welcome = useDecryptScramble(employee ? "Your pay, sealed" : "Welcome to SealedPay", 280);
+  const welcome = useDecryptScramble("Welcome to SealedPay", 280);
 
   const canContinue = (
     employee
       ? [true, first.length > 0, understood, Boolean(avatar), walletReady, true]
       : [true, first.length > 0, understood, Boolean(avatar), walletReady, true, true]
   )[step];
-  const continueLabel = step === 0 ? "Let's get started" : step === TOTAL - 1 ? "Let's go" : "Continue";
+  const continueLabel = step === 0 ? "Get started" : step === TOTAL - 1 ? "Go to dashboard" : "Continue";
 
   function go(next: number) {
     if (next < 0 || next >= TOTAL) return;
@@ -403,8 +403,8 @@ function StepWelcome({ welcome, employee }: { welcome: string; employee: boolean
       <Item i={3}>
         <p className="mt-3.5" style={{ fontSize: 15, fontWeight: 400, color: "#9db3aa", maxWidth: 400, lineHeight: 1.55 }}>
           {employee
-            ? "Your salary arrives encrypted on-chain. Only you can reveal it · right here, with just your email."
-            : "Pay your whole team in one transaction. Salaries stay encrypted, on-chain, end to end."}
+            ? "Your salary arrives encrypted on-chain. Only the account tied to your email can decrypt it."
+            : "Run payroll for your whole team in a single transaction. Salaries remain encrypted on-chain, end to end."}
         </p>
       </Item>
     </>
@@ -419,12 +419,12 @@ function StepName({ name, setName }: { name: string; setName: (v: string) => voi
       </Item>
       <Item i={1}>
         <h1 className="mt-3" style={{ fontWeight: 700, fontSize: 29, lineHeight: 1.2 }}>
-          First, what should we call you?
+          What&rsquo;s your name?
         </h1>
       </Item>
       <Item i={2}>
         <p className="mt-3" style={{ fontSize: 14, color: "#9db3aa", lineHeight: 1.5 }}>
-          We’ll use your name to personalize the workspace.
+          It appears on your workspace profile.
         </p>
       </Item>
       <Item i={3}>
@@ -486,9 +486,9 @@ function StepRole({
             </>
           ) : (
             <>
-              You run confidential payroll for a team of 5. Salaries are encrypted on-chain with Zama FHE. You approve{" "}
-              <span style={{ color: "#cfe0d8" }}>one transaction</span>, and everyone gets paid without exposing a
-              single amount.
+              Salaries are encrypted on-chain with Zama FHE before they settle. You approve{" "}
+              <span style={{ color: "#cfe0d8" }}>one transaction</span> and every employee is paid without a single
+              amount being exposed.
             </>
           )}
         </p>
@@ -526,10 +526,10 @@ function StepRole({
               </>
             ) : (
               <>
-                We’ve pre-loaded a demo team and{" "}
-                <span style={{ color: "#f2f7f4", fontWeight: 600 }}>6 months of payroll history</span> so you can
-                explore right away. Any real payroll you run settles live on Sepolia, and those transactions appear here
-                in the UI with their own Etherscan links, on top of the sample data.
+                A sample team and{" "}
+                <span style={{ color: "#f2f7f4", fontWeight: 600 }}>6 months of payroll history</span> are pre-loaded
+                for evaluation. Payroll you run settles live on Sepolia and appears alongside the sample data, each
+                transaction with its own Etherscan link.
               </>
             )}
           </span>
@@ -552,7 +552,7 @@ function StepAvatar({ avatar, setAvatar, employee }: { avatar: string; setAvatar
       </Item>
       <Item i={2}>
         <p className="mt-3" style={{ fontSize: 14, color: "#9db3aa" }}>
-          {employee ? "Pick a face for your profile." : "Pick a face for your admin profile."}
+          {employee ? "Select a profile picture for your account." : "Select a profile picture for your administrator account."}
         </p>
       </Item>
       <Item i={3}>
@@ -624,16 +624,16 @@ function StepWallet({
       </Item>
       <Item i={1}>
         <h1 className="mt-3" style={{ fontWeight: 700, fontSize: 29 }}>
-          {employee ? "Your pay lands here" : "Your payroll wallet"}
+          {employee ? "Where your salary arrives" : "Your payroll wallet"}
         </h1>
       </Item>
       <Item i={2}>
         <p className="mt-3" style={{ fontSize: 14, color: "#9db3aa", lineHeight: 1.5 }}>
           {employee
-            ? "This wallet was created from your email when you signed in. Payments sent to it are sealed · only your signature can reveal them."
+            ? "This wallet was created from your email when you signed in. Payments sent to it stay sealed · only your signature can reveal them."
             : embedded
-              ? "This wallet was created from your email · payroll settles from it on Sepolia. Prefer a wallet you already fund? Connect it instead."
-              : "Payroll settles from your connected wallet on Sepolia, with free test money and a little Sepolia ETH for gas from any faucet."}
+              ? "This wallet was created from your email · payroll settles from it on Sepolia. You can also connect an existing funded wallet instead."
+              : "Payroll settles from your connected wallet on Sepolia. Test funds are free to mint · gas requires a small amount of Sepolia ETH from any faucet."}
         </p>
       </Item>
       <Item i={3}>
@@ -705,7 +705,7 @@ function StepWallet({
               className="mt-3.5 w-full cursor-pointer text-center"
               style={{ fontSize: 12.5, color: "#9db3aa", background: "none", textDecoration: "underline", textUnderlineOffset: 3 }}
             >
-              Skip for now, explore with demo data
+              Continue with sample data
             </button>
           )}
         </div>
@@ -755,7 +755,7 @@ function StepFund({ onError }: { onError: (msg: string) => void }) {
       </Item>
       <Item i={2}>
         <p className="mt-3" style={{ fontSize: 14, color: "#9db3aa", lineHeight: 1.5 }}>
-          Mint free test cUSDd so your first payroll has something to send. You can top up anytime from the dashboard.
+          Mint test cUSDd to fund your first payroll. You can top up at any time from the dashboard.
         </p>
       </Item>
       <Item i={3}>
@@ -846,9 +846,9 @@ function FundControls({
       </motion.button>
 
       <p style={{ fontSize: 11.5, color: "#7f9a8f", marginTop: 11, paddingLeft: 7, lineHeight: 1.5 }}>
-        Needs a little Sepolia ETH for gas.{" "}
+        Gas requires a small amount of Sepolia ETH.{" "}
         <a href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia" target="_blank" rel="noreferrer" style={{ color: "#5fe3ab", textDecoration: "none" }}>
-          Get some free
+          Get it free
         </a>
         {address ? (
           <>
@@ -891,8 +891,8 @@ function FundReceipt({ title, sub, reduced }: { title: string; sub: string; redu
 
 function StepAllSet({ nameComma, avatar, employee }: { nameComma: string; avatar: string; employee: boolean }) {
   const chips = employee
-    ? (["Email wallet ready", "Pay arrives sealed", "Reveal any time"] as const)
-    : (["Wallet connected", "Team of 5 loaded", "6 months history"] as const);
+    ? (["Wallet ready", "Payments arrive sealed", "Reveal any time"] as const)
+    : (["Wallet connected", "Sample team loaded", "6 months of history"] as const);
   return (
     <>
       <Item i={0} center>
@@ -919,8 +919,8 @@ function StepAllSet({ nameComma, avatar, employee }: { nameComma: string; avatar
       <Item i={3}>
         <p className="mt-3" style={{ fontSize: 14.5, color: "#9db3aa", maxWidth: 380, lineHeight: 1.55 }}>
           {employee
-            ? "Your pay space is ready. Reveal your balance, browse every payment, download payslips."
-            : "Your workspace is ready. Everything below is live. Reveal amounts, run payroll, explore the team."}
+            ? "Your portal is ready. Reveal your balance, review every payment, and export payslips."
+            : "Your workspace is ready. Review your team, run payroll, and verify every payout on-chain."}
         </p>
       </Item>
       <Item i={4}>
