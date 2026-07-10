@@ -16,7 +16,7 @@ export function OrbitGraphic() {
     <motion.div
       aria-hidden
       className="pointer-events-none absolute left-1/2"
-      style={{ bottom: "-68%", width: 1150, height: 1150, x: "-50%", zIndex: 0, transformOrigin: "50% 100%" }}
+      style={{ bottom: "-69%", width: 1150, height: 1150, x: "-50%", zIndex: 0, transformOrigin: "50% 100%" }}
       initial={reduced ? false : { scale: 0.72, opacity: 0 }}
       animate={{ scale: 1, opacity: 0.75 }}
       transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
@@ -28,7 +28,7 @@ export function OrbitGraphic() {
           width: 720,
           height: 720,
           transform: "translate(-50%,-50%)",
-          background: "radial-gradient(circle, rgba(78,206,152,0.10), rgba(46,148,116,0.03) 44%, rgba(0,0,0,0) 68%)",
+          background: "radial-gradient(circle, rgba(78,206,152,0.07), rgba(46,148,116,0.02) 44%, rgba(0,0,0,0) 68%)",
           filter: "blur(12px)",
           animation: reduced ? undefined : "sp-halo 8s ease-in-out infinite",
         }}
@@ -36,8 +36,8 @@ export function OrbitGraphic() {
       <svg viewBox="0 0 1150 1150" width="1150" height="1150" fill="none" className="absolute inset-0">
         <defs>
           <radialGradient id="sp-globe" cx="42%" cy="36%" r="72%">
-            <stop offset="0%" stopColor="rgba(120,233,192,0.11)" />
-            <stop offset="55%" stopColor="rgba(46,148,116,0.055)" />
+            <stop offset="0%" stopColor="rgba(120,233,192,0.08)" />
+            <stop offset="55%" stopColor="rgba(46,148,116,0.04)" />
             <stop offset="100%" stopColor="rgba(8,20,15,0)" />
           </radialGradient>
           <linearGradient id="sp-ring" x1="0" y1="0" x2="1" y2="1">
@@ -70,8 +70,8 @@ export function OrbitGraphic() {
             drawn inside the sphere. */}
         <g style={{ transformOrigin: "575px 575px" }}>
           <circle cx="575" cy="575" r="215" fill="url(#sp-globe)" />
-          <circle cx="575" cy="575" r="214" fill="none" stroke="rgba(120,233,192,0.20)" strokeWidth="5" filter="url(#sp-atmo)" />
-          <circle cx="575" cy="575" r="215" fill="none" stroke="rgba(150,240,205,0.14)" strokeWidth="1" />
+          <circle cx="575" cy="575" r="214" fill="none" stroke="rgba(120,233,192,0.14)" strokeWidth="5" filter="url(#sp-atmo)" />
+          <circle cx="575" cy="575" r="215" fill="none" stroke="rgba(150,240,205,0.10)" strokeWidth="1" />
         </g>
       </svg>
     </motion.div>
