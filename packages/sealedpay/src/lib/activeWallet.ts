@@ -87,13 +87,21 @@ export function useActiveWalletSync() {
   }, [wallets, address, attempt, expectsEmbedded]);
 
   // Watchdog for the EMBEDDED path only (its activation never prompts, so
-  // retrying is free): wallets exist but wagmi still reports disconnected —
-  // keep nudging until the connection lands. Stops the moment it does.
+  // retrying is free). It runs whenever the active wagmi wallet is NOT the
+  // embedded one — which covers two failure modes with one rule:
+  //   1. disconnected: the connection never landed (fresh sign-in races),
+  //   2. hijacked: an injected MetaMask re-announces itself on tab focus and
+  //      wagmi adopts it as the active connector (site was authorized long
+  //      ago), flipping the app to its address + chain. Re-pinning the
+  //      embedded wallet silently reverses the takeover within a beat.
+  // Stops the moment the embedded wallet is the connected one.
   const walletsExist = wallets.length > 0;
+  const embeddedAddr = getEmbeddedConnectedWallet(wallets)?.address.toLowerCase();
   useEffect(() => {
-    if (!walletsExist || isConnected) return;
+    if (!walletsExist) return;
     if (!expectsEmbedded || loadPreferExternal()) return;
+    if (isConnected && embeddedAddr !== undefined && address?.toLowerCase() === embeddedAddr) return;
     const t = window.setInterval(() => setAttempt((n) => n + 1), 1400);
     return () => window.clearInterval(t);
-  }, [walletsExist, isConnected, expectsEmbedded]);
+  }, [walletsExist, isConnected, expectsEmbedded, embeddedAddr, address]);
 }
