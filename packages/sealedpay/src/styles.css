@@ -47,6 +47,32 @@ textarea:focus-visible {
   background-image: repeating-linear-gradient(135deg, #87a69a 0 1.35px, #28382f 1.35px 5.85px);
 }
 
+/* iOS-style glass hairline: a 1px gradient border (bright specular top-left,
+   faint elsewhere) drawn with a masked padding layer, so it hugs any radius. */
+.sp-glass-card {
+  position: relative;
+  border: none;
+}
+.sp-glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.34),
+    rgba(255, 255, 255, 0.07) 28%,
+    rgba(95, 230, 175, 0.12) 62%,
+    rgba(255, 255, 255, 0.15)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
 /* Landing orbit graphic (OrbitGraphic.tsx). */
 @keyframes sp-spin {
   to {

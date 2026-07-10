@@ -69,18 +69,17 @@ interface DoorDef {
   icon: ReactNode;
 }
 
+/* Wallet receiving money — "I run payroll". */
 const EMPLOYER_ICON = (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-    <circle cx="9" cy="7" r="4" />
-    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  <svg width="22" height="22" viewBox="0 0 96 96" fill="currentColor" aria-hidden>
+    <path d="M86 36v14H72c-5.514 0-10 4.486-10 10s4.486 10 10 10h14v14c0 3.309-2.691 6-6 6H16c-3.309 0-6-2.691-6-6V36c0-3.309 2.691-6 6-6h64c3.309 0 6 2.691 6 6zM72 54h14v12H72c-3.309 0-6-2.691-6-6s2.691-6 6-6zm4 4h-4a2 2 0 0 0 0 4h4a2 2 0 0 0 0-4zM52.172 26 63.95 14.222l-2.172-2.172L47.827 26zM58.95 9.221l-.586-.586c-3.51-3.508-9.219-3.508-12.729 0L28.272 26h13.899zM75.728 26l-8.949-8.95L57.828 26z" />
   </svg>
 );
+/* ID badge — "I get paid". */
 const EMPLOYEE_ICON = (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <rect x="3" y="5" width="18" height="14" rx="3" />
-    <path d="m3 8 7.9 5.3a2 2 0 0 0 2.2 0L21 8" />
+  <svg width="22" height="22" viewBox="0 0 25 25" fill="currentColor" aria-hidden>
+    <path d="M7 2.7c-1.7 0-3 1.4-3 3v15.8c0 1.7 1.3 3 3 3h11c1.7 0 3-1.4 3-3V5.7c0-1.7-1.3-3-3-3h-2.1v1.7c0 1.9-1.5 3.4-3.4 3.4S9.1 6.3 9.1 4.4V2.7zm5.5 8.3c1.2 0 2.2 1 2.2 2.2s-1 2.2-2.2 2.2-2.2-1-2.2-2.2 1-2.2 2.2-2.2zm-2.6 6.1c.2-.2.5-.1.7 0 .6.3 1.2.4 1.9.4s1.4-.2 2-.4c.2-.1.5-.1.7 0 .6.4 1 .9 1.4 1.5.5.9-.1 2.1-1.2 2.1H9.7c-1.1 0-1.7-1.1-1.2-2 .3-.7.8-1.2 1.4-1.6z" />
+    <path d="M14 4.4V2c0-.8-.7-1.5-1.5-1.5S11 1.2 11 2v2.4c0 .8.7 1.5 1.5 1.5S14 5.2 14 4.4z" />
   </svg>
 );
 
@@ -180,6 +179,9 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
           // With two doors, the inactive one sits on the side away from active.
           const side = i > active ? 1 : -1; // +1 → peeks right, -1 → peeks left
           const x = isActive ? 0 : side * CARD_W * (hoverPeek ? 0.7 : 0.84);
+          // The resting peek leans like a card held in the hand (low pivot);
+          // hovering straightens it a touch as it leans in, active sits flat.
+          const rotate = isActive ? 0 : side * (hoverPeek ? 3.2 : 5.5);
           return (
             <DoorPanel
               key={d.door}
@@ -187,8 +189,9 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
               active={isActive}
               reduced={Boolean(reduced)}
               x={x}
+              rotate={rotate}
               scale={isActive ? 1 : 0.9}
-              opacity={isActive ? 1 : hoverPeek ? 0.72 : 0.44}
+              opacity={isActive ? 1 : hoverPeek ? 0.74 : 0.48}
               busy={waiting === d.door && !authenticated}
               onPeekEnter={() => !isActive && setHoverPeek(true)}
               onPeekLeave={() => setHoverPeek(false)}
@@ -231,6 +234,7 @@ function DoorPanel({
   active,
   reduced,
   x,
+  rotate,
   scale,
   opacity,
   busy,
@@ -244,6 +248,7 @@ function DoorPanel({
   active: boolean;
   reduced: boolean;
   x: number;
+  rotate: number;
   scale: number;
   opacity: number;
   busy: boolean;
@@ -256,28 +261,41 @@ function DoorPanel({
   return (
     <motion.div
       className="absolute left-0 top-0"
-      style={{ width: CARD_W, zIndex: active ? 3 : 1, cursor: active ? "default" : "pointer" }}
+      style={{ width: CARD_W, zIndex: active ? 3 : 1, cursor: active ? "default" : "pointer", transformOrigin: "50% 88%" }}
       initial={false}
-      animate={{ x, scale, opacity }}
-      transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 240, damping: 30, mass: 0.9 }}
+      animate={{ x, rotate, scale, opacity }}
+      transition={
+        reduced
+          ? { duration: 0 }
+          : {
+              // One gentle glide for position/tilt, a slightly livelier spring
+              // for scale (a soft pop as a card lands centre), and a tween for
+              // opacity — springing opacity is what read as the jerk.
+              x: { type: "spring", stiffness: 190, damping: 27, mass: 1 },
+              rotate: { type: "spring", stiffness: 190, damping: 27, mass: 1 },
+              scale: { type: "spring", stiffness: 290, damping: 18 },
+              opacity: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+            }
+      }
       onMouseEnter={onPeekEnter}
       onMouseLeave={onPeekLeave}
       onClick={active ? undefined : onPeekClick}
     >
       <div
-        className="flex flex-col"
+        className="sp-glass-card flex flex-col"
         style={{
           height: 250,
           borderRadius: 24,
           padding: "24px 24px 22px",
-          background: active ? "rgba(18,29,26,0.72)" : "rgba(14,22,19,0.6)",
-          border: `1px solid ${active ? "rgba(95,230,175,0.28)" : "rgba(255,255,255,0.1)"}`,
-          backdropFilter: "blur(20px) saturate(1.25)",
-          WebkitBackdropFilter: "blur(20px) saturate(1.25)",
-          boxShadow: active ? "0 30px 70px -28px rgba(0,0,0,0.75), inset 0 1px 0 0 rgba(255,255,255,0.08)" : "0 20px 50px -24px rgba(0,0,0,0.7)",
+          background: active ? "rgba(16,27,23,0.55)" : "rgba(12,20,17,0.42)",
+          backdropFilter: "blur(22px) saturate(1.3)",
+          WebkitBackdropFilter: "blur(22px) saturate(1.3)",
+          boxShadow: active
+            ? "0 30px 70px -28px rgba(0,0,0,0.75), 0 0 44px -26px rgba(95,230,175,0.5)"
+            : "0 20px 50px -24px rgba(0,0,0,0.7)",
         }}
       >
-        <span className="flex items-center justify-center" style={{ width: 46, height: 46, borderRadius: 14, background: "rgba(95,230,175,0.12)", border: "1px solid rgba(95,230,175,0.24)" }}>
+        <span className="flex items-center justify-center" style={{ width: 46, height: 46, borderRadius: 14, background: "rgba(95,230,175,0.12)", border: "1px solid rgba(95,230,175,0.24)", color: "#78e9c0" }}>
           {def.icon}
         </span>
         <span className="mt-4 block" style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
