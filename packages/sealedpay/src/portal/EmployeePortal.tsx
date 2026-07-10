@@ -1473,30 +1473,54 @@ function CenterNote({ icon, title, sub, spinner }: { icon: ReactNode; title: str
 
 function EmploymentRow({ job, sym }: { job: Employment; sym: string }) {
   const [salaryShown, setSalaryShown] = useState(false);
+  const display = job.employerCompany || job.employerName || (job.employerAddress ? shortWallet(job.employerAddress) : "Employer");
   return (
-    <button
-      type="button"
-      onClick={() => setSalaryShown((s) => !s)}
-      title={salaryShown ? "Hide salary" : "Show salary"}
-      className="flex cursor-pointer items-center text-left transition-colors hover:bg-[rgba(95,230,175,0.08)]"
-      style={{ gap: 11, padding: "8px 16px 8px 13px", width: "calc(100% + 26px)", marginLeft: -13, borderRadius: 999 }}
-    >
-      <span className="flex shrink-0 items-center justify-center rounded-full" style={{ width: 34, height: 34, background: "rgba(59,191,142,0.18)", fontSize: 11, fontWeight: 800, color: "#d3ecdd" }}>
-        {(job.employerCompany || job.employerName || "E").slice(0, 1).toUpperCase()}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate" style={{ fontSize: 12.5, fontWeight: 600, color: "#eef4f1" }}>
-          {job.employerCompany || job.employerName || (job.employerAddress ? shortWallet(job.employerAddress) : "Employer")}
+    <div style={{ paddingTop: 6 }}>
+      {/* Identity: company mark + name, with the payroll admin beneath */}
+      <div className="flex items-center" style={{ gap: 13 }}>
+        <span
+          className="flex shrink-0 items-center justify-center rounded-full"
+          style={{ width: 44, height: 44, background: "linear-gradient(135deg, rgba(95,230,175,0.28), rgba(46,148,116,0.2))", border: "1px solid rgba(95,230,175,0.3)", fontSize: 15, fontWeight: 800, color: "#d3ecdd" }}
+        >
+          {display.slice(0, 1).toUpperCase()}
         </span>
-        <span className="block" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
-          Employs you as {job.me.role ?? "Employee"}
-          {job.me.dept ? ` · ${job.me.dept}` : ""}
+        <span className="min-w-0">
+          <span className="block truncate" style={{ fontSize: 14.5, fontWeight: 600, color: "#f2f7f4" }}>{display}</span>
+          {job.employerCompany && job.employerName && (
+            <span className="block" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
+              Payroll run by {job.employerName}
+            </span>
+          )}
         </span>
-      </span>
-      <span className="tnum flex shrink-0 items-baseline" style={{ gap: 4, fontSize: 12, fontWeight: 600, color: "#cfe0d8" }}>
-        <RevealAmount value={Number(job.me.salary).toLocaleString("en-US")} revealed={salaryShown} label="monthly salary" />
-        <span>{sym}/mo</span>
-      </span>
-    </button>
+      </div>
+
+      <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "13px 0 3px" }} />
+
+      <EmploymentDetail label="Your role" value={job.me.role ?? "Employee"} />
+      {job.me.dept && <EmploymentDetail label="Team" value={job.me.dept} />}
+      <button
+        type="button"
+        onClick={() => setSalaryShown((v) => !v)}
+        title={salaryShown ? "Hide salary" : "Show salary"}
+        className="flex cursor-pointer items-center justify-between transition-colors hover:bg-[rgba(95,230,175,0.08)]"
+        style={{ width: "calc(100% + 20px)", margin: "0 -10px", padding: "9px 10px", borderRadius: 999 }}
+      >
+        <span style={{ fontSize: 11.5, color: tokens.text.muted }}>Monthly salary</span>
+        <span className="tnum flex items-baseline" style={{ gap: 4, fontSize: 12, fontWeight: 600, color: "#cfe0d8" }}>
+          <RevealAmount value={Number(job.me.salary).toLocaleString("en-US")} revealed={salaryShown} label="monthly salary" />
+          <span>{sym}/mo</span>
+        </span>
+      </button>
+      {job.employerAddress && <EmploymentDetail label="Payroll wallet" value={shortWallet(job.employerAddress)} mono />}
+    </div>
+  );
+}
+
+function EmploymentDetail({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="flex items-center justify-between" style={{ padding: "9px 0" }}>
+      <span style={{ fontSize: 11.5, color: tokens.text.muted }}>{label}</span>
+      <span className={mono ? "tnum" : undefined} style={{ fontSize: 12, fontWeight: 500, color: "#cfe0d8" }}>{value}</span>
+    </div>
   );
 }
