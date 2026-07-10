@@ -750,7 +750,17 @@ function VerificationsView({ pay }: { pay: MyPay }) {
      scan-state ladder: wrong network, preparing wallet, scan error. ────────── */
 
 function SalaryChartCard({ pay, sym }: { pay: MyPay; sym: string }) {
-  const [activeBar, setActiveBar] = useState<string | null>(null);
+  // Like the employer's Payout Activity, one month is ALWAYS active (halo +
+  // tooltip): the current month by default, snapping once to the newest
+  // payment's month after the first scan. Hovering moves it, leaving keeps it.
+  const [activeBar, setActiveBar] = useState<string>(() => new Date().toLocaleString("en-US", { month: "short" }));
+  const snapped = useRef(false);
+  useEffect(() => {
+    if (snapped.current || !pay.payments || pay.payments.length === 0) return;
+    snapped.current = true;
+    const newest = pay.payments[0];
+    if (newest.timestamp) setActiveBar(new Date(newest.timestamp).toLocaleString("en-US", { month: "short" }));
+  }, [pay.payments]);
   const { switchChain, isPending: switchingChain } = useSwitchChain();
   const revealed = pay.revealed;
 
@@ -897,10 +907,7 @@ function SalaryChartCard({ pay, sym }: { pay: MyPay; sym: string }) {
                     className="relative flex cursor-pointer flex-col items-center justify-end"
                     style={{ height: CH }}
                     onMouseEnter={() => armActive(m)}
-                    onMouseLeave={() => {
-                      cancelActive();
-                      setActiveBar(null);
-                    }}
+                    onMouseLeave={cancelActive}
                   >
                     <div className="relative flex flex-col-reverse" style={{ width: 54 }}>
                       <div
