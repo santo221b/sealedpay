@@ -1470,7 +1470,13 @@ function CenterNote({ icon, title, sub, spinner }: { icon: ReactNode; title: str
 function EmploymentRow({ job, sym }: { job: Employment; sym: string }) {
   const [salaryShown, setSalaryShown] = useState(false);
   return (
-    <div className="flex items-center" style={{ gap: 11, padding: "8px 0" }}>
+    <button
+      type="button"
+      onClick={() => setSalaryShown((s) => !s)}
+      title={salaryShown ? "Hide salary" : "Show salary"}
+      className="flex w-full cursor-pointer items-center text-left transition-colors hover:bg-[rgba(95,230,175,0.08)]"
+      style={{ gap: 11, padding: "8px 10px", margin: "0 -10px", borderRadius: 999 }}
+    >
       <span className="flex shrink-0 items-center justify-center rounded-full" style={{ width: 34, height: 34, background: "rgba(59,191,142,0.18)", fontSize: 11, fontWeight: 800, color: "#d3ecdd" }}>
         {(job.employerName || "E").slice(0, 1).toUpperCase()}
       </span>
@@ -1483,15 +1489,9 @@ function EmploymentRow({ job, sym }: { job: Employment; sym: string }) {
           {job.me.dept ? ` · ${job.me.dept}` : ""}
         </span>
       </span>
-      <button
-        type="button"
-        onClick={() => setSalaryShown((s) => !s)}
-        className="tnum cursor-pointer text-right"
-        title={salaryShown ? "Hide salary" : "Show salary"}
-        style={{ fontSize: 12, fontWeight: 600, color: "#cfe0d8" }}
-      >
+      <span className="tnum shrink-0 text-right" style={{ fontSize: 12, fontWeight: 600, color: "#cfe0d8" }}>
         {salaryShown ? `${Number(job.me.salary).toLocaleString("en-US")} ${sym}/mo` : "*** / mo"}
-      </button>
-    </div>
+      </span>
+    </button>
   );
 }
