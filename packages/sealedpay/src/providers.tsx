@@ -84,7 +84,7 @@ function ensurePrivySkin() {
       z-index: 1 !important;
       width: 432px !important;
       max-width: calc(100vw - 48px) !important;
-      background: rgba(16,26,22,0.62) !important;
+      background: rgba(16,26,22,0.5) !important;
       -webkit-backdrop-filter: blur(26px) saturate(1.3) !important;
       backdrop-filter: blur(26px) saturate(1.3) !important;
       border: none !important;
