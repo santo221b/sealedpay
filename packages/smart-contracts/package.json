@@ -1,6 +1,6 @@
 {
   "name": "@dispersekit/contracts",
-  "description": "DisperseKit contracts — ERC-7984 confidential demo token + confidential disperse, on the Zama Protocol (based on zama-ai/fhevm-hardhat-template)",
+  "description": "DisperseKit contracts \u2014 ERC-7984 confidential demo token + confidential disperse, on the Zama Protocol (based on zama-ai/fhevm-hardhat-template)",
   "version": "0.1.0",
   "engines": {
     "node": ">=20",
@@ -71,12 +71,11 @@
   ],
   "scripts": {
     "clean": "rimraf ./fhevmTemp ./artifacts ./cache ./coverage ./types ./coverage.json ./dist && npm run typechain",
-    "compile": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile",
+    "compile": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile && npm run typechain",
     "coverage": "cross-env SOLIDITY_COVERAGE=true hardhat coverage --solcoverjs ./.solcover.js --temp artifacts --testfiles \"test/**/*.ts\" && npm run typechain",
     "lint": "npm run lint:sol && npm run lint:ts && npm run prettier:check",
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
     "lint:ts": "eslint .",
-    "postcompile": "npm run typechain",
     "prettier:check": "prettier --check \"**/*.{js,json,md,sol,ts,yml}\"",
     "prettier:write": "prettier --write \"**/*.{js,json,md,sol,ts,yml}\"",
     "test": "hardhat test",

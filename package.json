@@ -15,12 +15,38 @@
     "dev:sealedpay": "npm run dev --workspace packages/sealedpay",
     "build": "npm run build --workspaces --if-present",
     "test:contracts": "npm run test --workspace packages/smart-contracts",
-    "compile": "npm run compile --workspace packages/smart-contracts"
+    "compile": "npm run compile --workspace packages/smart-contracts",
+    "setup": "simple-git-hooks && allow-scripts",
+    "audit:prod": "node scripts/audit-prod.mjs",
+    "lint:lockfile": "lockfile-lint --path package-lock.json --allowed-hosts npm --validate-https --validate-package-names --validate-integrity --allowed-package-name-aliases \"cbw-sdk:@coinbase/wallet-sdk\" \"string-width-cjs:string-width\" \"strip-ansi-cjs:strip-ansi\" \"wrap-ansi-cjs:wrap-ansi\""
   },
   "engines": {
     "node": ">=20"
   },
   "overrides": {
-    "qr": "0.5.5"
+    "qr": "0.5.5",
+    "ws@8": "8.21.0",
+    "axios@0": "0.33.0"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "git diff --cached --name-only | grep -q '^package-lock.json$' && npm run lint:lockfile || true",
+    "pre-push": "npm run audit:prod"
+  },
+  "lavamoat": {
+    "allowScripts": {
+      "@privy-io/react-auth>@reown/appkit": false,
+      "bufferutil": false,
+      "fsevents": false,
+      "keccak": false,
+      "rpc-websockets>utf-8-validate": false,
+      "secp256k1": false,
+      "utf-8-validate": false
+    }
+  },
+  "devDependencies": {
+    "@lavamoat/allow-scripts": "2.5.1",
+    "axios": "1.18.1",
+    "lockfile-lint": "5.0.0",
+    "simple-git-hooks": "2.13.1"
   }
 }

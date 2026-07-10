@@ -15,6 +15,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Lockfile — npm-host + HTTPS + integrity + name checks
+        run: npm run lint:lockfile
+      - name: Prod-dep audit — high/critical gate (path-aware, see scripts/audit-prod.mjs)
+        run: npm run audit:prod
       - name: Contracts — compile + full mock suite (disperse, privacy, footguns)
         run: npm run test:contracts
       - name: Widget — type-check + build

@@ -111,6 +111,15 @@ Full setup (env, Sepolia deploy): [docs/SETUP.md](docs/SETUP.md) · Embedding gu
 
 Solidity `^0.8.27` · [`@fhevm/solidity`](https://docs.zama.org/protocol) · [`@openzeppelin/confidential-contracts`](https://zama.org/erc-7984) (ERC-7984) · Hardhat (fhevm template) · React + TypeScript + Vite · wagmi + viem · [Privy](https://privy.io) email auth + embedded wallets (SealedPay) · RainbowKit (DisperseKit widget) · Vercel Functions + [Upstash Redis](https://upstash.com) (SealedPay backend) · [`@tokenops/sdk`](https://www.npmjs.com/package/@tokenops/sdk) (confidential disperse) · [`@zama-fhe/relayer-sdk`](https://docs.zama.org/protocol/sdk) · Tailwind CSS + Framer Motion
 
+## Security model
+
+Dependency installs run with **install scripts disabled** (`.npmrc`
+`ignore-scripts`) behind a per-package allowlist, versions pin exactly, CI
+gates on a path-aware `npm run audit:prod` plus `lockfile-lint`, and
+Dependabot holds routine updates behind a cooldown. After cloning, run
+`npm run setup` once to install the git hooks. Full policy and audit
+history: [SECURITY.md](SECURITY.md).
+
 ## Docs
 
 - [SETUP.md](docs/SETUP.md) — clone → run in under 10 minutes
