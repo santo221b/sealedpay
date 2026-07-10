@@ -3,8 +3,8 @@
  *
  * The globe sits half-below the viewport edge like a sunrise and SCALES UP from
  * the bottom on entry (transform-origin at its base). Deliberately a whisper:
- * the sphere itself is almost clean (a soft fill, a rim, two faint turning
- * meridians) — the detail lives OUTSIDE, in the drifting orbit rings and one
+ * the sphere itself is almost clean (a soft fill, a rim, one faint turning
+ * meridian) — the detail lives OUTSIDE, in the drifting orbit rings and one
  * dim travelling node. Reduced-motion safe.
  */
 import { motion, useReducedMotion } from "framer-motion";
@@ -15,7 +15,7 @@ export function OrbitGraphic() {
     <motion.div
       aria-hidden
       className="pointer-events-none absolute left-1/2"
-      style={{ bottom: "-56%", width: 1150, height: 1150, x: "-50%", zIndex: 0, transformOrigin: "50% 100%" }}
+      style={{ bottom: "-63.5%", width: 1150, height: 1150, x: "-50%", zIndex: 0, transformOrigin: "50% 100%" }}
       initial={reduced ? false : { scale: 0.72, opacity: 0 }}
       animate={{ scale: 1, opacity: 0.75 }}
       transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
@@ -41,7 +41,7 @@ export function OrbitGraphic() {
           </radialGradient>
           <linearGradient id="sp-ring" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="rgba(120,233,192,0.0)" />
-            <stop offset="50%" stopColor="rgba(120,233,192,0.22)" />
+            <stop offset="50%" stopColor="rgba(120,233,192,0.18)" />
             <stop offset="100%" stopColor="rgba(120,233,192,0.0)" />
           </linearGradient>
         </defs>
@@ -53,20 +53,19 @@ export function OrbitGraphic() {
             style={{ transformOrigin: "575px 575px", animation: reduced ? undefined : "sp-spin 60s linear infinite" }}
           />
           <ellipse
-            cx="575" cy="575" rx="352" ry="212" stroke="rgba(95,230,175,0.08)" strokeWidth="0.9"
+            cx="575" cy="575" rx="352" ry="212" stroke="rgba(95,230,175,0.065)" strokeWidth="0.9"
             style={{ transformOrigin: "575px 575px", transform: "rotate(24deg)", animation: reduced ? undefined : "sp-spin-rev 80s linear infinite" }}
           />
           {/* A dim travelling node on the outer orbit */}
           <circle r="2.4" fill="rgba(157,243,208,0.55)" style={{ offsetPath: "path('M 145 575 a 430 150 0 1 0 860 0 a 430 150 0 1 0 -860 0')", animation: reduced ? undefined : "sp-orbit-node 60s linear infinite", filter: "drop-shadow(0 0 4px rgba(120,233,192,0.35))" }} />
         </g>
 
-        {/* The globe — near-clean sphere: soft fill, a rim, two faint turning
-            meridians. No latitude cage. */}
+        {/* The globe — near-clean sphere: soft fill, a rim, ONE faint turning
+            meridian. No latitude cage. */}
         <g style={{ transformOrigin: "575px 575px" }}>
           <circle cx="575" cy="575" r="215" fill="url(#sp-globe)" stroke="rgba(120,233,192,0.15)" strokeWidth="1" />
           <g style={{ transformOrigin: "575px 575px", animation: reduced ? undefined : "sp-globe-turn 40s linear infinite" }}>
             <ellipse cx="575" cy="575" rx={215 * 0.45} ry="215" stroke="rgba(120,233,192,0.10)" strokeWidth="0.8" />
-            <ellipse cx="575" cy="575" rx={215 * 0.85} ry="215" stroke="rgba(120,233,192,0.07)" strokeWidth="0.8" />
           </g>
         </g>
       </svg>

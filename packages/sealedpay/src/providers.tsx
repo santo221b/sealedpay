@@ -65,26 +65,52 @@ function ensurePrivySkin() {
       -webkit-backdrop-filter: blur(4px) !important;
       backdrop-filter: blur(4px) !important;
     }
+    /* Privy paints a full-bleed inner panel with its own theme background
+       (--privy-color-background: #020713), which sits ON TOP of any glass we
+       give the card — that panel is why the modal read fully opaque. Clear the
+       var inside the modal so OUR translucent card shows, and retint the small
+       accent chips (background-2) to the green palette. */
+    #privy-modal-content, #privy-modal-content * {
+      --privy-color-background: transparent !important;
+      --privy-color-background-2: rgba(120,233,192,0.08) !important;
+    }
     /* The card itself — SealedPay dark-green glass, translucent so the page
        glows through the blur. */
     #privy-modal-content {
       position: relative !important;
       z-index: 1 !important;
-      background: rgba(16,26,22,0.72) !important;
+      background: rgba(16,26,22,0.62) !important;
       -webkit-backdrop-filter: blur(26px) saturate(1.3) !important;
       backdrop-filter: blur(26px) saturate(1.3) !important;
-      border: 1px solid rgba(95,230,175,0.22) !important;
+      border: none !important;
       border-radius: 22px !important;
       box-shadow: 0 30px 90px -30px rgba(0,0,0,0.75), 0 0 70px -22px rgba(46,148,116,0.4) !important;
       font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif !important;
     }
-    /* The app-style avatar glow: the modal logo lifts + glows on hover. */
-    #privy-dialog img {
+    /* iOS glass hairline rim (same technique as .sp-glass-card). */
+    #privy-modal-content::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(155deg, rgba(255,255,255,0.34), rgba(255,255,255,0.07) 28%, rgba(95,230,175,0.12) 62%, rgba(255,255,255,0.15));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask-composite: exclude;
+      pointer-events: none;
+      z-index: 2;
+    }
+    /* The modal logo is our app avatar — give it the exact TopBar hover
+       (lift, small counter-tilt, green shadow). Scoped to the avatar asset so
+       wallet-brand icons inside the dialog do not inherit it. */
+    #privy-dialog img[src*="avatar-profile"] {
       transition: filter .25s ease, transform .25s ease;
     }
-    #privy-dialog img:hover {
-      filter: drop-shadow(0 0 14px rgba(120,233,192,0.85));
-      transform: scale(1.06);
+    #privy-dialog img[src*="avatar-profile"]:hover {
+      filter: drop-shadow(0 6px 14px rgba(59,191,142,0.45));
+      transform: scale(1.06) rotate(-2.5deg);
     }
   `;
   document.head.appendChild(style);
