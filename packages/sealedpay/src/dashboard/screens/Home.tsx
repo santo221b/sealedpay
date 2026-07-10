@@ -122,7 +122,7 @@ function ViewAll({ onClick }: { onClick?: () => void }) {
 
 /* ── Screen ─────────────────────────────────────────────────────────────── */
 
-export function Home({ data, tab, setTab, onAddEmployee, onViewInsights, onViewTeam }: HomeScreenProps) {
+export function Home({ data, tab, setTab, onAddEmployee, onLoadSamples, onViewInsights, onViewTeam }: HomeScreenProps) {
   const reduced = useReducedMotion();
 
   // Which stacked block (month + segment id) the cursor is over, so the tooltip
@@ -432,7 +432,7 @@ export function Home({ data, tab, setTab, onAddEmployee, onViewInsights, onViewT
       {tab === "Payouts" && <PayoutsTab data={data} />}
       {tab === "Verifications" && <VerificationsTab data={data} />}
       {tab === "Team" && (
-        <TeamTab data={data} donutData={donutData} donutOptions={donutOptions} counts={counts} onAddEmployee={onAddEmployee} />
+        <TeamTab data={data} donutData={donutData} donutOptions={donutOptions} counts={counts} onAddEmployee={onAddEmployee} onLoadSamples={onLoadSamples} />
       )}
 
       {/* Bottom row — overview only */}
@@ -466,6 +466,14 @@ export function Home({ data, tab, setTab, onAddEmployee, onViewInsights, onViewT
                 style={{ marginTop: 11, background: "#5fe3ab", color: "#0b1512", fontSize: 12, fontWeight: 500, padding: "8px 20px" }}
               >
                 Add employee
+              </button>
+              <button
+                type="button"
+                onClick={onLoadSamples}
+                className="cursor-pointer transition-colors hover:text-[#cfe0d8]"
+                style={{ marginTop: 8, fontSize: 11, color: tokens.text.muted, background: "none", textDecoration: "underline", textUnderlineOffset: 3 }}
+              >
+                Or load sample data to explore
               </button>
             </div>
           ) : (
@@ -551,7 +559,17 @@ export function Home({ data, tab, setTab, onAddEmployee, onViewInsights, onViewT
 
 /* ── Shared bits for the focused tabs ────────────────────────────────────── */
 
-function TabEmpty({ title, sub, action }: { title: string; sub: string; action?: { label: string; onClick: () => void } }) {
+function TabEmpty({
+  title,
+  sub,
+  action,
+  secondary,
+}: {
+  title: string;
+  sub: string;
+  action?: { label: string; onClick: () => void };
+  secondary?: { label: string; onClick: () => void };
+}) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center" style={{ padding: "30px 8px 22px", gap: 4 }}>
       <div style={{ fontSize: 13.5, fontWeight: 500, color: tokens.text.secondary }}>{title}</div>
@@ -564,6 +582,16 @@ function TabEmpty({ title, sub, action }: { title: string; sub: string; action?:
           style={{ marginTop: 10, background: "#5fe3ab", color: "#0b1512", fontSize: 12, fontWeight: 500, padding: "8px 20px" }}
         >
           {action.label}
+        </button>
+      )}
+      {secondary && (
+        <button
+          type="button"
+          onClick={secondary.onClick}
+          className="cursor-pointer transition-colors hover:text-[#cfe0d8]"
+          style={{ marginTop: 7, fontSize: 11, color: tokens.text.muted, background: "none", textDecoration: "underline", textUnderlineOffset: 3 }}
+        >
+          {secondary.label}
         </button>
       )}
     </div>
@@ -693,19 +721,26 @@ function TeamTab({
   donutOptions,
   counts,
   onAddEmployee,
+  onLoadSamples,
 }: {
   data: DashboardData;
   donutData: ChartData<"doughnut", number[], string>;
   donutOptions: ChartOptions<"doughnut">;
   counts: number[];
   onAddEmployee: () => void;
+  onLoadSamples: () => void;
 }) {
   return (
     <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 20 }}>
       <GlassCard className="flex flex-col" style={{ padding: "16px 23px" }}>
         <div style={{ fontWeight: 400, fontSize: 17 }}>By department</div>
         {data.people.length === 0 ? (
-          <TabEmpty title="No team yet" sub="Add your first employee to run a confidential payroll." action={{ label: "Add employee", onClick: onAddEmployee }} />
+          <TabEmpty
+            title="No team yet"
+            sub="Add your first employee to run a confidential payroll."
+            action={{ label: "Add employee", onClick: onAddEmployee }}
+            secondary={{ label: "Or load sample data to explore", onClick: onLoadSamples }}
+          />
         ) : (
           <div className="flex flex-1 items-center justify-center" style={{ gap: 23, marginTop: 7 }}>
             <div className="relative" style={{ width: 144, height: 144 }}>

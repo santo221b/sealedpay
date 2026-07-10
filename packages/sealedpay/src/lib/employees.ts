@@ -7,9 +7,10 @@
  * with a debounced PUT behind it, and sync failures surface as one calm,
  * deduped message (the shell toasts it).
  *
- * A brand-new tenant (server returns null) is seeded with the demo team ONCE,
- * flagged `sample: true` — "clear demo data" simply removes those rows, which
- * makes the cleared state itself sync across devices.
+ * Sample data is OPT-IN: a brand-new tenant starts with an empty roster, and
+ * the dashboard's empty states offer "Load sample data" (loadSamples), which
+ * adds the demo team flagged `sample: true`. "Clear sample data" removes those
+ * rows again — both states sync across devices like any other mutation.
  *
  * Salaries are stored as the human-entered string ("2500.5") and only
  * converted to base units at payroll time, through the widget's validated
@@ -117,16 +118,9 @@ export function useEmployees() {
         const { employees: server } = await api.getRoster();
         if (cancelled) return;
         if (server === null) {
-          // First visit ever for this employer: seed the demo team (sample rows).
-          const seeded = SEED_EMPLOYEES.map((s) =>
-            fromInput({ name: s.name, role: s.role, dept: s.dept, email: s.email, address: s.address, salary: s.salary }, { sample: true }),
-          );
-          setEmployees(seeded);
-          try {
-            await api.putRoster(seeded as RosterEmployee[]);
-          } catch (e) {
-            if (!cancelled) setSyncError(e instanceof Error ? e.message : String(e));
-          }
+          // First visit ever for this employer: start EMPTY. Sample data is
+          // opt-in from the dashboard's empty states (see loadSamples).
+          setEmployees([]);
         } else {
           // A local edit made WHILE the fetch was in flight wins (dirty) — the
           // scheduled PUT reconciles the server; otherwise adopt server truth.
@@ -212,6 +206,19 @@ export function useEmployees() {
   /** Remove the demo rows (per-tenant; syncs across devices like any edit). */
   const clearSamples = useCallback(() => mutate((list) => list.filter((e) => !e.sample)), [mutate]);
 
+  /** Opt-in demo data: add the sample team (idempotent, syncs like any edit). */
+  const loadSamples = useCallback(
+    () =>
+      mutate((list) => {
+        if (list.some((e) => e.sample)) return list;
+        const seeded = SEED_EMPLOYEES.map((s) =>
+          fromInput({ name: s.name, role: s.role, dept: s.dept, email: s.email, address: s.address, salary: s.salary }, { sample: true }),
+        );
+        return [...list, ...seeded];
+      }),
+    [mutate],
+  );
+
   /** Replace the whole roster (kept for edge/migration paths). */
   const replaceAll = useCallback(
     (inputs: EmployeeInput[]) => mutate(() => inputs.map((input) => fromInput(input))),
@@ -220,5 +227,5 @@ export function useEmployees() {
 
   const hasSamples = employees.some((e) => e.sample);
 
-  return { employees, loaded, hasSamples, syncError, add, update, remove, replaceAll, clearSamples };
+  return { employees, loaded, hasSamples, syncError, add, update, remove, replaceAll, clearSamples, loadSamples };
 }

@@ -145,7 +145,6 @@ export function Onboarding({
   // welcome-back click-through; blank for a genuine first run.
   const [name, setName] = useState(initialName);
   const [avatar, setAvatar] = useState(initialAvatar);
-  const [understood, setUnderstood] = useState(false);
 
   // Auth already happened on the landing page — the wallet step CONFIRMS the
   // signed-in wallet (embedded or external) instead of opening a connect modal.
@@ -178,8 +177,8 @@ export function Onboarding({
 
   const canContinue = (
     employee
-      ? [true, first.length > 0, understood, Boolean(avatar), walletReady, true]
-      : [true, first.length > 0, understood, Boolean(avatar), walletReady, true, true]
+      ? [true, first.length > 0, true, Boolean(avatar), walletReady, true]
+      : [true, first.length > 0, true, Boolean(avatar), walletReady, true, true]
   )[step];
   const continueLabel = step === 0 ? "Get started" : step === TOTAL - 1 ? "Go to dashboard" : "Continue";
 
@@ -292,7 +291,7 @@ export function Onboarding({
             >
               {step === 0 && <StepWelcome welcome={welcome} employee={employee} />}
               {step === 1 && <StepName name={name} setName={setName} />}
-              {step === 2 && <StepRole nameComma={nameComma} understood={understood} setUnderstood={setUnderstood} employee={employee} />}
+              {step === 2 && <StepRole nameComma={nameComma} employee={employee} />}
               {step === 3 && <StepAvatar avatar={avatar} setAvatar={setAvatar} employee={employee} />}
               {step === 4 && (
                 <StepWallet
@@ -458,18 +457,7 @@ function StepName({ name, setName }: { name: string; setName: (v: string) => voi
   );
 }
 
-function StepRole({
-  nameComma,
-  understood,
-  setUnderstood,
-  employee,
-}: {
-  nameComma: string;
-  understood: boolean;
-  setUnderstood: (v: boolean) => void;
-  employee: boolean;
-}) {
-  const reduced = useReducedMotion();
+function StepRole({ nameComma, employee }: { nameComma: string; employee: boolean }) {
   return (
     <>
       <Item i={0}>
@@ -498,29 +486,23 @@ function StepRole({
         </p>
       </Item>
       <Item i={3}>
-        <button
-          type="button"
-          onClick={() => setUnderstood(!understood)}
-          className="mt-[22px] flex w-full cursor-pointer select-none items-start gap-3.5 text-left"
+        {/* Info card (no acknowledgment tick — that was compliance theater):
+            employee = the email-wallet explainer, employer = the environment. */}
+        <div
+          className="mt-[22px] flex w-full items-start gap-3.5 text-left"
           style={{ background: "rgba(110,196,186,0.17)", border: "1px solid rgba(255,255,255,0.13)", borderRadius: 20, padding: "18px 20px" }}
-          aria-pressed={understood}
         >
-          <motion.span
-            className="mt-px flex shrink-0 items-center justify-center transition-[background,border]"
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: "50%",
-              background: understood ? "#5fe3ab" : "rgba(255,255,255,0.05)",
-              border: understood ? "1px solid rgba(0,0,0,0)" : "1px solid rgba(255,255,255,0.18)",
-            }}
-            animate={understood && !reduced ? { scale: [1, 1.22, 1] } : { scale: 1 }}
-            transition={{ duration: 0.3, ease: EASE }}
+          <span
+            className="mt-px flex shrink-0 items-center justify-center"
+            style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(95,230,175,0.16)", border: "1px solid rgba(95,230,175,0.35)" }}
+            aria-hidden
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#08331f" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: understood ? 1 : 0, transition: "opacity .18s" }} aria-hidden>
-              <polyline points="20 6 9 17 4 12" />
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
             </svg>
-          </motion.span>
+          </span>
           <span style={{ fontSize: 13.5, color: "#c2d0c9", lineHeight: 1.55 }}>
             {employee ? (
               <>
@@ -530,14 +512,12 @@ function StepRole({
               </>
             ) : (
               <>
-                A sample team and{" "}
-                <span style={{ color: "#f2f7f4", fontWeight: 600 }}>6 months of payroll history</span> are pre-loaded
-                for evaluation. Payroll you run settles live on Sepolia and appears alongside the sample data, each
-                transaction with its own Etherscan link.
+                SealedPay runs on <span style={{ color: "#f2f7f4", fontWeight: 600 }}>Sepolia testnet</span> · payroll
+                settles with free test funds, and every transaction is verifiable on Etherscan.
               </>
             )}
           </span>
-        </button>
+        </div>
       </Item>
     </>
   );

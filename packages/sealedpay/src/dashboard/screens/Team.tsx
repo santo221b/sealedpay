@@ -16,7 +16,7 @@ const GRADIENT = "linear-gradient(135deg,#41b091 0%,#2e9478 50%,#26826a 100%)";
 // The org's fixed departments (same set offered in the Add-employee modal).
 const DEPARTMENTS = ["Engineering", "Design", "Operations"] as const;
 
-export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: TeamScreenProps) {
+export function Team({ data, onRunPayroll, onAddEmployee, onLoadSamples, onOpenEmployee }: TeamScreenProps) {
   const deptCount = DEPARTMENTS.length;
   const oldest = data.runs[data.runs.length - 1];
   const since = useMemo(() => {
@@ -165,6 +165,14 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
             >
               Add employee
             </PrimaryButton>
+            <button
+              type="button"
+              onClick={onLoadSamples}
+              className="cursor-pointer transition-colors hover:text-[#cfe0d8]"
+              style={{ marginTop: 9, fontSize: 11, color: tokens.text.muted, background: "none", textDecoration: "underline", textUnderlineOffset: 3 }}
+            >
+              Or load sample data to explore
+            </button>
           </div>
         ) : (
           <div

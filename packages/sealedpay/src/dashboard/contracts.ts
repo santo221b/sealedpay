@@ -89,6 +89,8 @@ export interface HomeScreenProps {
   setTab: (tab: string) => void;
   /** Open the Add-employee modal (used by the empty team state). */
   onAddEmployee: () => void;
+  /** Opt-in demo data (secondary action on the empty team states). */
+  onLoadSamples: () => void;
   /** Navigate to the Insights screen (the Payout Activity "View All"). */
   onViewInsights: () => void;
   /** Navigate to the Team screen (the Team card "View All"). */
@@ -99,6 +101,8 @@ export interface TeamScreenProps {
   data: DashboardData;
   onRunPayroll: () => void;
   onAddEmployee: () => void;
+  /** Opt-in demo data (secondary action on the empty roster state). */
+  onLoadSamples: () => void;
   onOpenEmployee: (id: string) => void;
 }
 
