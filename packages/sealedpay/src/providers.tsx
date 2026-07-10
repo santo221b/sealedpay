@@ -125,6 +125,14 @@ function ensurePrivySkin() {
       word-break: break-word;
       max-width: 100%;
     }
+    /* The EIP-712 payload (JsonTree) is nested ULs styled white-space: nowrap
+       inside a horizontal scroller with HIDDEN scrollbars — long values run
+       off the right edge looking clipped. Let the lists wrap instead. */
+    #privy-modal-content ul,
+    #privy-modal-content li {
+      white-space: normal !important;
+      overflow-wrap: anywhere;
+    }
     /* iOS glass hairline rim (same technique as .sp-glass-card). */
     #privy-modal-content::before {
       content: "";
