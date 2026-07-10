@@ -73,8 +73,18 @@ export function useMyPay() {
   // scan found has a plaintext, and the balance on display matches the chain.
   const revealed = payments !== undefined && payments.every((p) => p.amount !== undefined) && balance !== undefined;
 
-  // A wallet-account switch must never keep showing the previous account's pay.
+  // A wallet-account switch must never keep showing the previous account's
+  // pay — but a TRANSIENT drop must not destroy it either. The active account
+  // flips to undefined for a beat on tab refocus (provider re-announce, then
+  // the active-wallet sync re-pins the embedded wallet), and decrypted
+  // amounts cost a fresh signature to recover. State is keyed to the address
+  // that produced it: wipe only when a DIFFERENT address takes over.
+  const stateOwner = useRef<`0x${string}` | undefined>(undefined);
   useEffect(() => {
+    if (me === undefined || stateOwner.current === me) return;
+    const hadOwner = stateOwner.current !== undefined;
+    stateOwner.current = me;
+    if (!hadOwner) return;
     setPayments(undefined);
     setBalanceHandle(undefined);
     setDecryptedBal(undefined);

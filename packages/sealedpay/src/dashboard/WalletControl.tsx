@@ -30,7 +30,7 @@ const PILL: React.CSSProperties = {
 };
 
 export function WalletControl() {
-  const { ready, authenticated, connectWallet } = usePrivy();
+  const { ready, authenticated, user, connectWallet } = usePrivy();
   const { wallets } = useWallets();
   const { setActiveWallet } = useSetActiveWallet();
   const { isConnected, chain } = useAccount();
@@ -40,10 +40,23 @@ export function WalletControl() {
 
   // The gate guarantees authentication before the dashboard renders, but an
   // external wallet can still disconnect out from under us (extension locked,
-  // account removed). Offer the reconnect instead of a dead label. An email
-  // account's embedded wallet just needs ACTIVATING — never send those users
-  // into the external connect modal.
+  // account removed). Offer the reconnect instead of a dead label.
   if (authenticated && !isConnected) {
+    // An email account's embedded wallet re-attaches on its own: the active-
+    // wallet sync re-pins it the moment it reappears. A manual button here was
+    // a MetaMask-era affordance — it raced the sync, and with the wallet list
+    // momentarily empty it sent email users into the EXTERNAL connect modal.
+    if (user?.email?.address) {
+      return (
+        <div style={{ ...PILL, cursor: "default", background: "rgba(120,233,192,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#9db3aa", fontWeight: 500 }}>
+          <span
+            aria-hidden
+            style={{ width: 12, height: 12, borderRadius: "50%", border: "2px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }}
+          />
+          Restoring your wallet
+        </div>
+      );
+    }
     const embedded = getEmbeddedConnectedWallet(wallets);
     return (
       <button

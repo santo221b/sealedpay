@@ -206,7 +206,21 @@ function ensurePrivySkin() {
 // point at its own Privy app without touching source.
 export const PRIVY_APP_ID = (import.meta.env.VITE_PRIVY_APP_ID as string | undefined) ?? "cmre3lzzl00iq0bihtxg4p6cw";
 
-const queryClient = new QueryClient();
+/**
+ * The wagmi config and query client are cached on globalThis so a Vite HMR
+ * re-execution of this module reuses the SAME instances. A fresh createConfig
+ * starts with zero connectors and nothing ever rehydrates it (wagmi hydrates
+ * only on mount, @privy-io/wagmi pins reconnectOnMount to false, and Privy's
+ * wallet sync doesn't re-run on a config swap) — so every edit to this file
+ * left the app "disconnected" with a Reconnect control that silently no-oped.
+ * In production the module runs once and these are plain assignments.
+ */
+const hmrCache = globalThis as unknown as {
+  __spQueryClient?: QueryClient;
+  __spWagmiConfig?: ReturnType<typeof createConfig>;
+};
+
+const queryClient = (hmrCache.__spQueryClient ??= new QueryClient());
 
 /**
  * Sepolia RPCs, most reliable first. The chain's DEFAULT public RPC rate-limits
@@ -226,11 +240,11 @@ const sepoliaChain = defineChain({
   rpcUrls: { default: { http: SEPOLIA_RPCS } },
 });
 
-// One config for the whole app (module singleton, mirrors the old providers).
-export const wagmiConfig = createConfig({
+// One config for the whole app (module singleton, HMR-stable — see hmrCache).
+export const wagmiConfig = (hmrCache.__spWagmiConfig ??= createConfig({
   chains: [sepoliaChain],
   transports: { [sepoliaChain.id]: fallback(SEPOLIA_RPCS.map((url) => http(url, { retryCount: 1 }))) },
-});
+}));
 
 export function SealedPayProviders({ children }: { children: ReactNode }) {
   useEffect(() => ensurePrivySkin(), []);
