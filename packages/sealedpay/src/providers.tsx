@@ -139,13 +139,14 @@ function ensurePrivySkin() {
     #privy-modal-content div:has(> svg) {
       border-radius: 50% !important;
     }
-    /* The modal logo is our app avatar — give it the exact TopBar hover
-       (lift, small counter-tilt, green shadow). Scoped to the avatar asset so
-       wallet-brand icons inside the dialog do not inherit it. */
-    #privy-dialog img[src*="avatar-profile"] {
+    /* The modal logo is one of our app avatars (door-dependent, see Landing's
+       rewrite effect) — give it the exact TopBar hover (lift, small
+       counter-tilt, green shadow). Scoped to the avatar assets so wallet-brand
+       icons inside the dialog do not inherit it. */
+    #privy-dialog img[src*="/avatars/"] {
       transition: filter .25s ease, transform .25s ease;
     }
-    #privy-dialog img[src*="avatar-profile"]:hover {
+    #privy-dialog img[src*="/avatars/"]:hover {
       filter: drop-shadow(0 6px 14px rgba(59,191,142,0.45));
       transform: scale(1.06) rotate(-2.5deg);
     }

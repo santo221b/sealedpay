@@ -139,6 +139,9 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
   useEffect(() => {
     if (!waiting) return;
     const title = waiting === "employer" ? "Employer sign in" : "Employee sign in";
+    // Per-door modal avatar (Privy's logo config is just as static as its
+    // header): the employer door gets its own face.
+    const logo = waiting === "employer" ? "/avatars/avatar-1.svg" : "/avatars/avatar-profile.svg";
     const GENERIC = /log in or sign up|employer sign in|employee sign in/i;
     const rewrite = () => {
       const dlg = document.getElementById("privy-dialog");
@@ -147,6 +150,9 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
         if (GENERIC.test(h.textContent ?? "") && h.textContent !== title) h.textContent = title;
       }
       if (dlg.getAttribute("aria-label") !== title) dlg.setAttribute("aria-label", title);
+      for (const img of dlg.querySelectorAll('img[src*="/avatars/"]')) {
+        if (img.getAttribute("src") !== logo) img.setAttribute("src", logo);
+      }
     };
     rewrite();
     const mo = new MutationObserver(rewrite);
