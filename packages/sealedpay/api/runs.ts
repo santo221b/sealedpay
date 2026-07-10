@@ -1,4 +1,4 @@
-import { adapt } from "../server/adapter";
-import { handleRuns } from "../server/handlers";
+import { adapt } from "../server/adapter.js";
+import { handleRuns } from "../server/handlers.js";
 
 export default adapt(handleRuns);

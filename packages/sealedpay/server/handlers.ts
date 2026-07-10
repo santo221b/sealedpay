@@ -8,9 +8,9 @@
  * differentiated privacy claim is ON-CHAIN: amounts on the public ledger are
  * FHE ciphertexts only the employer and each recipient can decrypt.
  */
-import { ApiFail } from "./errors";
-import { embeddedAddressOf, getUserById, pregenerateWallet, requireUser } from "./privy";
-import { getStore, keys } from "./store";
+import { ApiFail } from "./errors.js";
+import { embeddedAddressOf, getUserById, pregenerateWallet, requireUser } from "./privy.js";
+import { getStore, keys } from "./store.js";
 
 /* ── Shapes (kept in sync with src/lib/api.ts by hand) ───────────────────── */
 

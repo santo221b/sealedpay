@@ -15,8 +15,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 
-import { env } from "./env";
-import { ApiFail, withTimeout } from "./errors";
+import { env } from "./env.js";
+import { ApiFail, withTimeout } from "./errors.js";
 
 const STORE_TIMEOUT_MS = 8_000;
 const STORE_DOWN = "The SealedPay database didn't respond. Try again in a moment.";

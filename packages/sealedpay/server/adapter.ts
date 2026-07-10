@@ -6,8 +6,8 @@
  */
 import type { IncomingMessage, ServerResponse } from "node:http";
 
-import { ApiFail } from "./errors";
-import type { HandlerResult } from "./handlers";
+import { ApiFail } from "./errors.js";
+import type { HandlerResult } from "./handlers.js";
 
 const MAX_BODY_BYTES = 262_144; // 256 KB — far above any roster/runs payload
 

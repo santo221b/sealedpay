@@ -5,8 +5,8 @@
  */
 import { PrivyClient, type User } from "@privy-io/server-auth";
 
-import { env } from "./env";
-import { ApiFail, withTimeout } from "./errors";
+import { env } from "./env.js";
+import { ApiFail, withTimeout } from "./errors.js";
 
 const PRIVY_TIMEOUT_MS = 12_000;
 const PRIVY_DOWN = "Privy (the sign-in service) didn't respond. Try again in a moment.";

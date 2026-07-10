@@ -6,7 +6,7 @@
  */
 import type { Plugin, ViteDevServer } from "vite";
 
-import { loadDevEnv } from "./env";
+import { loadDevEnv } from "./env.js";
 
 const ROUTES = ["roster", "runs", "profile", "pregen", "me"] as const;
 
