@@ -1,10 +1,10 @@
 /**
  * Landing — the front page. Trimmed copy (a headline + one line), then a
  * sliding two-panel carousel that floats over the OrbitGraphic: one door is
- * centred, the other peeks from the side and, on hover, leans in. Clicking the
- * peek slides it to centre while the current door slides away — both doors lead
- * to the same Privy email/wallet login; the chosen one only decides which
- * surface you land on.
+ * centred, the other rests mostly tucked behind it and, on hover, leans
+ * outward to reveal more of itself. Clicking the peek slides it to centre
+ * while the current door slides away — both doors lead to the same Privy
+ * email/wallet login; the chosen one only decides which surface you land on.
  */
 import { useLogin, usePrivy } from "@privy-io/react-auth";
 import { motion, useReducedMotion } from "framer-motion";
@@ -196,10 +196,12 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
           const isActive = i === active;
           // With two doors, the inactive one sits on the side away from active.
           const side = i > active ? 1 : -1; // +1 → peeks right, -1 → peeks left
-          const x = isActive ? 0 : side * CARD_W * (hoverPeek ? 0.7 : 0.84);
-          // The resting peek leans like a card held in the hand (low pivot);
-          // hovering straightens it a touch as it leans in, active sits flat.
-          const rotate = isActive ? 0 : side * (hoverPeek ? 3.2 : 5.5);
+          // Rest = mostly tucked behind the centred card; hover slides it
+          // OUTWARD so more of it comes into view (never further behind).
+          const x = isActive ? 0 : side * CARD_W * (hoverPeek ? 0.9 : 0.76);
+          // Low pivot, like a card held in the hand: a modest resting tilt
+          // that deepens toward the open side on hover. Active sits flat.
+          const rotate = isActive ? 0 : side * (hoverPeek ? 6.5 : 3.8);
           return (
             <DoorPanel
               key={d.door}
@@ -208,8 +210,8 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
               reduced={Boolean(reduced)}
               x={x}
               rotate={rotate}
-              scale={isActive ? 1 : 0.9}
-              opacity={isActive ? 1 : hoverPeek ? 0.74 : 0.48}
+              scale={isActive ? 1 : hoverPeek ? 0.93 : 0.9}
+              opacity={isActive ? 1 : hoverPeek ? 0.82 : 0.42}
               busy={waiting === d.door && !authenticated}
               onPeekEnter={() => !isActive && setHoverPeek(true)}
               onPeekLeave={() => setHoverPeek(false)}

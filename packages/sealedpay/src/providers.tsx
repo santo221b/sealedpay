@@ -65,11 +65,12 @@ function ensurePrivySkin() {
       -webkit-backdrop-filter: blur(4px) !important;
       backdrop-filter: blur(4px) !important;
     }
-    /* The card itself — SealedPay dark-green glass. */
+    /* The card itself — SealedPay dark-green glass, translucent so the page
+       glows through the blur. */
     #privy-modal-content {
       position: relative !important;
       z-index: 1 !important;
-      background: rgba(16,26,22,0.9) !important;
+      background: rgba(16,26,22,0.72) !important;
       -webkit-backdrop-filter: blur(26px) saturate(1.3) !important;
       backdrop-filter: blur(26px) saturate(1.3) !important;
       border: 1px solid rgba(95,230,175,0.22) !important;

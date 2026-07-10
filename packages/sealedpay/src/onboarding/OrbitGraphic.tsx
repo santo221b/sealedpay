@@ -15,9 +15,9 @@ export function OrbitGraphic() {
     <motion.div
       aria-hidden
       className="pointer-events-none absolute left-1/2"
-      style={{ bottom: "-50%", width: 1150, height: 1150, x: "-50%", zIndex: 0, transformOrigin: "50% 100%" }}
+      style={{ bottom: "-56%", width: 1150, height: 1150, x: "-50%", zIndex: 0, transformOrigin: "50% 100%" }}
       initial={reduced ? false : { scale: 0.72, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
+      animate={{ scale: 1, opacity: 0.75 }}
       transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
     >
       {/* Soft horizon halo */}
@@ -41,7 +41,7 @@ export function OrbitGraphic() {
           </radialGradient>
           <linearGradient id="sp-ring" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="rgba(120,233,192,0.0)" />
-            <stop offset="50%" stopColor="rgba(120,233,192,0.28)" />
+            <stop offset="50%" stopColor="rgba(120,233,192,0.22)" />
             <stop offset="100%" stopColor="rgba(120,233,192,0.0)" />
           </linearGradient>
         </defs>
@@ -57,7 +57,7 @@ export function OrbitGraphic() {
             style={{ transformOrigin: "575px 575px", transform: "rotate(24deg)", animation: reduced ? undefined : "sp-spin-rev 80s linear infinite" }}
           />
           {/* A dim travelling node on the outer orbit */}
-          <circle r="2.6" fill="rgba(157,243,208,0.7)" style={{ offsetPath: "path('M 145 575 a 430 150 0 1 0 860 0 a 430 150 0 1 0 -860 0')", animation: reduced ? undefined : "sp-orbit-node 60s linear infinite", filter: "drop-shadow(0 0 4px rgba(120,233,192,0.45))" }} />
+          <circle r="2.4" fill="rgba(157,243,208,0.55)" style={{ offsetPath: "path('M 145 575 a 430 150 0 1 0 860 0 a 430 150 0 1 0 -860 0')", animation: reduced ? undefined : "sp-orbit-node 60s linear infinite", filter: "drop-shadow(0 0 4px rgba(120,233,192,0.35))" }} />
         </g>
 
         {/* The globe — near-clean sphere: soft fill, a rim, two faint turning
