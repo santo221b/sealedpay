@@ -7,7 +7,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ModalShell } from "../../design/kit2";
 import type { ProfilePopupProps } from "../contracts";
 
-export function ProfilePopup({ open, onClose, name, avatar, employerShort, role = "Payroll administrator" }: ProfilePopupProps) {
+export function ProfilePopup({ open, onClose, name, avatar, employerShort, role = "Payroll administrator", email }: ProfilePopupProps) {
   const reduced = useReducedMotion();
   return (
     <ModalShell open={open} onClose={onClose} width={342} labelledBy="profile-name">
@@ -29,6 +29,11 @@ export function ProfilePopup({ open, onClose, name, avatar, employerShort, role 
           {name}
         </h2>
         <p style={{ fontSize: 12.6, color: "#9db3aa", marginTop: 5 }}>{role}</p>
+        {email && (
+          <p className="truncate" style={{ maxWidth: "100%", fontSize: 12, color: "#7f9a8f", marginTop: 3 }}>
+            {email}
+          </p>
+        )}
         {employerShort && (
           <span
             className="tnum inline-flex items-center gap-[6px] rounded-full"

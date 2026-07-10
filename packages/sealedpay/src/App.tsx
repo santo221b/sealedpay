@@ -1037,7 +1037,7 @@ function Dashboard({ onLoggedOut }: { onLoggedOut: () => void }) {
         }}
       />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); disconnect(); void privyLogout(); onLoggedOut(); }} />
-      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} />
+      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} email={privyUser?.email?.address} />
       <ReminderModal
         open={remindOpen}
         onClose={() => setRemindOpen(false)}

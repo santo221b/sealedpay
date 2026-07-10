@@ -397,7 +397,7 @@ export function EmployeePortal({ onLoggedOut }: { onLoggedOut: () => void }) {
           onLoggedOut();
         }}
       />
-      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={pay.me ? shortWallet(pay.me) : undefined} role="Employee" />
+      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={pay.me ? shortWallet(pay.me) : undefined} role="Employee" email={email} />
       <Toast toast={toast} />
     </div>
   );

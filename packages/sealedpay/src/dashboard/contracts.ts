@@ -221,6 +221,8 @@ export interface ProfilePopupProps {
   employerShort?: string;
   /** Role line under the name; defaults to the employer's "Payroll administrator". */
   role?: string;
+  /** The signed-in login email, shown under the role line. */
+  email?: string;
 }
 
 export interface ReminderModalProps {
