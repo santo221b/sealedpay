@@ -14,7 +14,7 @@ import { PrivyProvider } from "@privy-io/react-auth";
 import { createConfig, WagmiProvider } from "@privy-io/wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, type ReactNode } from "react";
-import { http } from "viem";
+import { defineChain, fallback, http } from "viem";
 import { sepolia } from "viem/chains";
 
 /**
@@ -189,10 +189,28 @@ export const PRIVY_APP_ID = (import.meta.env.VITE_PRIVY_APP_ID as string | undef
 
 const queryClient = new QueryClient();
 
+/**
+ * Sepolia RPCs, most reliable first. The chain's DEFAULT public RPC rate-limits
+ * hard (measured 403s), which made embedded-wallet broadcasts drop and
+ * confirmation waits hang — MetaMask never hit this because it broadcasts via
+ * its own infrastructure. Every read/write falls through this list instead,
+ * and Privy's own dialogs get the same list via the chain override below.
+ */
+const SEPOLIA_RPCS = [
+  "https://sepolia.gateway.tenderly.co",
+  "https://ethereum-sepolia-rpc.publicnode.com",
+  "https://sepolia.drpc.org",
+  "https://1rpc.io/sepolia",
+];
+const sepoliaChain = defineChain({
+  ...sepolia,
+  rpcUrls: { default: { http: SEPOLIA_RPCS } },
+});
+
 // One config for the whole app (module singleton, mirrors the old providers).
 export const wagmiConfig = createConfig({
-  chains: [sepolia],
-  transports: { [sepolia.id]: http() },
+  chains: [sepoliaChain],
+  transports: { [sepoliaChain.id]: fallback(SEPOLIA_RPCS.map((url) => http(url, { retryCount: 1 }))) },
 });
 
 export function SealedPayProviders({ children }: { children: ReactNode }) {
@@ -213,8 +231,8 @@ export function SealedPayProviders({ children }: { children: ReactNode }) {
           ethereum: { createOnLogin: "users-without-wallets" },
           showWalletUIs: true,
         },
-        defaultChain: sepolia,
-        supportedChains: [sepolia],
+        defaultChain: sepoliaChain,
+        supportedChains: [sepoliaChain],
       }}
     >
       <QueryClientProvider client={queryClient}>
