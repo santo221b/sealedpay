@@ -28,7 +28,7 @@ import { useFundWallet, useUnfundedWallet } from "../lib/wallet";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const EXIT_EASE = [0.4, 0, 1, 1] as const;
-export const AVATARS = ["/avatars/avatar-1.svg", "/avatars/avatar-2.svg", "/avatars/avatar-3.svg", "/avatars/avatar-profile.svg"];
+export const AVATARS = ["/avatars/avatar-1.svg", "/avatars/avatar-2.svg", "/avatars/avatar-3.svg", "/avatars/avatar-4.svg", "/avatars/avatar-profile.svg"];
 
 export type OnboardingVariant = "employer" | "employee";
 
@@ -569,7 +569,7 @@ function StepAvatar({ avatar, setAvatar, employee }: { avatar: string; setAvatar
                 type="button"
                 onClick={() => setAvatar(src)}
                 className="relative cursor-pointer"
-                style={{ width: 104, height: 104, borderRadius: "50%", padding: 4, background: selected ? "linear-gradient(135deg, #5fe3ab, #2f9d74)" : "rgba(255,255,255,0.08)" }}
+                style={{ width: 92, height: 92, borderRadius: "50%", padding: 4, background: selected ? "linear-gradient(135deg, #5fe3ab, #2f9d74)" : "rgba(255,255,255,0.08)" }}
                 animate={{ scale: selected ? 1.15 : 1 }}
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.2 }}
