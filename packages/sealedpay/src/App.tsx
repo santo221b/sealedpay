@@ -972,7 +972,7 @@ function Dashboard({ onLoggedOut }: { onLoggedOut: () => void }) {
                 }}
               />
             ) : (
-              <WalletSidebar data={data} onFund={() => setFundOpen(true)} activity={activity} />
+              <WalletSidebar data={data} onFund={() => setFundOpen(true)} activity={activity} onCopied={() => showToast("ok", "Copied wallet address")} />
             )}
           </div>
 
@@ -1037,7 +1037,7 @@ function Dashboard({ onLoggedOut }: { onLoggedOut: () => void }) {
         }}
       />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); disconnect(); void privyLogout(); onLoggedOut(); }} />
-      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} email={privyUser?.email?.address} />
+      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} email={privyUser?.email?.address} walletFull={employer} onCopied={() => showToast("ok", "Copied wallet address")} />
       <ReminderModal
         open={remindOpen}
         onClose={() => setRemindOpen(false)}

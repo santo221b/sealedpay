@@ -4,10 +4,11 @@
  */
 import { motion, useReducedMotion } from "framer-motion";
 
+import { copyText } from "../../lib/clipboard";
 import { ModalShell } from "../../design/kit2";
 import type { ProfilePopupProps } from "../contracts";
 
-export function ProfilePopup({ open, onClose, name, avatar, employerShort, role = "Payroll administrator", email }: ProfilePopupProps) {
+export function ProfilePopup({ open, onClose, name, avatar, employerShort, role = "Payroll administrator", email, walletFull, onCopied }: ProfilePopupProps) {
   const reduced = useReducedMotion();
   return (
     <ModalShell open={open} onClose={onClose} width={342} labelledBy="profile-name">
@@ -35,8 +36,13 @@ export function ProfilePopup({ open, onClose, name, avatar, employerShort, role 
           </p>
         )}
         {employerShort && (
-          <span
-            className="tnum inline-flex items-center gap-[6px] rounded-full"
+          <button
+            type="button"
+            title="Copy wallet address"
+            onClick={() => {
+              if (walletFull) void copyText(walletFull).then((ok) => ok && onCopied?.());
+            }}
+            className="tnum inline-flex cursor-pointer items-center gap-[6px] rounded-full transition-colors hover:bg-[rgba(95,230,175,0.12)]"
             style={{
               border: "1px solid rgba(95,230,175,0.55)",
               color: "#78e9c0",
@@ -47,7 +53,7 @@ export function ProfilePopup({ open, onClose, name, avatar, employerShort, role 
           >
             <span className="rounded-full" style={{ width: 6, height: 6, background: "#34d399" }} aria-hidden />
             {employerShort}
-          </span>
+          </button>
         )}
       </div>
     </ModalShell>

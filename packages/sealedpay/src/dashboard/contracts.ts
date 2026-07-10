@@ -137,6 +137,8 @@ export interface WalletSidebarProps {
   action?: { label: string; aria: string; icon: import("react").ReactElement; onClick: () => void; busy?: boolean };
   /** Copy for the empty Recent-activity state; defaults to the employer's. */
   emptyNote?: { title: string; sub: string };
+  /** Called after the address strip is clicked and copied (the shell toasts). */
+  onCopied?: () => void;
 }
 
 export interface ActivityRow {
@@ -223,6 +225,10 @@ export interface ProfilePopupProps {
   role?: string;
   /** The signed-in login email, shown under the role line. */
   email?: string;
+  /** Full wallet address behind the chip; clicking the chip copies it. */
+  walletFull?: string;
+  /** Called after the address is copied (the shell toasts). */
+  onCopied?: () => void;
 }
 
 export interface ReminderModalProps {

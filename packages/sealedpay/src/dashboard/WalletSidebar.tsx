@@ -18,6 +18,7 @@ import {
   CheckGlyph,
 } from "../design/icons";
 import { tokens } from "../design/tokens";
+import { copyText } from "../lib/clipboard";
 import { midWallet } from "../lib/seed";
 import type { ActivityRow, WalletSidebarProps } from "./contracts";
 
@@ -97,7 +98,7 @@ function ActivityRowView({ row }: { row: ActivityRow }) {
   );
 }
 
-export function WalletSidebar({ data, onFund, activity, title = "Payroll Wallet", action, emptyNote }: WalletSidebarProps) {
+export function WalletSidebar({ data, onFund, activity, title = "Payroll Wallet", action, emptyNote, onCopied }: WalletSidebarProps) {
   const reduced = useReducedMotion();
   const balanceRevealed = data.showAll || data.balance.revealed;
   const empty = emptyNote ?? { title: "No activity yet", sub: "Fund the wallet or run a payroll to see it here." };
@@ -289,9 +290,25 @@ export function WalletSidebar({ data, onFund, activity, title = "Payroll Wallet"
         />
 
         <div className="relative">
-          {/* address strip — show more of the address here, there is room */}
+          {/* address strip — show more of the address here, there is room.
+              Clicking copies the full address (the shell toasts). */}
           <div className="tnum" style={{ fontSize: 13, letterSpacing: 0.9, color: "#ffffff", paddingLeft: 21 }}>
-            {data.employerAddress ? midWallet(data.employerAddress) : "Not connected"}
+            {data.employerAddress ? (
+              <button
+                type="button"
+                title="Copy wallet address"
+                onClick={() => {
+                  const address = data.employerAddress;
+                  if (address) void copyText(address).then((ok) => ok && onCopied?.());
+                }}
+                className="tnum cursor-pointer transition-opacity hover:opacity-75"
+                style={{ font: "inherit", letterSpacing: "inherit", color: "inherit", background: "none", padding: 0 }}
+              >
+                {midWallet(data.employerAddress)}
+              </button>
+            ) : (
+              "Not connected"
+            )}
           </div>
           <div style={{ fontSize: 10, color: "rgba(240,250,245,0.85)", marginTop: 3, paddingLeft: 21 }}>Sepolia</div>
           {/* divider (full-bleed) */}

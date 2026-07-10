@@ -379,6 +379,7 @@ export function EmployeePortal({ onLoggedOut }: { onLoggedOut: () => void }) {
               title="My Wallet"
               action={sidebarAction}
               emptyNote={{ title: "No activity yet", sub: "Payments to this wallet will appear here." }}
+              onCopied={() => showToast("ok", "Copied wallet address")}
             />
           </div>
 
@@ -397,7 +398,7 @@ export function EmployeePortal({ onLoggedOut }: { onLoggedOut: () => void }) {
           onLoggedOut();
         }}
       />
-      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={pay.me ? shortWallet(pay.me) : undefined} role="Employee" email={email} />
+      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={pay.me ? shortWallet(pay.me) : undefined} role="Employee" email={email} walletFull={pay.me} onCopied={() => showToast("ok", "Copied wallet address")} />
       <Toast toast={toast} />
     </div>
   );
