@@ -14,7 +14,12 @@ Every standalone user-facing string starts with a capital letter: titles, labels
 - Wrong: `sub="on-chain, never public"`
 - Right: `sub="On-chain, never public"`
 
-The only exception is a fragment deliberately rendered mid-sentence as a continuation of other text on the same line (e.g. `from 0x1234…5678` under an amount).
+This includes clauses after a middot: if the text after `·` reads as a full clause or sentence, either capitalize it or use a period instead of the middot.
+
+- Wrong: `SealedPay runs on Sepolia testnet · payroll settles with free test funds.`
+- Right: `SealedPay runs on Sepolia testnet. Payroll settles with free test funds.`
+
+The only exception is a genuine mid-sentence fragment on the same rendered line (e.g. an address chip inside a running sentence).
 
 ## 2. Never use the em-dash
 
