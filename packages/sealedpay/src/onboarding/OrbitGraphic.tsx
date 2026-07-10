@@ -16,7 +16,7 @@ export function OrbitGraphic() {
     <motion.div
       aria-hidden
       className="pointer-events-none absolute left-1/2"
-      style={{ bottom: "-66%", width: 1150, height: 1150, x: "-50%", zIndex: 0, transformOrigin: "50% 100%" }}
+      style={{ bottom: "-68%", width: 1150, height: 1150, x: "-50%", zIndex: 0, transformOrigin: "50% 100%" }}
       initial={reduced ? false : { scale: 0.72, opacity: 0 }}
       animate={{ scale: 1, opacity: 0.75 }}
       transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
@@ -42,7 +42,7 @@ export function OrbitGraphic() {
           </radialGradient>
           <linearGradient id="sp-ring" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="rgba(120,233,192,0.0)" />
-            <stop offset="50%" stopColor="rgba(120,233,192,0.16)" />
+            <stop offset="50%" stopColor="rgba(120,233,192,0.11)" />
             <stop offset="100%" stopColor="rgba(120,233,192,0.0)" />
           </linearGradient>
           {/* Soft blur for the atmospheric rim band. */}
@@ -58,7 +58,7 @@ export function OrbitGraphic() {
             style={{ transformOrigin: "575px 575px", animation: reduced ? undefined : "sp-spin 60s linear infinite" }}
           />
           <ellipse
-            cx="575" cy="575" rx="352" ry="212" stroke="rgba(95,230,175,0.058)" strokeWidth="0.9"
+            cx="575" cy="575" rx="352" ry="212" stroke="rgba(95,230,175,0.04)" strokeWidth="0.9"
             style={{ transformOrigin: "575px 575px", transform: "rotate(24deg)", animation: reduced ? undefined : "sp-spin-rev 80s linear infinite" }}
           />
           {/* A dim travelling node on the outer orbit */}
