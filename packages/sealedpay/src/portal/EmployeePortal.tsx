@@ -678,11 +678,11 @@ function VerificationsView({ pay }: { pay: MyPay }) {
   return (
     <div className="flex flex-col" style={{ gap: 20 }}>
       <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-        <MiniStat value={String(payments.length)} label="Amounts encrypted" sub="on-chain, never public" />
+        <MiniStat value={String(payments.length)} label="Amounts encrypted" sub="On-chain, never public" />
         <MiniStat
           value={payments.length > 0 ? `${revealedCount}/${payments.length}` : "0"}
           label="Revealed by you"
-          sub="decrypted locally, visible only to you"
+          sub="Decrypted locally, visible only to you"
         />
       </div>
       <GlassCard style={{ padding: "20px 23px" }}>

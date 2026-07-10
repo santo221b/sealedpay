@@ -646,8 +646,8 @@ function VerificationsTab({ data }: { data: DashboardData }) {
   return (
     <div className="flex flex-col" style={{ gap: 20 }}>
       <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-        <StatCard value={String(data.encryptedCount)} label="Amounts encrypted" sub="on-chain, never public" />
-        <StatCard value={data.runs.length > 0 ? `${verified}/${data.runs.length}` : "0"} label="Runs verified" sub="decrypted and matched" />
+        <StatCard value={String(data.encryptedCount)} label="Amounts encrypted" sub="On-chain, never public" />
+        <StatCard value={data.runs.length > 0 ? `${verified}/${data.runs.length}` : "0"} label="Runs verified" sub="Decrypted and matched" />
       </div>
       <GlassCard style={{ padding: "20px 23px" }}>
         <div style={{ fontWeight: 400, fontSize: 17 }}>Verifications</div>
