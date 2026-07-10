@@ -208,7 +208,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
           <div
             className="dc-floaty"
             style={{
-              filter: "drop-shadow(0 0 12px rgba(90,200,150,0.30))",
+              filter: "drop-shadow(0 0 12px rgba(90,200,150,0.26))",
               animation: reduced ? undefined : "sp-floaty-subtle 5s ease-in-out infinite, sp-seal-glow 3.4s ease-in-out infinite",
             }}
           >
@@ -249,7 +249,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
               reduced={Boolean(reduced)}
               x={x}
               rotate={rotate}
-              scale={isActive ? 1 : hoverPeek ? 0.84 : 0.81}
+              scale={isActive ? 1 : hoverPeek ? 0.76 : 0.73}
               opacity={isActive ? 1 : hoverPeek ? 0.82 : 0.42}
               busy={waiting === d.door && !authenticated}
               onPeekEnter={() => !isActive && setHoverPeek(true)}
