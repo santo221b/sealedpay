@@ -84,8 +84,8 @@ const EMPLOYEE_ICON = (
 );
 
 const DOORS: DoorDef[] = [
-  { door: "employer", title: "I run payroll", sub: "Pay your team confidentially, in one transaction.", cta: "Sign in as employer", icon: EMPLOYER_ICON },
-  { door: "employee", title: "I get paid", sub: "See your sealed salary. Only your email can reveal it.", cta: "Sign in as employee", icon: EMPLOYEE_ICON },
+  { door: "employer", title: "For employers", sub: "Run payroll for your whole team in one confidential transaction.", cta: "Sign in as employer", icon: EMPLOYER_ICON },
+  { door: "employee", title: "For employees", sub: "View your salary and payment history. Only you can decrypt the amounts.", cta: "Sign in as employee", icon: EMPLOYEE_ICON },
 ];
 
 export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
@@ -180,7 +180,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
           {headline}
         </h1>
         <p className="mt-3" style={{ fontSize: 14.5, color: "#9db3aa" }}>
-          Confidential on-chain salaries. Sign in with your email.
+          Confidential on-chain payroll. Sign in with your email to continue.
         </p>
       </motion.div>
 
@@ -234,7 +234,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
           <button
             key={i}
             type="button"
-            aria-label={`Show ${DOORS[i].title}`}
+            aria-label={`Switch to ${DOORS[i].door} sign in`}
             onClick={() => setActive(i)}
             className="cursor-pointer rounded-full transition-all"
             style={{ width: i === active ? 22 : 7, height: 7, background: i === active ? "#5fe3ab" : "rgba(255,255,255,0.22)" }}
