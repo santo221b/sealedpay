@@ -217,6 +217,8 @@ export interface ProfilePopupProps {
   name: string;
   avatar: string;
   employerShort?: string;
+  /** Role line under the name; defaults to the employer's "Payroll administrator". */
+  role?: string;
 }
 
 export interface ReminderModalProps {

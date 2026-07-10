@@ -29,7 +29,7 @@ import { Toast } from "../dashboard/modals/Toast";
 import { yScale } from "../dashboard/screens/Home";
 import type { ActivityRow, NotificationItem, ToastState } from "../dashboard/contracts";
 import { RevealAmount } from "../design/RevealAmount";
-import { HomeNav, PadlockGlyph, ReceiptCheckGlyph } from "../design/icons";
+import { CheckGlyph, HomeNav, PadlockGlyph, ReceiptCheckGlyph } from "../design/icons";
 import { GlassCard, SettingToggle } from "../design/kit2";
 import { tokens } from "../design/tokens";
 import { api, type Employment } from "../lib/api";
@@ -44,6 +44,8 @@ const CH = 112; // chart height px (same as the employer's Payout Activity)
 const BAR_COLOR = "#8fd7c0";
 const SCAFFOLD_MONTHS = ["Feb", "Mar", "Apr", "May", "Jun", "Jul"];
 const PLACEHOLDER_H = 26;
+// The employer Home's four tabs, repurposed to three (no Team for a recipient).
+const HOME_TABS = ["All", "Payments", "Verifications"];
 
 type MyPay = ReturnType<typeof useMyPay>;
 
@@ -362,7 +364,7 @@ export function EmployeePortal({ onLoggedOut, onSwitchDoor }: { onLoggedOut: () 
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div key={nav} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}>
                   {nav === 0 ? (
-                    <HomeScreen pay={pay} jobs={jobs} sym={sym} fmt={fmt} email={email} />
+                    <HomeScreen pay={pay} jobs={jobs} sym={sym} fmt={fmt} email={email} onPayslip={onPayslip} />
                   ) : (
                     <PayslipsScreen pay={pay} sym={sym} fmt={fmt} onPayslip={onPayslip} />
                   )}
@@ -396,7 +398,7 @@ export function EmployeePortal({ onLoggedOut, onSwitchDoor }: { onLoggedOut: () 
           onLoggedOut();
         }}
       />
-      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={pay.me ? shortWallet(pay.me) : undefined} />
+      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={pay.me ? shortWallet(pay.me) : undefined} role="Employee" />
       <Toast toast={toast} />
     </div>
   );
@@ -410,13 +412,16 @@ function HomeScreen({
   sym,
   fmt,
   email,
+  onPayslip,
 }: {
   pay: MyPay;
   jobs: Jobs;
   sym: string;
   fmt: (v: bigint) => string | undefined;
   email?: string;
+  onPayslip: (p: MyPayment) => void;
 }) {
+  const [tab, setTab] = useState("All");
   const lastPay = pay.payments?.[0];
   const totalReceived = useMemo(() => {
     if (!pay.payments || pay.payments.some((p) => p.amount === undefined)) return undefined;
@@ -429,9 +434,40 @@ function HomeScreen({
         Your pay
       </h1>
 
-      <SalaryChartCard pay={pay} sym={sym} />
+      {/* Tab row — same pills as the employer's Home */}
+      <div className="flex" style={{ gap: 13 }}>
+        {HOME_TABS.map((t) => {
+          const active = tab === t;
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className="cursor-pointer select-none"
+              style={{
+                fontSize: 13,
+                borderRadius: tokens.radius.pill,
+                padding: "10px 22px",
+                transition: "background .2s, color .2s",
+                border: "none",
+                fontWeight: 400,
+                background: active ? tokens.accent.primary : tokens.glass.card,
+                color: active ? "#0b1512" : tokens.text.muted,
+                boxShadow: active ? "none" : tokens.glass.cardShadow,
+              }}
+            >
+              {t}
+            </button>
+          );
+        })}
+      </div>
 
-      {/* Bottom row — mirrors the employer's Team + stat cards */}
+      {(tab === "All" || tab === "Payments") && <SalaryChartCard pay={pay} sym={sym} />}
+      {tab === "Payments" && <PaymentsLedger pay={pay} jobs={jobs} sym={sym} fmt={fmt} onPayslip={onPayslip} />}
+      {tab === "Verifications" && <VerificationsView pay={pay} />}
+
+      {/* Bottom row — mirrors the employer's Team + stat cards (overview only) */}
+      {tab === "All" && (
       <div className="grid" style={{ gridTemplateColumns: "1.35fr 1fr", gap: 20 }}>
         <GlassCard className="flex flex-col" style={{ padding: "16px 23px" }}>
           <div className="flex items-center justify-between">
@@ -520,6 +556,191 @@ function HomeScreen({
           </GlassCard>
         </div>
       </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Payments tab: the ledger of every received payment ─────────────────── */
+
+function PaymentsLedger({
+  pay,
+  jobs,
+  sym,
+  fmt,
+  onPayslip,
+}: {
+  pay: MyPay;
+  jobs: Jobs;
+  sym: string;
+  fmt: (v: bigint) => string | undefined;
+  onPayslip: (p: MyPayment) => void;
+}) {
+  const reduced = useReducedMotion();
+  return (
+    <GlassCard style={{ padding: "20px 22px" }}>
+      <div className="flex items-center justify-between">
+        <div style={{ fontWeight: 400, fontSize: 17 }}>Payments received</div>
+        {(pay.payments?.length ?? 0) > 0 && (
+          <span className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
+            {pay.payments!.length} found
+          </span>
+        )}
+      </div>
+
+      {pay.payments === undefined ? (
+        <div className="mt-4 flex flex-col" style={{ gap: 7 }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="dc-shimmer" style={{ height: 56, borderRadius: 14, background: "rgba(255,255,255,0.04)", animationDelay: `${i * 0.12}s` }} />
+          ))}
+        </div>
+      ) : pay.payments.length === 0 ? (
+        <CenterNote
+          icon={<ReceiptCheckGlyph size={22} />}
+          title="No payments yet"
+          sub={
+            jobs.employments && jobs.employments.length > 0
+              ? "You're on the payroll · your first payment will appear here the moment it lands."
+              : "Once your employer adds you and runs payroll, payments appear here automatically."
+          }
+        />
+      ) : (
+        <div className="mt-3 flex flex-col" style={{ gap: 4 }}>
+          <AnimatePresence initial={false}>
+            {pay.payments.map((p, i) => (
+              <motion.div
+                key={p.txHash + p.handle}
+                initial={reduced ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.32, delay: reduced ? 0 : Math.min(i * 0.045, 0.4), ease: EASE }}
+                className="group flex items-center"
+                style={{ gap: 12, padding: "9px 6px", borderRadius: 12 }}
+              >
+                <span className="flex shrink-0 items-center justify-center rounded-full" style={{ width: 36, height: 36, background: tokens.accent.puckBg, border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <ReceiptCheckGlyph size={17} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block" style={{ fontSize: 13, fontWeight: 500, color: "#eef4f1" }}>
+                    {p.from === zeroAddress ? "Faucet mint · Test funds" : `from ${shortWallet(p.from)}`}
+                  </span>
+                  <span className="tnum block whitespace-nowrap" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
+                    {p.timestamp ? `${fmtPaymentTime(p.timestamp)} · ` : ""}
+                    {shortHash(p.txHash)} ·{" "}
+                    <a href={p.url} target="_blank" rel="noreferrer" className="hover:underline" style={{ color: "#4ecba0", textDecoration: "none" }}>
+                      Etherscan
+                    </a>
+                  </span>
+                </span>
+                {p.amount !== undefined && (
+                  <button
+                    type="button"
+                    onClick={() => onPayslip(p)}
+                    className="cursor-pointer rounded-full opacity-0 transition-opacity group-hover:opacity-100"
+                    title="Download payslip"
+                    style={{ fontSize: 10.5, color: "#9db3aa", border: "1px solid rgba(255,255,255,0.13)", padding: "5px 11px" }}
+                  >
+                    Payslip
+                  </button>
+                )}
+                <span className="flex items-center" style={{ gap: 4, fontSize: 13.5, fontWeight: 500, color: "#eef4f1" }}>
+                  {p.from !== zeroAddress && <span style={{ color: "#78e9c0" }}>+</span>}
+                  <RevealAmount
+                    value={p.amount !== undefined ? fmt(p.amount) : undefined}
+                    revealed={p.amount !== undefined}
+                    pending={pay.phase === "revealing"}
+                    label="payment amount"
+                  />
+                  <span>{sym}</span>
+                </span>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
+    </GlassCard>
+  );
+}
+
+/* ── Verifications tab: privacy scorecard + per-payment reveal status ────── */
+
+function MiniStat({ value, label, sub }: { value: string; label: string; sub: string }) {
+  return (
+    <GlassCard style={{ padding: "16px 20px" }}>
+      <div style={{ fontSize: 10.5, color: tokens.text.muted }}>{label}</div>
+      <div className="tnum" style={{ fontSize: 26, fontWeight: 700, color: "#f2f7f4", marginTop: 5 }}>{value}</div>
+      <div style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 3 }}>{sub}</div>
+    </GlassCard>
+  );
+}
+
+function VerificationsView({ pay }: { pay: MyPay }) {
+  const payments = pay.payments ?? [];
+  const revealedCount = payments.filter((p) => p.amount !== undefined).length;
+  return (
+    <div className="flex flex-col" style={{ gap: 20 }}>
+      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        <MiniStat value={String(payments.length)} label="Amounts encrypted" sub="on-chain, never public" />
+        <MiniStat
+          value={payments.length > 0 ? `${revealedCount}/${payments.length}` : "0"}
+          label="Revealed by you"
+          sub="decrypted locally, visible only to you"
+        />
+      </div>
+      <GlassCard style={{ padding: "20px 23px" }}>
+        <div style={{ fontWeight: 400, fontSize: 17 }}>Verifications</div>
+        <p style={{ fontSize: 11.5, color: tokens.text.muted, lineHeight: 1.5, marginTop: 5 }}>
+          Amounts stay encrypted on-chain. A revealed payment was decrypted with your signature, locally in this
+          browser · nobody else can read it.
+        </p>
+        {payments.length === 0 ? (
+          <CenterNote
+            icon={<CheckGlyph size={20} color="#78e9c0" />}
+            title="Nothing to verify yet"
+            sub="Payments appear here the moment payroll runs, ready to reveal."
+          />
+        ) : (
+          <div className="mt-3 flex flex-col" style={{ gap: 4 }}>
+            {payments.map((p) => {
+              const isRevealed = p.amount !== undefined;
+              return (
+                <a
+                  key={p.txHash + p.handle}
+                  href={p.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center transition-colors hover:bg-[rgba(95,230,175,0.08)]"
+                  style={{ gap: 12, padding: "9px 13px", borderRadius: 999, textDecoration: "none", color: "inherit" }}
+                >
+                  <span className="flex shrink-0 items-center justify-center rounded-full" style={{ width: 36, height: 36, background: isRevealed ? "rgba(95,230,175,0.14)" : "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    {isRevealed ? <CheckGlyph size={15} /> : <PadlockGlyph size={14} color="#9db3aa" />}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block" style={{ fontSize: 13.5, fontWeight: 600, color: "#eef4f1" }}>
+                      {p.timestamp ? fmtPaymentTime(p.timestamp) : shortHash(p.txHash)}
+                    </span>
+                    <span className="block whitespace-nowrap" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
+                      {p.from === zeroAddress ? "Faucet mint · Test funds" : `from ${shortWallet(p.from)}`} · encrypted on-chain
+                    </span>
+                  </span>
+                  <span className="ml-auto shrink-0">
+                    {isRevealed ? (
+                      <span className="inline-flex shrink-0 items-center" style={{ gap: 3.5, fontSize: 9, padding: "3px 9px", borderRadius: 999, border: `1px solid ${tokens.accent.pillBorder}`, color: tokens.accent.pillText }}>
+                        <CheckGlyph size={10} />
+                        Revealed
+                      </span>
+                    ) : (
+                      <span className="inline-flex shrink-0 items-center" style={{ gap: 3.5, fontSize: 9, padding: "3px 9px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.18)", color: "#9db3aa" }}>
+                        <PadlockGlyph size={9} />
+                        Sealed
+                      </span>
+                    )}
+                  </span>
+                </a>
+              );
+            })}
+          </div>
+        )}
+      </GlassCard>
     </div>
   );
 }
