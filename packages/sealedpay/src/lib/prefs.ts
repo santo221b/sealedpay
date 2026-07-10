@@ -9,12 +9,15 @@ import { useCallback, useEffect, useState } from "react";
 export const IDENTITY_KEYS = {
   name: "sealedpay_name",
   avatar: "sealedpay_avatar",
+  company: "sealedpay_company",
   onboarded: "sealedpay_onboarded",
 } as const;
 
 export interface Identity {
   name: string;
   avatar: string; // avatar asset path, e.g. /avatars/avatar-1.svg
+  /** Employer only: the company name employees see as their employer. */
+  company: string;
   onboarded: boolean;
 }
 
@@ -22,13 +25,15 @@ export function loadIdentity(): Identity {
   return {
     name: localStorage.getItem(IDENTITY_KEYS.name) ?? "",
     avatar: localStorage.getItem(IDENTITY_KEYS.avatar) ?? "/avatars/avatar-profile.svg",
+    company: localStorage.getItem(IDENTITY_KEYS.company) ?? "",
     onboarded: localStorage.getItem(IDENTITY_KEYS.onboarded) === "1",
   };
 }
 
-export function saveIdentity(name: string, avatar: string) {
+export function saveIdentity(name: string, avatar: string, company?: string) {
   localStorage.setItem(IDENTITY_KEYS.name, name);
   localStorage.setItem(IDENTITY_KEYS.avatar, avatar);
+  if (company !== undefined) localStorage.setItem(IDENTITY_KEYS.company, company.trim());
   localStorage.setItem(IDENTITY_KEYS.onboarded, "1");
 }
 
@@ -46,6 +51,52 @@ export function clearOnboarded() {
  * shows only their real data. Persisted so it survives reloads.
  */
 const SAMPLES_CLEARED_KEY = "sealedpay_samples_cleared";
+
+/**
+ * Which door the user came through on the landing page. One email can be both
+ * an employer and an employee; the door only picks the default surface — a
+ * switcher in the profile menu flips it any time.
+ */
+export type Door = "employer" | "employee";
+const DOOR_KEY = "sealedpay_door";
+
+export function loadDoor(): Door | null {
+  const v = localStorage.getItem(DOOR_KEY);
+  return v === "employer" || v === "employee" ? v : null;
+}
+
+export function saveDoor(door: Door) {
+  localStorage.setItem(DOOR_KEY, door);
+}
+
+export function clearDoor() {
+  localStorage.removeItem(DOOR_KEY);
+}
+
+/** The last Privy user id seen on this browser — so the Gate can detect an
+ * account switch (the design's global identity keys belong to one account). */
+const LAST_USER_KEY = "sealedpay_last_user";
+
+export function loadLastUser(): string | null {
+  return localStorage.getItem(LAST_USER_KEY);
+}
+
+export function saveLastUser(userId: string) {
+  localStorage.setItem(LAST_USER_KEY, userId);
+}
+
+/** Employee-side onboarding flag — separate from the employer's, so someone
+ * who is both sees each flow exactly once. */
+const EMPLOYEE_ONBOARDED_KEY = "sealedpay_employee_onboarded";
+
+export function loadEmployeeOnboarded(): boolean {
+  return localStorage.getItem(EMPLOYEE_ONBOARDED_KEY) === "1";
+}
+
+export function setEmployeeOnboarded(v: boolean) {
+  if (v) localStorage.setItem(EMPLOYEE_ONBOARDED_KEY, "1");
+  else localStorage.removeItem(EMPLOYEE_ONBOARDED_KEY);
+}
 
 export function loadSamplesCleared(): boolean {
   return localStorage.getItem(SAMPLES_CLEARED_KEY) === "1";

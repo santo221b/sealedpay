@@ -21,6 +21,7 @@ export function TopBar({
   onHome,
   walletControl,
   search,
+  searchSlot,
 }: {
   profile: { name: string; avatar: string };
   onProfile: () => void;
@@ -28,7 +29,10 @@ export function TopBar({
   onHome: () => void;
   /** Connect / reconnect / switch-network control (owns the wallet state). */
   walletControl?: React.ReactNode;
-  search: {
+  /** A self-contained search element (the employee portal's payment search). */
+  searchSlot?: React.ReactNode;
+  /** The employer search (people + runs). Omit when searchSlot is used. */
+  search?: {
     open: boolean;
     query: string;
     setQuery: (q: string) => void;
@@ -57,44 +61,47 @@ export function TopBar({
       </button>
 
       {/* Search field + its dropdown, lifted above the dimming overlay via z-60 */}
-      <div className="relative" style={{ zIndex: 60, marginLeft: 32 }}>
-        <div
-          className="flex items-center"
-          style={{
-            gap: 9,
-            width: 306,
-            border: `1px solid ${tokens.glass.railBorder}`,
-            background: tokens.glass.rail,
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            boxShadow: tokens.glass.cardShadow,
-            borderRadius: tokens.radius.pill,
-            padding: "11px 18px",
-          }}
-        >
-          <SearchGlyph size={14} />
-          <input
-            value={search.query}
-            onFocus={search.onOpen}
-            onChange={(e) => search.setQuery(e.target.value)}
-            placeholder="Search employees or payouts"
-            aria-label="Search employees or payouts"
-            className="flex-1 bg-transparent outline-none"
-            style={{ color: "#e8f0ec", fontSize: 12, fontFamily: "'Manrope', sans-serif" }}
+      {searchSlot}
+      {search && (
+        <div className="relative" style={{ zIndex: 60, marginLeft: 32 }}>
+          <div
+            className="flex items-center"
+            style={{
+              gap: 9,
+              width: 306,
+              border: `1px solid ${tokens.glass.railBorder}`,
+              background: tokens.glass.rail,
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              boxShadow: tokens.glass.cardShadow,
+              borderRadius: tokens.radius.pill,
+              padding: "11px 18px",
+            }}
+          >
+            <SearchGlyph size={14} />
+            <input
+              value={search.query}
+              onFocus={search.onOpen}
+              onChange={(e) => search.setQuery(e.target.value)}
+              placeholder="Search employees or payouts"
+              aria-label="Search employees or payouts"
+              className="flex-1 bg-transparent outline-none"
+              style={{ color: "#e8f0ec", fontSize: 12, fontFamily: "'Manrope', sans-serif" }}
+            />
+          </div>
+
+          <SearchPalette
+            open={search.open}
+            onClose={search.onClose}
+            query={search.query}
+            setQuery={search.setQuery}
+            people={search.people}
+            runs={search.runs}
+            onPickPerson={search.onPickPerson}
+            onPickRun={search.onPickRun}
           />
         </div>
-
-        <SearchPalette
-          open={search.open}
-          onClose={search.onClose}
-          query={search.query}
-          setQuery={search.setQuery}
-          people={search.people}
-          runs={search.runs}
-          onPickPerson={search.onPickPerson}
-          onPickRun={search.onPickRun}
-        />
-      </div>
+      )}
 
       {/* Right cluster: wallet control (connect / switch network) + profile avatar */}
       <div className="ml-auto flex items-center" style={{ gap: 14 }}>
@@ -115,7 +122,7 @@ export function TopBar({
           whileHover={reduced ? undefined : { scale: 1.06, rotate: -2.5, filter: "drop-shadow(0 6px 14px rgba(59,191,142,0.45))" }}
           transition={{ duration: 0.3 }}
           className="cursor-pointer rounded-full object-cover"
-          style={{ width: 40, height: 40, border: "2px solid rgba(255,255,255,0.15)", background: "linear-gradient(135deg,#34d399,#0e9f6e)" }}
+          style={{ width: 40, height: 40, border: "2px solid rgba(255,255,255,0.15)", background: "rgba(236,238,237,0.26)" }}
         />
       </div>
     </div>

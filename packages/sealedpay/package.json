@@ -1,18 +1,21 @@
 {
   "name": "@dispersekit/payroll",
-  "description": "SealedPay — confidential payroll on-chain. An employer-only dashboard over the DisperseKit disperse engine; salaries encrypted end-to-end.",
+  "description": "SealedPay \u2014 confidential payroll on-chain. An employer-only dashboard over the DisperseKit disperse engine; salaries encrypted end-to-end.",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && tsc -p server/tsconfig.json && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@dispersekit/widget": "*",
     "@fontsource/manrope": "^5.2.8",
-    "@rainbow-me/rainbowkit": "^2.2.11",
+    "@privy-io/react-auth": "^3.34.0",
+    "@privy-io/server-auth": "^1.32.5",
+    "@privy-io/wagmi": "^4.0.14",
+    "@upstash/redis": "^1.38.0",
     "chart.js": "^4.5.1",
     "framer-motion": "^12.42.2",
     "react": "^19.2.7",

@@ -48,7 +48,7 @@ export function PermissionPrompt({ open, onEnable, onDismiss }: PermissionPrompt
             <div className="min-w-0">
               <h3 style={{ fontSize: 13.5, fontWeight: 600, color: "#f2f7f4" }}>Turn on in-app alerts?</h3>
               <p style={{ fontSize: 11, color: "#9db3aa", marginTop: 3, lineHeight: 1.45 }}>
-                Show a heads-up inside the app when payroll is delivered or needs attention.
+                Show an alert inside the app when payroll is delivered or needs attention.
               </p>
             </div>
           </div>

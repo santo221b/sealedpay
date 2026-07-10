@@ -37,7 +37,7 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 
 // Rotating status under the encrypting spinner — surfaces that the sealing is
 // real Zama FHE happening in the browser, not a fake progress bar.
-const SEAL_MESSAGES = ["Sealing amounts", "Zama FHE doing its magic", "Sealing under Zama's keys"];
+const SEAL_MESSAGES = ["Sealing amounts", "Encrypting with Zama FHE", "Sealing under Zama's keys"];
 
 // Per-card seal cadence (must match the encIdx interval) + how long a single
 // amount churns before it locks — used to hold the step until every card has
@@ -612,7 +612,7 @@ function StepSelect(props: {
               <p className="tnum" style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
                 {String(selectedCount).padStart(2, "0")}
               </p>
-              <p style={{ fontSize: 10.5, color: "#9db3aa", marginTop: 3 }}>recipients</p>
+              <p style={{ fontSize: 10.5, color: "#9db3aa", marginTop: 3 }}>Recipients</p>
             </div>
           </div>
         </>

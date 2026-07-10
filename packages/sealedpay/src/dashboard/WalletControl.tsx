@@ -1,11 +1,17 @@
 /**
- * Wallet control for the top bar — connect, reconnect, and (critically) switch
- * to Sepolia when the connected wallet is on the wrong chain. The rest of the
- * dashboard is presentation-only; this is the one place that reaches into
- * RainbowKit, so a returning/disconnected/wrong-network judge always has an
+ * Wallet control for the top bar — reconnect and (critically) switch to
+ * Sepolia when a connected external wallet is on the wrong chain. The rest of
+ * the dashboard is presentation-only; this is the one place that reaches into
+ * Privy/wagmi, so a returning/disconnected/wrong-network user always has an
  * affordance instead of a dead "Not connected" label.
+ *
+ * The control only appears when action is needed: connected-and-on-Sepolia
+ * renders nothing (the address already lives on the wallet card).
  */
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { SEPOLIA_CHAIN_ID } from "@dispersekit/widget";
+import { getEmbeddedConnectedWallet, usePrivy, useWallets } from "@privy-io/react-auth";
+import { useSetActiveWallet } from "@privy-io/wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 
 import { tokens } from "../design/tokens";
 
@@ -24,44 +30,58 @@ const PILL: React.CSSProperties = {
 };
 
 export function WalletControl() {
-  return (
-    <ConnectButton.Custom>
-      {({ account, chain, openConnectModal, openChainModal, mounted, authenticationStatus }) => {
-        const ready = mounted && authenticationStatus !== "loading";
-        const connected = ready && account && chain;
-        if (!ready) return <div aria-hidden style={{ width: 120, height: 34 }} />;
+  const { ready, authenticated, user, connectWallet } = usePrivy();
+  const { wallets } = useWallets();
+  const { setActiveWallet } = useSetActiveWallet();
+  const { isConnected, chain } = useAccount();
+  const { switchChain, isPending: switching } = useSwitchChain();
 
-        if (!connected) {
-          return (
-            <button
-              type="button"
-              onClick={openConnectModal}
-              style={{ ...PILL, background: tokens.accent.primary, color: "#08130e" }}
-            >
-              Connect wallet
-            </button>
-          );
-        }
+  if (!ready) return <div aria-hidden style={{ width: 120, height: 34 }} />;
 
-        if (chain.unsupported) {
-          return (
-            <button
-              type="button"
-              onClick={openChainModal}
-              style={{ ...PILL, background: "rgba(224,122,106,0.16)", color: "#f0a99d", border: "1px solid rgba(224,122,106,0.5)" }}
-            >
-              <span style={{ width: 7, height: 7, borderRadius: 999, background: "#e07a6a" }} />
-              Wrong network, switch to Sepolia
-            </button>
-          );
-        }
+  // The gate guarantees authentication before the dashboard renders, but an
+  // external wallet can still disconnect out from under us (extension locked,
+  // account removed). Offer the reconnect instead of a dead label.
+  if (authenticated && !isConnected) {
+    // An email account's embedded wallet re-attaches on its own: the active-
+    // wallet sync re-pins it the moment it reappears. A manual button here was
+    // a MetaMask-era affordance — it raced the sync, and with the wallet list
+    // momentarily empty it sent email users into the EXTERNAL connect modal.
+    if (user?.email?.address) {
+      return (
+        <div style={{ ...PILL, cursor: "default", background: "rgba(120,233,192,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#9db3aa", fontWeight: 500 }}>
+          <span
+            aria-hidden
+            style={{ width: 12, height: 12, borderRadius: "50%", border: "2px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }}
+          />
+          Restoring your wallet
+        </div>
+      );
+    }
+    const embedded = getEmbeddedConnectedWallet(wallets);
+    return (
+      <button
+        type="button"
+        onClick={() => (embedded ? void setActiveWallet(embedded) : connectWallet())}
+        style={{ ...PILL, background: tokens.accent.primary, color: "#08130e" }}
+      >
+        Reconnect wallet
+      </button>
+    );
+  }
 
-        // Connected and on Sepolia: nothing to show here — the address already
-        // lives on the wallet card above Recent activity, so a chip would just
-        // duplicate it. The control only appears when action is needed.
-        void account;
-        return null;
-      }}
-    </ConnectButton.Custom>
-  );
+  if (isConnected && chain?.id !== SEPOLIA_CHAIN_ID) {
+    return (
+      <button
+        type="button"
+        onClick={() => switchChain({ chainId: SEPOLIA_CHAIN_ID })}
+        disabled={switching}
+        style={{ ...PILL, background: "rgba(224,122,106,0.16)", color: "#f0a99d", border: "1px solid rgba(224,122,106,0.5)", opacity: switching ? 0.7 : 1, cursor: switching ? "wait" : "pointer" }}
+      >
+        <span style={{ width: 7, height: 7, borderRadius: 999, background: "#e07a6a" }} />
+        {switching ? "Switching to Sepolia" : "Wrong network, switch to Sepolia"}
+      </button>
+    );
+  }
+
+  return null;
 }

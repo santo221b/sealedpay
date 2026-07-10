@@ -49,8 +49,8 @@ export const TOUR_STEPS: TourStep[] = [
   {
     nav: 0,
     target: "tour-home-chart",
-    title: "Sample data, to start",
-    body: "The dashboard is pre-loaded with a sample team and history so you can explore. Any real payout you run shows up here on the chart.",
+    title: "Payout activity",
+    body: "Every payroll you run lands on this chart. Prefer to explore first? You can load sample data from the Team card below.",
   },
   {
     nav: 0,
@@ -78,14 +78,6 @@ export const TOUR_STEPS: TourStep[] = [
     body: "Your roster. To pay someone on their own, open their card.",
   },
   {
-    openEmployee: true,
-    clickAnchor: "tour-team-employee",
-    target: "tour-employee-pay",
-    scrollTop: true,
-    title: "Pay one person",
-    body: "From a card, send a one-off payment, handy for a quick test. Only they can read their own amount.",
-  },
-  {
     target: "tour-rail-settings",
     title: "Settings",
     body: "The rest lives here in Settings.",
@@ -96,8 +88,8 @@ export const TOUR_STEPS: TourStep[] = [
     target: "tour-settings-panel",
     noScroll: true,
     placement: "right",
-    title: "Clear the samples",
-    body: "Ready for your own data? Clear the sample team and history from here.",
+    title: "Your preferences",
+    body: "Mask amounts by default, set payout reminders, and auto-verify runs from here.",
   },
   {
     nav: 0,

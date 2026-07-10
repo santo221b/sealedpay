@@ -3,6 +3,17 @@
 > What works, what's stubbed, what's blocked, and the exact next step.
 > Newest entries first.
 
+## 2026-07-10 — SealedPay 2.0: email accounts, employee portal, backend
+
+**Done — live on [sealedpay.vercel.app](https://sealedpay.vercel.app)**
+- **Email sign-in via Privy**: two doors on the landing (For Employers / For Employees), email + code, an embedded wallet created from the email — no extension, no seed phrase. MetaMask/WalletConnect removed from SealedPay (the DisperseKit widget keeps RainbowKit).
+- **First backend**: Vercel functions under `packages/sealedpay/api` + `server/` — every call verifies the Privy access token; roster, payroll runs, and profiles persist in Upstash Redis. localStorage is now a cache, not the store.
+- **Employees are added by email**: the server pregenerates a Privy wallet for the address, so payroll can run before the employee ever signs in.
+- **Employee portal**: dedicated dashboard (salary chart, payments ledger, verifications, payslip export, employer card) with one-signature EIP-712 reveal of amounts + balance.
+- **Role exclusivity**: an email is an employer or an employee, never both — enforced server-side, surfaced as a calm toast at the gate.
+- **Demo data is opt-in**: empty states carry a "Load sample data" link; nothing is seeded.
+- Hardening from the rebuild sessions: RPC fallback transport (default Sepolia RPC 403s), HMR-stable wagmi config, embedded-wallet restore without a manual reconnect button, pay state keyed to its owning address, Privy modal skinned to the app's glass (incl. EIP-712 payload wrapping), resolution-independent landing hero.
+
 ## 2026-07-07 — SealedPay design handoff implementation (in progress)
 
 **Done — verified**

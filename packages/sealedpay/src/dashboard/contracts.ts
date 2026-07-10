@@ -21,6 +21,8 @@ export interface Person {
   dept: string;
   /** Full checksummed address (display with shortWallet()). */
   wallet: string;
+  /** Login email (the payroll identity), when the row was added by email. */
+  email?: string;
   /** Monthly salary in cUSDd, numeric (format with fmtAmount()). */
   salary: number;
   joined: string;
@@ -87,6 +89,8 @@ export interface HomeScreenProps {
   setTab: (tab: string) => void;
   /** Open the Add-employee modal (used by the empty team state). */
   onAddEmployee: () => void;
+  /** Opt-in demo data (secondary action on the empty team states). */
+  onLoadSamples: () => void;
   /** Navigate to the Insights screen (the Payout Activity "View All"). */
   onViewInsights: () => void;
   /** Navigate to the Team screen (the Team card "View All"). */
@@ -97,6 +101,8 @@ export interface TeamScreenProps {
   data: DashboardData;
   onRunPayroll: () => void;
   onAddEmployee: () => void;
+  /** Opt-in demo data (secondary action on the empty roster state). */
+  onLoadSamples: () => void;
   onOpenEmployee: (id: string) => void;
 }
 
@@ -121,9 +127,18 @@ export interface EmployeeViewProps {
 }
 
 export interface WalletSidebarProps {
-  data: DashboardData;
+  /** Only the fields the sidebar reads — the employee portal passes a slice. */
+  data: Pick<DashboardData, "showAll" | "balance" | "employerAddress">;
   onFund: () => void;
   activity: ActivityRow[];
+  /** Card heading; defaults to the employer's "Payroll Wallet". */
+  title?: string;
+  /** Replaces the circular Fund button (the employee portal wires Reveal). */
+  action?: { label: string; aria: string; icon: import("react").ReactElement; onClick: () => void; busy?: boolean };
+  /** Copy for the empty Recent-activity state; defaults to the employer's. */
+  emptyNote?: { title: string; sub: string };
+  /** Called after the address strip is clicked and copied (the shell toasts). */
+  onCopied?: () => void;
 }
 
 export interface ActivityRow {
@@ -154,8 +169,6 @@ export interface SettingsPanelProps {
   reminders: boolean;
   autoverify: boolean;
   onToggle: (key: "maskDefault" | "reminders" | "autoverify", value: boolean) => void;
-  /** Testing shortcut: jump to the recipient "My pay" view (via a notice). */
-  onViewRecipient: () => void;
   /** Remove the pre-loaded demo team + history, keeping only real data. */
   onClearSamples: () => void;
   /** Whether any sample data is still present (hides the clear button once gone). */
@@ -166,9 +179,9 @@ export interface AddEmployeeModalProps {
   open: boolean;
   onClose: () => void;
   /** Returns an error string to display, or null on success (shell validates + persists). */
-  onAdd: (values: { name: string; role: string; salary: string; dept: string; wallet: string }) => string | null;
+  onAdd: (values: { name: string; role: string; salary: string; dept: string; email?: string; wallet: string }) => string | null;
   /** Present → edit mode: prefills the form and switches the copy to "Save". */
-  initial?: { name: string; role: string; salary: string; dept: string; wallet: string };
+  initial?: { name: string; role: string; salary: string; dept: string; email?: string; wallet: string };
   /** Edit mode only: remove this employee (rendered as a confirm inside the modal). */
   onRemove?: () => void;
 }
@@ -208,6 +221,16 @@ export interface ProfilePopupProps {
   name: string;
   avatar: string;
   employerShort?: string;
+  /** Role line under the name; defaults to the employer's "Payroll administrator". */
+  role?: string;
+  /** Employer only: company name, appended to the role line. */
+  company?: string;
+  /** The signed-in login email, shown under the role line. */
+  email?: string;
+  /** Full wallet address behind the chip; clicking the chip copies it. */
+  walletFull?: string;
+  /** Called after the address is copied (the shell toasts). */
+  onCopied?: () => void;
 }
 
 export interface ReminderModalProps {

@@ -19,7 +19,6 @@
  */
 import {
   DEMO_TOKEN_ADDRESS,
-  DisperseProviders,
   SEPOLIA_CHAIN_ID,
   formatAmount,
   isValidAmountText,
@@ -27,6 +26,7 @@ import {
   useTokenMeta,
   type DeliveryResult,
 } from "@dispersekit/widget";
+import { usePrivy } from "@privy-io/react-auth";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatUnits, isAddress, parseUnits } from "viem";
@@ -47,12 +47,10 @@ import { NotificationsPanel } from "./dashboard/modals/NotificationsPanel";
 import { PermissionPrompt } from "./dashboard/modals/PermissionPrompt";
 import { ProfilePopup } from "./dashboard/modals/ProfilePopup";
 import { ReminderModal } from "./dashboard/modals/ReminderModal";
-import { RecipientNoticeModal } from "./dashboard/modals/RecipientNoticeModal";
 import { SettingsPanel } from "./dashboard/modals/SettingsPanel";
 import { Toast } from "./dashboard/modals/Toast";
 import { EmployeeView } from "./dashboard/screens/EmployeeView";
 import { Home } from "./dashboard/screens/Home";
-import { MyPay } from "./dashboard/screens/MyPay";
 import { Insights } from "./dashboard/screens/Insights";
 import { Team } from "./dashboard/screens/Team";
 import { tokens } from "./design/tokens";
@@ -61,17 +59,21 @@ import { useHistory } from "./lib/history";
 import { useNotifications } from "./lib/notifications";
 import { savePendingRun, useOrphanRun } from "./lib/orphan";
 import { THEME_COLORS, setThemeColor } from "./lib/themeColor";
-import { clearOnboarded, loadIdentity, loadSamplesCleared, loadTourSeen, setSamplesClearedPref, setTourSeenPref } from "./lib/prefs";
+import { setPreferExternal, useActiveWalletSync } from "./lib/activeWallet";
+import { api } from "./lib/api";
+import { clearDoor, clearOnboarded, loadDoor, loadEmployeeOnboarded, loadIdentity, loadLastUser, loadTourSeen, saveDoor, saveLastUser, setEmployeeOnboarded, setTourSeenPref, type Door } from "./lib/prefs";
 import { useSettings } from "./lib/prefs";
 import { humanizeError } from "./lib/humanizeError";
 import { rosterToRows } from "./lib/roster";
 import { useTxTimes } from "./lib/txTime";
-import { SEEDED_KEY, SEED_EMPLOYEES, fmtAmount, midWallet, shortWallet } from "./lib/seed";
+import { fmtAmount, midWallet, shortWallet } from "./lib/seed";
 import { useVerifyRun } from "./lib/verifyRun";
 import { activityRows, employeeRows, encryptedAmountsCount, toPerson, toRunViews, type FundingEvent } from "./lib/views";
 import { useFundWallet, useWalletBalance } from "./lib/wallet";
+import { Landing } from "./onboarding/Landing";
 import { Onboarding } from "./onboarding/Onboarding";
-import { sealedTheme } from "./theme";
+import { EmployeePortal } from "./portal/EmployeePortal";
+import { SealedPayProviders } from "./providers";
 
 const TOKEN = DEMO_TOKEN_ADDRESS;
 // Real deposits persist across reloads (cleared by Reset demo, which wipes the
@@ -88,39 +90,218 @@ function compactAmount(v: number): string {
 }
 
 export function App() {
-  const [onboarded, setOnboarded] = useState(() => loadIdentity().onboarded);
-  // A ?view=mypay deep link opens the recipient view directly — shareable, works
-  // on any device, and needs no employer login (the real recipient use case).
-  const [recipient, setRecipient] = useState(() => {
-    try {
-      return new URLSearchParams(window.location.search).get("view") === "mypay";
-    } catch {
-      return false;
-    }
-  });
-  // Logout un-onboards you (clears the flag, keeps the identity), so it lands
-  // back on the onboarding front door — pre-filled for a returning employer,
-  // blank on a genuine first run.
-  const identity = loadIdentity();
-  const returning = identity.name.trim().length > 0;
   return (
-    <DisperseProviders theme={sealedTheme} appName="SealedPay">
-      {recipient ? (
-        <MyPay onExit={() => setRecipient(false)} />
-      ) : onboarded ? (
-        <Dashboard onViewMyPay={() => setRecipient(true)} onLoggedOut={() => { clearOnboarded(); setOnboarded(false); }} />
-      ) : (
-        <Onboarding
-          onDone={() => setOnboarded(true)}
-          initialName={returning ? identity.name : ""}
-          initialAvatar={returning ? identity.avatar : ""}
-        />
-      )}
-    </DisperseProviders>
+    <SealedPayProviders>
+      <Gate />
+    </SealedPayProviders>
   );
 }
 
-function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLoggedOut: () => void }) {
+/**
+ * Post-auth routing. The landing page owns login; this gate owns what an
+ * authenticated user sees:
+ *   employer door → employer onboarding (once) → payroll dashboard
+ *   employee door → employee onboarding (once) → employee portal
+ * A ?view=mypay deep link keeps working as the employee door.
+ *
+ * ROLE EXCLUSIVITY: an email is either an employer or an employee, never
+ * both. The first sign-in writes the account's role to its server profile
+ * (permanent — the server refuses to overwrite it); every later sign-in
+ * through the wrong door is signed out with a calm toast. Accounts that
+ * predate the role field are inferred: on someone's payroll → employee,
+ * has a stored roster → employer.
+ */
+function Gate() {
+  const { ready, authenticated, user, logout: privyLogout } = usePrivy();
+  // Keep signing + balance-decrypt on the embedded (email) wallet by default,
+  // so an email login never falls through to an injected MetaMask.
+  useActiveWalletSync();
+  const [door, setDoor] = useState<Door | null>(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get("view") === "mypay") return "employee";
+    } catch {
+      /* no url access */
+    }
+    return loadDoor();
+  });
+  const [onboarded, setOnboarded] = useState(() => loadIdentity().onboarded);
+  const [employeeOnboarded, setEmployeeOnboardedState] = useState(() => loadEmployeeOnboarded());
+
+  // Consume the ?view=mypay deep link ONCE: persist the door, then strip the
+  // param so a later in-app switch to the employer view isn't bounced back to
+  // the employee surface on the next render/reload.
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("view") === "mypay") {
+        saveDoor("employee");
+        params.delete("view");
+        const qs = params.toString();
+        window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
+      }
+    } catch {
+      /* no history access */
+    }
+  }, []);
+
+  // Detect an ACCOUNT SWITCH on the same browser (different Privy user signs in):
+  // the design's global identity/onboarded keys belong to the previous account,
+  // so reset the door + onboarding flags and let the new account onboard fresh.
+  const lastUser = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!ready) return;
+    const uid = authenticated ? user?.id : undefined;
+    const seen = loadLastUser();
+    if (uid && seen && seen !== uid) {
+      clearOnboarded();
+      setEmployeeOnboarded(false);
+      clearDoor();
+      setPreferExternal(null);
+      setOnboarded(false);
+      setEmployeeOnboardedState(false);
+      setDoor(null);
+    }
+    if (uid) saveLastUser(uid);
+    lastUser.current = uid;
+  }, [ready, authenticated, user?.id]);
+
+  // Logout (from either surface) → clear the door → back to the landing page.
+  const onLoggedOut = useCallback(() => {
+    clearOnboarded();
+    clearDoor();
+    setPreferExternal(null);
+    setOnboarded(false);
+    setDoor(null);
+  }, []);
+
+  const enter = useCallback((d: Door) => {
+    saveDoor(d);
+    setDoor(d);
+  }, []);
+
+  /* Role exclusivity check — runs once per (account, door) before routing. */
+  const [roleOk, setRoleOk] = useState(false);
+  const [roleToast, setRoleToast] = useState<ToastState | null>(null);
+  const roleToastTimer = useRef<number>(undefined);
+  const roleCheckFor = useRef<string>(undefined);
+  useEffect(() => () => window.clearTimeout(roleToastTimer.current), []);
+  useEffect(() => {
+    if (!ready || !authenticated || !door || !user?.id) return;
+    const key = `${user.id}:${door}`;
+    if (roleCheckFor.current === key) return;
+    roleCheckFor.current = key;
+    setRoleOk(false);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { profile } = await api.getProfile();
+        let actual = profile?.role;
+        if (!actual) {
+          // Account predates the role field (or first sign-in): infer a
+          // conflict from existing data before granting the door.
+          if (door === "employer") {
+            const me = await api.me();
+            if (me.employments.length > 0) actual = "employee";
+          } else {
+            const { employees: roster } = await api.getRoster();
+            if (roster !== null) actual = "employer";
+          }
+        }
+        if (cancelled) return;
+        if (actual && actual !== door) {
+          window.clearTimeout(roleToastTimer.current);
+          setRoleToast({
+            kind: "err",
+            msg:
+              actual === "employer"
+                ? "This email belongs to an employer account. Sign in as employer to continue."
+                : "This email belongs to an employee account. Sign in as employee to continue.",
+            id: Date.now(),
+          });
+          roleToastTimer.current = window.setTimeout(() => setRoleToast(null), 5200);
+          roleCheckFor.current = undefined;
+          void privyLogout();
+          onLoggedOut();
+          return;
+        }
+        // First time through this door: claim the role (server makes it
+        // permanent — first write wins).
+        if (!profile?.role) void api.putProfile({ role: door }).catch(() => undefined);
+        setRoleOk(true);
+      } catch {
+        // Connectivity must never lock the app out — the check reruns on the
+        // next session, and the server-side first-write rule still holds.
+        if (!cancelled) setRoleOk(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, authenticated, door, user?.id]);
+
+  const identity = loadIdentity();
+  const returning = identity.name.trim().length > 0;
+
+  // Wait for Privy to restore the session before routing, so a reload of an
+  // authenticated user never flashes the landing page.
+  if (!ready) {
+    return (
+      <div className="flex min-h-screen items-center justify-center" style={{ background: "#070c0a" }}>
+        <span aria-hidden style={{ width: 22, height: 22, borderRadius: "50%", border: "2.4px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }} />
+      </div>
+    );
+  }
+
+  if (!authenticated || !door) {
+    return (
+      <>
+        <Landing onEnter={enter} />
+        <Toast toast={roleToast} />
+      </>
+    );
+  }
+
+  // Hold routing until the role check clears (a brief settle at most) so a
+  // wrong-door sign-in never flashes the other role's surface.
+  if (!roleOk) {
+    return (
+      <div className="flex min-h-screen items-center justify-center" style={{ background: "#070c0a" }}>
+        <span aria-hidden style={{ width: 22, height: 22, borderRadius: "50%", border: "2.4px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }} />
+      </div>
+    );
+  }
+
+  if (door === "employee") {
+    return employeeOnboarded ? (
+      <EmployeePortal onLoggedOut={onLoggedOut} />
+    ) : (
+      <Onboarding
+        variant="employee"
+        onDone={() => {
+          setEmployeeOnboarded(true);
+          setEmployeeOnboardedState(true);
+        }}
+        initialName={returning ? identity.name : ""}
+        initialAvatar={returning ? identity.avatar : ""}
+      />
+    );
+  }
+
+  return onboarded ? (
+    <Dashboard onLoggedOut={onLoggedOut} />
+  ) : (
+    <Onboarding
+      variant="employer"
+      onDone={() => setOnboarded(true)}
+      initialName={returning ? identity.name : ""}
+      initialAvatar={returning ? identity.avatar : ""}
+      initialCompany={returning ? identity.company : ""}
+    />
+  );
+}
+
+function Dashboard({ onLoggedOut }: { onLoggedOut: () => void }) {
   /* ── toast (top-center) — also surfaces balance reveal / decrypt errors ── */
   const [toast, setToastState] = useState<ToastState | null>(null);
   const toastTimer = useRef<number>(undefined);
@@ -132,11 +313,13 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   const onRevealError = useCallback((msg: string) => showToast("err", msg), [showToast]);
 
   /* ── data hooks ────────────────────────────────────────────────────────── */
-  const { address: employer } = useAccount();
+  const { address: employer, chain, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  const { employees, add, update, remove, replaceAll } = useEmployees();
+  const { logout: privyLogout, user: privyUser } = usePrivy();
+  const privyUserId = privyUser?.id;
+  const { employees, add, update, remove, hasSamples, clearSamples: clearSampleRows, loadSamples, syncError: rosterSyncError } = useEmployees();
   const [editEmp, setEditEmp] = useState<Employee | null>(null); // employee being edited
-  const { runs: liveRuns, addRun, markVerified } = useHistory();
+  const { runs: liveRuns, loaded: historyLoaded, addRun, markVerified, syncError: runsSyncError } = useHistory();
   const { settings, set: setSetting } = useSettings();
   const { notifs, unread, add: addNotif, markRead, markAllRead } = useNotifications();
   const { decimals } = useTokenMeta(TOKEN);
@@ -150,15 +333,6 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   const [activeBar, setActiveBar] = useState(""); // defaulted to the third-last bar on load (effect below)
   const [popup, setPopup] = useState<PopupKind>(null);
   const [logoutOpen, setLogoutOpen] = useState(false);
-  // Testing-only entry to the recipient view — gated behind a one-off notice so
-  // it is clearly a testing convenience, not a real product feature.
-  const [recipientNoticeOpen, setRecipientNoticeOpen] = useState(false);
-  const requestRecipientView = () => {
-    setPopup(null);
-    setPayrollOpen(false);
-    setRecipientNoticeOpen(true);
-  };
-
   // Keep the browser toolbar tinted to the dashboard (Safari).
   useEffect(() => {
     setThemeColor(THEME_COLORS.dashboard);
@@ -263,23 +437,36 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   };
 
   const identity = loadIdentity();
+  // Seeding is owned by useEmployees now (per-tenant, server-backed): a brand
+  // new employer gets the demo team from the hook itself.
 
-  /* ── seed / migrate the demo roster once per seed version ──────────────── */
-  // On a new SEEDED_KEY version this REPLACES any prior roster (e.g. the older
-  // 8-person seed) with the current SEED_EMPLOYEES — so a roster change lands
-  // without the user having to clear localStorage by hand.
-  const seededRef = useRef(false);
+  /* ── backend sync failures → one calm toast each (deduped) ─────────────── */
+  const toastedSync = useRef<string>(undefined);
   useEffect(() => {
-    if (seededRef.current) return;
-    seededRef.current = true;
-    if (!localStorage.getItem(SEEDED_KEY)) {
-      replaceAll(
-        SEED_EMPLOYEES.map((s) => ({ name: s.name, role: s.role, dept: s.dept, address: s.address, salary: s.salary })),
-      );
-      localStorage.setItem(SEEDED_KEY, "1");
+    const e = rosterSyncError ?? runsSyncError;
+    if (!e) {
+      toastedSync.current = undefined;
+      return;
     }
+    if (toastedSync.current === e) return;
+    toastedSync.current = e;
+    showToast("err", e);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [rosterSyncError, runsSyncError]);
+
+  /* ── keep the server profile current (names the employer for employees) ── */
+  useEffect(() => {
+    if (!identity.name) return;
+    const t = window.setTimeout(() => {
+      api
+        .putProfile({ name: identity.name, avatar: identity.avatar, walletAddress: employer, companyName: identity.company || undefined })
+        .catch(() => {
+          /* display-only metadata — a failed push just retries next visit */
+        });
+    }, 1200);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [identity.name, identity.avatar, employer]);
 
   /* ── notification permission prompt (design: 900ms after first load) ───── */
   useEffect(() => {
@@ -340,11 +527,11 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
       // verify step — the funds moved, so never say "Payroll failed · no funds
       // moved". Surface it as a soft "couldn't verify", matching the finale.
       if (phaseRef.current === "delivered") {
-        addNotif({ title: "Couldn't verify amounts", sub: "the payment was still delivered", color: "#e3b25f", tone: "warn" });
+        addNotif({ title: "Couldn't verify amounts", sub: "The payment was still delivered", color: "#e3b25f", tone: "warn" });
         showToast("err", "Couldn't verify amounts · the payment was still delivered");
         return;
       }
-      addNotif({ title: "Payroll failed", sub: "no funds moved · retry", color: "#e07a6a", tone: "err" });
+      addNotif({ title: "Payroll failed", sub: "No funds moved · retry", color: "#e07a6a", tone: "err" });
       showToast("err", "Payroll failed · no funds moved · retry");
     },
     [addNotif, showToast],
@@ -374,7 +561,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
       toastedFlowErr.current = e;
     } else if (cancelled) {
       toastedFlowErr.current = e;
-      addNotif({ title: "Payroll cancelled", sub: "you declined the request · nothing was sent", color: "#e3b25f", tone: "warn" });
+      addNotif({ title: "Payroll cancelled", sub: "You declined the request · nothing was sent", color: "#e3b25f", tone: "warn" });
       showToast("err", "Payroll cancelled · nothing was sent");
     } else if (/transaction was sent|confirmation failed|couldn.t confirm/i.test(e)) {
       // Broadcast but not yet confirmed — the modal keeps a Retry; surface why.
@@ -397,12 +584,13 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [retro.error]);
 
-  // Persist a recovery record the moment a tx hash exists (orphan safety).
+  // Persist a recovery record the moment a tx hash exists (orphan safety),
+  // keyed to THIS employer so it can't surface for another account.
   useEffect(() => {
-    if (flow.pendingTxHash && pendingRun.current) {
-      savePendingRun({ txHash: flow.pendingTxHash, names: pendingRun.current.names, totalText: pendingRun.current.totalText, startedAt: new Date().toISOString() });
+    if (flow.pendingTxHash && pendingRun.current && privyUserId) {
+      savePendingRun(privyUserId, { txHash: flow.pendingTxHash, names: pendingRun.current.names, totalText: pendingRun.current.totalText, startedAt: new Date().toISOString() });
     }
-  }, [flow.pendingTxHash]);
+  }, [flow.pendingTxHash, privyUserId]);
 
   // Immediate post-run verification → history ✓ badge + its OWN toast (only now
   // is a run truly "verified" — the delivery toast said "confirmed").
@@ -435,6 +623,11 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
         return msg;
       };
       if (decimals === undefined) return block("Token details are still loading, try again in a second.");
+      // Guard the network explicitly, so a wrong-chain run fails with a clear
+      // instruction instead of a misleading "not enough funds" (the balance
+      // read on the wrong chain would come back empty).
+      if (!isConnected) return block("Connect your wallet to run payroll.");
+      if (chain?.id !== SEPOLIA_CHAIN_ID) return block("Wrong network. Switch your wallet to Sepolia, then run payroll.");
       const pseudo = selected.map((p, i) => ({ id: String(i), name: p.name, address: p.wallet as `0x${string}`, salary: String(p.salary) }));
       const parsed = rosterToRows(pseudo, decimals);
       if (parsed.issues.length > 0) return block(parsed.namedProblems.join(" · "));
@@ -458,7 +651,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
       await flow.goToReview(parsed.rows);
       return null;
     },
-    [decimals, flow, balance, showToast],
+    [decimals, flow, balance, showToast, isConnected, chain],
   );
   useEffect(() => {
     if (executeWhenReady.current > 0 && flow.phase === "review" && flow.rows.length === executeWhenReady.current) {
@@ -503,13 +696,12 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   }, [empId]);
 
   /* ── derived views ─────────────────────────────────────────────────────── */
-  // Sample (demo) data is hidden once the employer clears it, leaving only
-  // their real employees, runs, and deposits — so a real transaction never
-  // blends into the seed data.
-  const [samplesCleared, setSamplesCleared] = useState(() => loadSamplesCleared());
+  // Sample (demo) rows now live IN the server roster (flagged), so clearing
+  // them is a roster edit that syncs across the employer's devices. Cleared =
+  // no sample rows left; the derived flag keeps the old filters working.
+  const samplesCleared = !hasSamples;
   const clearSamples = () => {
-    setSamplesClearedPref(true);
-    setSamplesCleared(true);
+    clearSampleRows();
     setNav(0);
   };
   const people = useMemo(() => {
@@ -709,7 +901,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
           <NotificationsPanel open={popup === "bell"} onClose={() => setPopup(null)} notifs={notifs} onRead={markRead} onMarkAllRead={markAllRead} />
         }
         gearPopover={
-          <SettingsPanel open={popup === "gear"} onClose={() => setPopup(null)} maskDefault={settings.maskDefault} reminders={settings.reminders} autoverify={settings.autoverify} onToggle={(key, value) => setSetting(key, value)} onViewRecipient={requestRecipientView} onClearSamples={clearSamples} hasSamples={!samplesCleared} />
+          <SettingsPanel open={popup === "gear"} onClose={() => setPopup(null)} maskDefault={settings.maskDefault} reminders={settings.reminders} autoverify={settings.autoverify} onToggle={(key, value) => setSetting(key, value)} onClearSamples={clearSamples} hasSamples={!samplesCleared} />
         }
       />
 
@@ -723,9 +915,9 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
             <main className="min-w-0">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div key={nav === 3 ? `emp-${empId}` : nav} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}>
-                  {nav === 0 && <Home data={data} tab={tab} setTab={setTab} onAddEmployee={() => setAddOpen(true)} onViewInsights={() => { setNav(2); setPopup(null); }} onViewTeam={() => { setNav(1); setPopup(null); }} />}
+                  {nav === 0 && <Home data={data} tab={tab} setTab={setTab} onAddEmployee={() => setAddOpen(true)} onLoadSamples={loadSamples} onViewInsights={() => { setNav(2); setPopup(null); }} onViewTeam={() => { setNav(1); setPopup(null); }} />}
                   {nav === 1 && (
-                    <Team data={data} onRunPayroll={() => { setPayrollOnlyId(null); setPayrollOpen(true); }} onAddEmployee={() => setAddOpen(true)} onOpenEmployee={openEmployee} />
+                    <Team data={data} onRunPayroll={() => { setPayrollOnlyId(null); setPayrollOpen(true); }} onAddEmployee={() => setAddOpen(true)} onLoadSamples={loadSamples} onOpenEmployee={openEmployee} />
                   )}
                   {nav === 2 && <Insights data={data} />}
                   {nav === 3 && person && (
@@ -746,7 +938,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
                 </motion.div>
               </AnimatePresence>
 
-              {orphanRecord && flow.phase === "input" && (
+              {orphanRecord && flow.phase === "input" && historyLoaded && (
                 <div className="mt-5 rounded-2xl p-3.5" style={{ background: "rgba(224,178,95,0.08)", border: "1px solid rgba(224,178,95,0.35)", color: "#e6c082", fontSize: 12 }}>
                   <p className="mb-2">
                     An earlier payroll run was sent (
@@ -781,12 +973,12 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
                 }}
               />
             ) : (
-              <WalletSidebar data={data} onFund={() => setFundOpen(true)} activity={activity} />
+              <WalletSidebar data={data} onFund={() => setFundOpen(true)} activity={activity} onCopied={() => showToast("ok", "Copied wallet address")} />
             )}
           </div>
 
           <p className="text-center" style={{ fontSize: 11, color: "rgba(233,244,238,0.62)", paddingTop: 35, paddingBottom: 9 }}>
-            SealedPay · Powered by <a href="https://dispersekit-demo.vercel.app" target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: "2px" }}>DisperseKit</a> · TokenOps disperse · Zama FHE
+            SealedPay · Powered by <a href="https://dispersekit-demo.vercel.app" target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "underline", textDecorationColor: "rgba(233,244,238,0.28)", textUnderlineOffset: "2px" }}>DisperseKit</a> · TokenOps · Zama FHE
           </p>
         </div>
       </div>
@@ -798,9 +990,9 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onAdd={(values) => {
-          const problem = validateEmployee({ name: values.name, role: values.role, dept: values.dept, address: values.wallet, salary: values.salary || "0" }, decimals);
+          const problem = validateEmployee({ name: values.name, role: values.role, dept: values.dept, email: values.email, address: values.wallet, salary: values.salary || "0" }, decimals);
           if (problem) return problem;
-          add({ name: values.name, role: values.role || "Employee", dept: values.dept, address: values.wallet, salary: values.salary || "0" });
+          add({ name: values.name, role: values.role || "Employee", dept: values.dept, email: values.email, address: values.wallet, salary: values.salary || "0" });
           addNotif({ title: "Employee added", sub: `${values.name.trim()} · ${values.dept}`, color: "#9db3aa", tone: "info" });
           setAddOpen(false);
           return null;
@@ -809,12 +1001,12 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
       <AddEmployeeModal
         open={Boolean(editEmp)}
         onClose={() => setEditEmp(null)}
-        initial={editEmp ? { name: editEmp.name, role: editEmp.role ?? "", salary: editEmp.salary, dept: editEmp.dept ?? "Engineering", wallet: editEmp.address } : undefined}
+        initial={editEmp ? { name: editEmp.name, role: editEmp.role ?? "", salary: editEmp.salary, dept: editEmp.dept ?? "Engineering", email: editEmp.email, wallet: editEmp.address } : undefined}
         onAdd={(values) => {
           if (!editEmp) return null;
-          const problem = validateEmployee({ name: values.name, role: values.role, dept: values.dept, address: values.wallet, salary: values.salary || "0" }, decimals);
+          const problem = validateEmployee({ name: values.name, role: values.role, dept: values.dept, email: values.email, address: values.wallet, salary: values.salary || "0" }, decimals);
           if (problem) return problem;
-          update(editEmp.id, { name: values.name, role: values.role || "Employee", dept: values.dept, address: values.wallet, salary: values.salary || "0" });
+          update(editEmp.id, { name: values.name, role: values.role || "Employee", dept: values.dept, email: values.email, address: values.wallet, salary: values.salary || "0" });
           addNotif({ title: "Employee updated", sub: `${values.name.trim()} · ${values.dept}`, color: "#9db3aa", tone: "info" });
           setEditEmp(null);
           return null;
@@ -845,9 +1037,8 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
           setFundOpen(false);
         }}
       />
-      <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); disconnect(); onLoggedOut(); }} />
-      <RecipientNoticeModal open={recipientNoticeOpen} onClose={() => setRecipientNoticeOpen(false)} onConfirm={() => { setRecipientNoticeOpen(false); onViewMyPay(); }} />
-      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} />
+      <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); disconnect(); void privyLogout(); onLoggedOut(); }} />
+      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} company={identity.company || undefined} email={privyUser?.email?.address} walletFull={employer} onCopied={() => showToast("ok", "Copied wallet address")} />
       <ReminderModal
         open={remindOpen}
         onClose={() => setRemindOpen(false)}
@@ -869,7 +1060,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
           setPermPrompt(false);
         }}
       />
-      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} onTxLocked={() => showToast("err", "Transaction in progress · please wait")} onValidatePayOne={payrollOnlyId ? validatePayOne : undefined} balance={payrollOnlyId ? data.balance : undefined} myAddress={employer} onViewMyPay={requestRecipientView} />
+      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} onTxLocked={() => showToast("err", "Transaction in progress · please wait")} onValidatePayOne={payrollOnlyId ? validatePayOne : undefined} balance={payrollOnlyId ? data.balance : undefined} myAddress={employer} />
       {tourStep !== null && (
         <TourOverlay
           step={TOUR_STEPS[tourStep]}
@@ -907,7 +1098,7 @@ function FundWalletModalWired({
     <FundWalletModal
       open={open}
       onClose={onClose}
-      employerShort={employer ? midWallet(employer) : "connect a wallet"}
+      employerShort={employer ? midWallet(employer) : "Connect a wallet"}
       employerFull={employer}
       busy={fund.busy}
       phase={fund.phase}

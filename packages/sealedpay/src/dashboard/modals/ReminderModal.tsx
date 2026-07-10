@@ -22,7 +22,7 @@ export function ReminderModal({ open, onClose, reminderSet, onConfirm }: Reminde
         <p style={{ fontSize: 12, color: "#9db3aa", marginTop: 5, lineHeight: 1.5 }}>
           {reminderSet
             ? "Reminder is on for Jul 29, two days before the Jul 31 run. You can remove it anytime."
-            : "Get a nudge on Jul 29, two days before the Jul 31 payroll run."}
+            : "Get a reminder on Jul 29, two days before the Jul 31 payroll run."}
         </p>
 
         <div className="flex gap-[11px]" style={{ marginTop: 22 }}>

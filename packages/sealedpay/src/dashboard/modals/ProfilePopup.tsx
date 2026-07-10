@@ -4,10 +4,11 @@
  */
 import { motion, useReducedMotion } from "framer-motion";
 
+import { copyText } from "../../lib/clipboard";
 import { ModalShell } from "../../design/kit2";
 import type { ProfilePopupProps } from "../contracts";
 
-export function ProfilePopup({ open, onClose, name, avatar, employerShort }: ProfilePopupProps) {
+export function ProfilePopup({ open, onClose, name, avatar, employerShort, role = "Payroll administrator", company, email, walletFull, onCopied }: ProfilePopupProps) {
   const reduced = useReducedMotion();
   return (
     <ModalShell open={open} onClose={onClose} width={342} labelledBy="profile-name">
@@ -28,10 +29,23 @@ export function ProfilePopup({ open, onClose, name, avatar, employerShort }: Pro
         <h2 id="profile-name" style={{ fontSize: 34, fontWeight: 700, color: "#f2f7f4", marginTop: 18, letterSpacing: 0.3 }}>
           {name}
         </h2>
-        <p style={{ fontSize: 12.6, color: "#9db3aa", marginTop: 5 }}>Payroll administrator</p>
+        <p style={{ fontSize: 12.6, color: "#9db3aa", marginTop: 5 }}>
+          {role}
+          {company ? ` · ${company}` : ""}
+        </p>
+        {email && (
+          <p className="truncate" style={{ maxWidth: "100%", fontSize: 12, color: "#7f9a8f", marginTop: 3 }}>
+            {email}
+          </p>
+        )}
         {employerShort && (
-          <span
-            className="tnum inline-flex items-center gap-[6px] rounded-full"
+          <button
+            type="button"
+            title="Copy wallet address"
+            onClick={() => {
+              if (walletFull) void copyText(walletFull).then((ok) => ok && onCopied?.());
+            }}
+            className="tnum inline-flex cursor-pointer items-center gap-[6px] rounded-full transition-colors hover:bg-[rgba(95,230,175,0.12)]"
             style={{
               border: "1px solid rgba(95,230,175,0.55)",
               color: "#78e9c0",
@@ -42,7 +56,7 @@ export function ProfilePopup({ open, onClose, name, avatar, employerShort }: Pro
           >
             <span className="rounded-full" style={{ width: 6, height: 6, background: "#34d399" }} aria-hidden />
             {employerShort}
-          </span>
+          </button>
         )}
       </div>
     </ModalShell>

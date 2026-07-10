@@ -18,6 +18,7 @@ import {
   CheckGlyph,
 } from "../design/icons";
 import { tokens } from "../design/tokens";
+import { copyText } from "../lib/clipboard";
 import { midWallet } from "../lib/seed";
 import type { ActivityRow, WalletSidebarProps } from "./contracts";
 
@@ -97,9 +98,10 @@ function ActivityRowView({ row }: { row: ActivityRow }) {
   );
 }
 
-export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
+export function WalletSidebar({ data, onFund, activity, title = "Payroll Wallet", action, emptyNote, onCopied }: WalletSidebarProps) {
   const reduced = useReducedMotion();
   const balanceRevealed = data.showAll || data.balance.revealed;
+  const empty = emptyNote ?? { title: "No activity yet", sub: "Fund the wallet or run a payroll to see it here." };
 
   return (
     <div
@@ -111,7 +113,7 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
         padding: "20px 20px 18px 20px",
       }}
     >
-      <div style={{ fontSize: 18, fontWeight: 500 }}>Payroll Wallet</div>
+      <div style={{ fontSize: 18, fontWeight: 500 }}>{title}</div>
 
       {/* Stacked balance card */}
       <div className="relative" style={{ marginTop: 43, height: 157, marginLeft: 1, marginRight: 1 }}>
@@ -197,18 +199,31 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
             <div className="z-[1] flex shrink-0 flex-col items-center" style={{ gap: 3 }}>
               <motion.button
                 type="button"
-                title="Fund wallet"
-                aria-label="Fund wallet"
+                title={action ? action.aria : "Fund wallet"}
+                aria-label={action ? action.aria : "Fund wallet"}
                 data-tour="tour-wallet-fund"
-                onClick={onFund}
-                whileHover={reduced ? undefined : { scale: 1.08 }}
-                whileTap={reduced ? undefined : { scale: 0.94 }}
-                className="flex cursor-pointer items-center justify-center rounded-full"
+                onClick={action ? action.onClick : onFund}
+                disabled={action?.busy}
+                whileHover={reduced || action?.busy ? undefined : { scale: 1.08 }}
+                whileTap={reduced || action?.busy ? undefined : { scale: 0.94 }}
+                className="flex cursor-pointer items-center justify-center rounded-full disabled:cursor-wait"
                 style={{ width: 40, height: 40, background: "#f5f8f6" }}
               >
-                <PlusGlyph size={16} />
+                {action?.busy ? (
+                  <span
+                    aria-hidden
+                    className="inline-block animate-spin rounded-full"
+                    style={{ width: 15, height: 15, border: "2px solid rgba(20,80,59,0.25)", borderTopColor: "#14503b" }}
+                  />
+                ) : action ? (
+                  action.icon
+                ) : (
+                  <PlusGlyph size={16} />
+                )}
               </motion.button>
-              <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 0.2, color: "rgba(240,250,245,0.9)" }}>Fund</span>
+              <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 0.2, color: "rgba(240,250,245,0.9)" }}>
+                {action ? action.label : "Fund"}
+              </span>
             </div>
           </div>
         </div>
@@ -275,9 +290,25 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
         />
 
         <div className="relative">
-          {/* address strip — show more of the address here, there is room */}
+          {/* address strip — show more of the address here, there is room.
+              Clicking copies the full address (the shell toasts). */}
           <div className="tnum" style={{ fontSize: 13, letterSpacing: 0.9, color: "#ffffff", paddingLeft: 21 }}>
-            {data.employerAddress ? midWallet(data.employerAddress) : "Not connected"}
+            {data.employerAddress ? (
+              <button
+                type="button"
+                title="Copy wallet address"
+                onClick={() => {
+                  const address = data.employerAddress;
+                  if (address) void copyText(address).then((ok) => ok && onCopied?.());
+                }}
+                className="tnum cursor-pointer transition-opacity hover:opacity-75"
+                style={{ font: "inherit", letterSpacing: "inherit", color: "inherit", background: "none", padding: 0 }}
+              >
+                {midWallet(data.employerAddress)}
+              </button>
+            ) : (
+              "Not connected"
+            )}
           </div>
           <div style={{ fontSize: 10, color: "rgba(240,250,245,0.85)", marginTop: 3, paddingLeft: 21 }}>Sepolia</div>
           {/* divider (full-bleed) */}
@@ -297,10 +328,8 @@ export function WalletSidebar({ data, onFund, activity }: WalletSidebarProps) {
                   <path d="M3 12h4l2 5 4-12 2 7h6" />
                 </svg>
               </span>
-              <div style={{ fontSize: 13, fontWeight: 500, color: "#e8f0ec" }}>No activity yet</div>
-              <div style={{ fontSize: 11, color: "#8ba297", maxWidth: 210, lineHeight: 1.5 }}>
-                Fund the wallet or run a payroll to see it here.
-              </div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: "#e8f0ec" }}>{empty.title}</div>
+              <div style={{ fontSize: 11, color: "#8ba297", maxWidth: 210, lineHeight: 1.5 }}>{empty.sub}</div>
             </div>
           ) : (
             <div className="flex flex-col" style={{ gap: 22, marginTop: 20 }}>

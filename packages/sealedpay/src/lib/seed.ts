@@ -35,11 +35,11 @@ const TEST_WALLET = "0x42D0446C1215BDc2f2a39D91Cdf481165B8b720F";
  *   Feb 4,600 (2 paid) → Mar 6,600 (3) → Apr 8,700 (4) → May 8,700 (4) → Jun/Jul 11,000 (5).
  */
 export const SEED_EMPLOYEES: (Omit<Employee, "id"> & { seedIndex: number; joined: string; historyStart: number })[] = [
-  { name: "Satoshi Nakamoto", role: "Protocol Architect", dept: "Engineering", address: TEST_WALLET, salary: "2400", seedIndex: 0, joined: "Feb 2026", historyStart: 0 },
-  { name: "Lewis Hamilton", role: "Engineer", dept: "Engineering", address: TEST_WALLET, salary: "2200", seedIndex: 1, joined: "Feb 2026", historyStart: 0 },
-  { name: "Max Verstappen", role: "Backend Engineer", dept: "Engineering", address: TEST_WALLET, salary: "2000", seedIndex: 2, joined: "Mar 2026", historyStart: 1 },
-  { name: "Charles Leclerc", role: "Product Designer", dept: "Design", address: TEST_WALLET, salary: "2100", seedIndex: 3, joined: "Apr 2026", historyStart: 2 },
-  { name: "Lionel Messi", role: "Community Manager", dept: "Operations", address: TEST_WALLET, salary: "2300", seedIndex: 4, joined: "Jun 2026", historyStart: 4 },
+  { name: "Satoshi Nakamoto", role: "Protocol Architect", dept: "Engineering", email: "satoshi@demo.sealedpay", address: TEST_WALLET, salary: "2400", seedIndex: 0, joined: "Feb 2026", historyStart: 0 },
+  { name: "Lewis Hamilton", role: "Engineer", dept: "Engineering", email: "lewis@demo.sealedpay", address: TEST_WALLET, salary: "2200", seedIndex: 1, joined: "Feb 2026", historyStart: 0 },
+  { name: "Max Verstappen", role: "Backend Engineer", dept: "Engineering", email: "max@demo.sealedpay", address: TEST_WALLET, salary: "2000", seedIndex: 2, joined: "Mar 2026", historyStart: 1 },
+  { name: "Charles Leclerc", role: "Product Designer", dept: "Design", email: "charles@demo.sealedpay", address: TEST_WALLET, salary: "2100", seedIndex: 3, joined: "Apr 2026", historyStart: 2 },
+  { name: "Lionel Messi", role: "Community Manager", dept: "Operations", email: "lionel@demo.sealedpay", address: TEST_WALLET, salary: "2300", seedIndex: 4, joined: "Jun 2026", historyStart: 4 },
 ];
 
 export interface SeedRun {

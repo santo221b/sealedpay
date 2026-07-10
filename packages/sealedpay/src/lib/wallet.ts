@@ -20,6 +20,7 @@ import { parseUnits, zeroHash } from "viem";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 
 import { humanizeError } from "./humanizeError";
+import { DECRYPT_TIMEOUT_MS, RELAYER_WARM_TIMEOUT_MS, withTimeout } from "./withTimeout";
 
 const FHE_NETWORK = "https://ethereum-sepolia-rpc.publicnode.com";
 const TOKEN = DEMO_TOKEN_ADDRESS;
@@ -102,15 +103,19 @@ export function useWalletBalance(decimals: number | undefined, onError?: (msg: s
     inFlight.current = true;
     setPending(true);
     try {
-      const instance = await getFhevmInstance(FHE_NETWORK);
-      const result = await userDecryptHandles({
-        instance,
-        requests: [{ handle, contractAddress: TOKEN }],
-        userAddress: employer,
-        signTypedData: (args) =>
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          walletClient.signTypedData({ ...args, account: employer } as any),
-      });
+      const instance = await withTimeout(getFhevmInstance(FHE_NETWORK), RELAYER_WARM_TIMEOUT_MS, "Couldn't reach Zama's encryption service in time. Check your connection and try again.");
+      const result = await withTimeout(
+        userDecryptHandles({
+          instance,
+          requests: [{ handle, contractAddress: TOKEN }],
+          userAddress: employer,
+          signTypedData: (args) =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            walletClient.signTypedData({ ...args, account: employer } as any),
+        }),
+        DECRYPT_TIMEOUT_MS,
+        "Zama's decryption service took too long to respond. Your balance is safe on-chain · try again.",
+      );
       setClear(result[handle]);
       setRevealed(true);
     } catch (e) {
@@ -148,15 +153,19 @@ export function useWalletBalance(decimals: number | undefined, onError?: (msg: s
     inFlight.current = true;
     setPending(true);
     try {
-      const instance = await getFhevmInstance(FHE_NETWORK);
-      const result = await userDecryptHandles({
-        instance,
-        requests: [{ handle, contractAddress: TOKEN }],
-        userAddress: employer,
-        signTypedData: (args) =>
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          walletClient.signTypedData({ ...args, account: employer } as any),
-      });
+      const instance = await withTimeout(getFhevmInstance(FHE_NETWORK), RELAYER_WARM_TIMEOUT_MS, "Couldn't reach Zama's encryption service in time. Check your connection and try again.");
+      const result = await withTimeout(
+        userDecryptHandles({
+          instance,
+          requests: [{ handle, contractAddress: TOKEN }],
+          userAddress: employer,
+          signTypedData: (args) =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            walletClient.signTypedData({ ...args, account: employer } as any),
+        }),
+        DECRYPT_TIMEOUT_MS,
+        "Zama's decryption service took too long to respond. Your balance is safe on-chain · try again.",
+      );
       const value = result[handle];
       setClear(value);
       return value;

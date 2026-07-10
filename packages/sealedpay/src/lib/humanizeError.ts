@@ -50,5 +50,5 @@ export function humanizeError(raw: string | null | undefined): string | undefine
   // the provider stack dump that follows it.
   const reason = raw.match(/reverted with the following reason:\s*(.+?)(?:\s*Contract Call:|\s*Request Arguments:|$)/i);
   const head = (reason?.[1] ?? raw.split(/\s*(?:Contract Call:|Request Arguments:|Docs:|Version:)/)[0]).trim();
-  return head.length > 160 ? `${head.slice(0, 157).trimEnd()}…` : head;
+  return head.length > 160 ? `${head.slice(0, 157).trimEnd()}.` : head;
 }

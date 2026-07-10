@@ -16,7 +16,7 @@ const GRADIENT = "linear-gradient(135deg,#41b091 0%,#2e9478 50%,#26826a 100%)";
 // The org's fixed departments (same set offered in the Add-employee modal).
 const DEPARTMENTS = ["Engineering", "Design", "Operations"] as const;
 
-export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: TeamScreenProps) {
+export function Team({ data, onRunPayroll, onAddEmployee, onLoadSamples, onOpenEmployee }: TeamScreenProps) {
   const deptCount = DEPARTMENTS.length;
   const oldest = data.runs[data.runs.length - 1];
   const since = useMemo(() => {
@@ -151,9 +151,11 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
       <GlassCard dataTour="tour-team-roster" style={{ padding: "20px 23px" }}>
         <div className="flex items-center justify-between">
           <div style={{ fontWeight: 400, fontSize: 17 }}>Employees</div>
-          <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
-            {data.people.length} people
-          </div>
+          {data.people.length > 0 && (
+            <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
+              {data.people.length} people
+            </div>
+          )}
         </div>
         {data.people.length === 0 ? (
           <div className="flex flex-col items-center text-center" style={{ padding: "34px 0 26px" }}>
@@ -165,6 +167,14 @@ export function Team({ data, onRunPayroll, onAddEmployee, onOpenEmployee }: Team
             >
               Add employee
             </PrimaryButton>
+            <button
+              type="button"
+              onClick={onLoadSamples}
+              className="cursor-pointer transition-colors hover:text-[#cfe0d8]"
+              style={{ marginTop: 9, fontSize: 11, color: tokens.text.muted, background: "none", textDecoration: "underline", textDecorationColor: "rgba(157,179,170,0.3)", textUnderlineOffset: 3 }}
+            >
+              Or load sample data to explore
+            </button>
           </div>
         ) : (
           <div
