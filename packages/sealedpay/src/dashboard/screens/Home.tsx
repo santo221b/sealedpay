@@ -589,7 +589,9 @@ function PayoutsTab({ data }: { data: DashboardData }) {
     <GlassCard style={{ padding: "20px 23px" }}>
       <div className="flex items-center justify-between">
         <div style={{ fontWeight: 400, fontSize: 17 }}>Payout ledger</div>
-        <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>{data.runs.length} runs</div>
+        {data.runs.length > 0 && (
+          <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>{data.runs.length} runs</div>
+        )}
       </div>
       {data.runs.length === 0 ? (
         <TabEmpty title="No payouts yet" sub="Run your first payroll to build the ledger." />
@@ -645,7 +647,7 @@ function VerificationsTab({ data }: { data: DashboardData }) {
     <div className="flex flex-col" style={{ gap: 20 }}>
       <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <StatCard value={String(data.encryptedCount)} label="Amounts encrypted" sub="on-chain, never public" />
-        <StatCard value={`${verified}/${data.runs.length}`} label="Runs verified" sub="decrypted and matched" />
+        <StatCard value={data.runs.length > 0 ? `${verified}/${data.runs.length}` : "0"} label="Runs verified" sub="decrypted and matched" />
       </div>
       <GlassCard style={{ padding: "20px 23px" }}>
         <div style={{ fontWeight: 400, fontSize: 17 }}>Verifications</div>
@@ -731,7 +733,9 @@ function TeamTab({
       <GlassCard style={{ padding: "16px 23px" }}>
         <div className="flex items-center justify-between">
           <div style={{ fontWeight: 400, fontSize: 17 }}>Employees</div>
-          <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>{data.people.length} people</div>
+          {data.people.length > 0 && (
+            <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>{data.people.length} people</div>
+          )}
         </div>
         {data.people.length === 0 ? (
           <TabEmpty title="No employees" sub="They will appear here once added." />

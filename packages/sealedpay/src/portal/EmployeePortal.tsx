@@ -198,7 +198,7 @@ export function EmployeePortal({ onLoggedOut, onSwitchDoor }: { onLoggedOut: () 
 
   const profile = usePortalProfile((msg) => showToast("err", msg));
   const fmt = (v: bigint) => (pay.decimals !== undefined ? formatAmount(v, pay.decimals) : undefined);
-  const revealed = pay.phase === "revealed";
+  const revealed = pay.revealed;
 
   const onPayslip = (p: MyPayment) => {
     if (p.amount === undefined || pay.decimals === undefined) return;
@@ -247,11 +247,13 @@ export function EmployeePortal({ onLoggedOut, onSwitchDoor }: { onLoggedOut: () 
   const sidebarData = {
     showAll: false,
     balance: {
+      // The hook only exposes a balance while it matches the CURRENT on-chain
+      // handle, so a stale number can never render here.
       value: pay.balance !== undefined ? fmt(pay.balance) : undefined,
-      revealed: revealed && balShown && pay.balance !== undefined,
+      revealed: pay.balance !== undefined && balShown,
       pending: pay.phase === "revealing",
       toggle: () => {
-        if (revealed) setBalShown((s) => !s);
+        if (pay.balance !== undefined) setBalShown((s) => !s);
         else void pay.reveal();
       },
     },
@@ -315,6 +317,7 @@ export function EmployeePortal({ onLoggedOut, onSwitchDoor }: { onLoggedOut: () 
           setPopup(null);
         }}
         walletControl={<WalletControl />}
+        searchSlot={<PaySearch pay={pay} sym={sym} fmt={fmt} onPayslip={onPayslip} />}
       />
 
       {/* Body: same alignment as the employer (rail left edge at 32.4px). */}
@@ -499,7 +502,11 @@ function HomeScreen({
             </span>
             <div className="flex items-center justify-between" style={{ marginTop: 9 }}>
               <span className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
-                {pay.payments ? `${pay.payments.length} payments` : "Scanning the chain"}
+                {pay.payments === undefined
+                  ? "Scanning the chain"
+                  : pay.payments.length > 0
+                    ? `${pay.payments.length} payments`
+                    : "Nothing received yet"}
               </span>
               <LockPuck locked={totalReceived === undefined} />
             </div>
@@ -516,7 +523,7 @@ function HomeScreen({
 
 function SalaryChartCard({ pay, sym }: { pay: MyPay; sym: string }) {
   const [activeBar, setActiveBar] = useState<string | null>(null);
-  const revealed = pay.phase === "revealed";
+  const revealed = pay.revealed;
 
   // Hover-intent, same 300ms beat as the employer chart.
   const HOVER_INTENT_MS = 300;
@@ -721,7 +728,7 @@ function PaymentsCard({
       <div className="flex items-center justify-between">
         <div style={{ fontWeight: 400, fontSize: 17 }}>Payments received</div>
         <div className="flex items-center gap-3">
-          {pay.payments !== undefined && (
+          {pay.payments !== undefined && pay.payments.length > 0 && (
             <span className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
               {pay.payments.length} found
             </span>
@@ -855,7 +862,7 @@ function PaymentsCard({
         </div>
       )}
 
-      {pay.phase === "revealed" && (
+      {pay.revealed && (pay.payments?.length ?? 0) > 0 && (
         <p className="text-center" style={{ fontSize: 11.5, color: tokens.text.muted, marginTop: 14, lineHeight: 1.55 }}>
           Decrypted locally after your signature. These amounts never appear on-chain or on any server. Only your
           wallet can read them.
@@ -879,8 +886,8 @@ function PayslipsScreen({
   onPayslip: (p: MyPayment) => void;
 }) {
   const reduced = useReducedMotion();
-  const revealed = pay.phase === "revealed";
   const exportable = (pay.payments ?? []).filter((p) => p.amount !== undefined);
+  const sealedCount = (pay.payments?.length ?? 0) - exportable.length;
 
   return (
     <div className="flex flex-col" style={{ gap: 20 }}>
@@ -891,7 +898,7 @@ function PayslipsScreen({
       <GlassCard style={{ padding: "20px 22px" }}>
         <div className="flex items-center justify-between">
           <div style={{ fontWeight: 400, fontSize: 17 }}>Your payslips</div>
-          {pay.payments !== undefined && (
+          {exportable.length > 0 && (
             <span className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
               {exportable.length} ready
             </span>
@@ -921,7 +928,7 @@ function PayslipsScreen({
             title="No payslips yet"
             sub="Once your employer runs payroll, each payment shows up here ready to export."
           />
-        ) : !revealed ? (
+        ) : exportable.length === 0 ? (
           <div className="mt-2 flex flex-col items-center text-center" style={{ padding: "28px 20px" }}>
             <span className="flex items-center justify-center rounded-full" style={{ width: 52, height: 52, background: "rgba(95,230,175,0.1)" }}>
               <PadlockGlyph size={22} color="#78e9c0" />
@@ -947,6 +954,23 @@ function PayslipsScreen({
           </div>
         ) : (
           <div className="mt-3 flex flex-col" style={{ gap: 4 }}>
+            {sealedCount > 0 && (
+              <div className="flex items-center justify-between" style={{ padding: "8px 6px", borderRadius: 12, background: "rgba(95,230,175,0.06)" }}>
+                <span className="flex items-center" style={{ gap: 7, fontSize: 11.5, color: tokens.text.muted }}>
+                  <PadlockGlyph size={11} color="#78e9c0" />
+                  {sealedCount} new {sealedCount === 1 ? "payment" : "payments"} still sealed
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void pay.reveal()}
+                  disabled={pay.phase === "revealing"}
+                  className="cursor-pointer rounded-full font-medium transition-colors hover:bg-[rgba(95,230,175,0.2)] disabled:cursor-wait disabled:opacity-70"
+                  style={{ fontSize: 11, color: "#78e9c0", border: "1px solid rgba(95,230,175,0.35)", padding: "5px 13px" }}
+                >
+                  {pay.phase === "revealing" ? "Decrypting" : "Reveal"}
+                </button>
+              </div>
+            )}
             {exportable.map((p, i) => (
               <motion.div
                 key={p.txHash + p.handle}
@@ -1094,6 +1118,209 @@ function EmployeeSettingsPanel({
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+/* ── Payment search — the employer's top-bar search, repurposed. The pill and
+     dropdown share the employer skin; results match month, amount, tx hash or
+     sender, and every revealed row can export its payslip right here. ─────── */
+
+function PaySearch({
+  pay,
+  sym,
+  fmt,
+  onPayslip,
+}: {
+  pay: MyPay;
+  sym: string;
+  fmt: (v: bigint) => string | undefined;
+  onPayslip: (p: MyPayment) => void;
+}) {
+  const reduced = useReducedMotion();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const close = () => {
+    setOpen(false);
+    setQuery("");
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const q = query.trim().toLowerCase().replace(/,/g, "");
+  const rows = (pay.payments ?? [])
+    .filter((p) => {
+      if (!q) return true;
+      const hay = [
+        p.timestamp ? new Date(p.timestamp).toLocaleString("en-US", { month: "long" }) : "",
+        p.timestamp ? fmtPaymentTime(p.timestamp) : "",
+        p.amount !== undefined && pay.decimals !== undefined ? formatAmount(p.amount, pay.decimals) : "",
+        p.txHash,
+        p.from === zeroAddress ? "faucet test funds" : p.from,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .replace(/,/g, "");
+      return hay.includes(q);
+    })
+    .slice(0, q ? 6 : 4);
+
+  return (
+    <div className="relative" style={{ zIndex: 60, marginLeft: 32 }}>
+      {/* The pill — same skin as the employer search field */}
+      <div
+        className="flex items-center"
+        style={{
+          gap: 9,
+          width: 306,
+          border: `1px solid ${tokens.glass.railBorder}`,
+          background: tokens.glass.rail,
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          boxShadow: tokens.glass.cardShadow,
+          borderRadius: tokens.radius.pill,
+          padding: "11px 18px",
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9db3aa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
+        <input
+          value={query}
+          onFocus={() => setOpen(true)}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search payments by month or amount"
+          aria-label="Search payments by month or amount"
+          className="flex-1 bg-transparent outline-none"
+          style={{ color: "#e8f0ec", fontSize: 12, fontFamily: "'Manrope', sans-serif" }}
+        />
+      </div>
+
+      <AnimatePresence>
+        {open && (
+          <>
+            {/* Dimming overlay behind the pill + panel (both in the z-60 container) */}
+            <motion.div
+              key="overlay"
+              className="fixed inset-0"
+              style={{ background: "#0D1411F2", zIndex: -1 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, transition: { duration: 0.18, ease: "easeIn" } }}
+              transition={{ duration: reduced ? 0.12 : 0.2, ease: "easeOut" }}
+              onMouseDown={close}
+            />
+            <motion.div
+              key="panel"
+              role="dialog"
+              aria-label="Search payments"
+              className="absolute overflow-hidden"
+              style={{
+                top: "calc(100% + 13px)",
+                left: 0,
+                width: 468,
+                maxWidth: "calc(100vw - 32px)",
+                borderRadius: 13,
+                border: "1px solid rgba(255,255,255,0.11)",
+                background: "#121D1ABF",
+                backdropFilter: "blur(6px)",
+                WebkitBackdropFilter: "blur(6px)",
+                padding: 14,
+                transformOrigin: "top center",
+              }}
+              initial={reduced ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                transition: reduced ? { duration: 0.12 } : { duration: 0.38, delay: 0.08, ease: [0.2, 1.06, 0.3, 1] },
+              }}
+              exit={
+                reduced
+                  ? { opacity: 0, transition: { duration: 0.12 } }
+                  : { opacity: 0, y: -8, scale: 0.98, transition: { duration: 0.19, ease: [0.4, 0, 1, 1] } }
+              }
+            >
+              {rows.length === 0 ? (
+                <p className="text-center" style={{ padding: "20px 12px", fontSize: 13.5, color: "#9db3aa" }}>
+                  {(pay.payments?.length ?? 0) === 0
+                    ? "Your payments appear here once payroll runs."
+                    : "No matches. Try a month, an amount, or a tx hash."}
+                </p>
+              ) : (
+                <div className="slim-scroll overflow-y-auto" style={{ maxHeight: "min(480px, 70vh)" }}>
+                  <p style={{ fontSize: 12, color: "#9db3aa", padding: "7px 12px 4px 12px" }}>Payments</p>
+                  {rows.map((p, i) => (
+                    <motion.div
+                      key={p.txHash + p.handle}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => window.open(p.url, "_blank", "noopener,noreferrer")}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") window.open(p.url, "_blank", "noopener,noreferrer");
+                      }}
+                      initial={reduced ? false : { opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.26, delay: reduced ? 0 : 0.2 + i * 0.035, ease: EASE }}
+                      className="flex w-full cursor-pointer items-center gap-[13px] rounded-full text-left transition-colors hover:bg-[rgba(95,230,175,0.1)]"
+                      style={{ padding: "10px 12px" }}
+                    >
+                      <span
+                        className="flex shrink-0 items-center justify-center"
+                        style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(59,191,142,0.18)", border: "1px solid rgba(255,255,255,0.06)" }}
+                      >
+                        <ReceiptCheckGlyph size={16} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="tnum block truncate" style={{ fontSize: 15, fontWeight: 600, color: "#eef4f1" }}>
+                          {p.timestamp ? fmtPaymentTime(p.timestamp) : shortHash(p.txHash)}
+                        </span>
+                        <span className="tnum block truncate" style={{ fontSize: 12, color: "#9db3aa", marginTop: 1 }}>
+                          {p.from === zeroAddress ? "Faucet mint · Test funds" : `from ${shortWallet(p.from)}`}
+                        </span>
+                      </span>
+                      {p.amount !== undefined ? (
+                        <>
+                          <span className="tnum shrink-0" style={{ fontSize: 13, fontWeight: 600, color: "#eef4f1" }}>
+                            {fmt(p.amount)} {sym}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onPayslip(p);
+                            }}
+                            className="shrink-0 cursor-pointer rounded-full transition-colors hover:bg-[rgba(95,230,175,0.2)]"
+                            style={{ fontSize: 10.5, fontWeight: 500, color: "#78e9c0", border: "1px solid rgba(95,230,175,0.35)", padding: "5px 12px" }}
+                          >
+                            Payslip
+                          </button>
+                        </>
+                      ) : (
+                        <span
+                          className="inline-flex shrink-0 items-center"
+                          style={{ gap: 4, fontSize: 9.5, borderRadius: tokens.radius.pill, border: "1px solid rgba(255,255,255,0.14)", color: "#9db3aa", padding: "4px 9px" }}
+                        >
+                          <PadlockGlyph size={9} />
+                          Sealed
+                        </span>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 

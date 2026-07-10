@@ -21,6 +21,7 @@ export function TopBar({
   onHome,
   walletControl,
   search,
+  searchSlot,
 }: {
   profile: { name: string; avatar: string };
   onProfile: () => void;
@@ -28,7 +29,9 @@ export function TopBar({
   onHome: () => void;
   /** Connect / reconnect / switch-network control (owns the wallet state). */
   walletControl?: React.ReactNode;
-  /** Omit to hide the search pill (the employee portal has nothing to search). */
+  /** A self-contained search element (the employee portal's payment search). */
+  searchSlot?: React.ReactNode;
+  /** The employer search (people + runs). Omit when searchSlot is used. */
   search?: {
     open: boolean;
     query: string;
@@ -58,6 +61,7 @@ export function TopBar({
       </button>
 
       {/* Search field + its dropdown, lifted above the dimming overlay via z-60 */}
+      {searchSlot}
       {search && (
         <div className="relative" style={{ zIndex: 60, marginLeft: 32 }}>
           <div

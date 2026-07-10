@@ -50,7 +50,7 @@ export interface MyPayment {
   amount?: bigint;
 }
 
-export type MyPayPhase = "idle" | "scanning" | "revealing" | "revealed";
+export type MyPayPhase = "idle" | "scanning" | "revealing";
 
 export function useMyPay() {
   const { address: me, isConnected, chain } = useAccount();
@@ -59,17 +59,25 @@ export function useMyPay() {
 
   const [payments, setPayments] = useState<MyPayment[]>();
   const [balanceHandle, setBalanceHandle] = useState<`0x${string}`>();
-  const [balance, setBalance] = useState<bigint>();
+  // The decrypted balance stays KEYED to the handle it was decrypted from. If a
+  // rescan finds a new balance handle (a payment arrived), the displayed value
+  // is stale by definition and derives back to undefined — the UI can never
+  // show a revealed balance that contradicts the chain.
+  const [decryptedBal, setDecryptedBal] = useState<{ handle: `0x${string}` | undefined; value: bigint }>();
   const [phase, setPhase] = useState<MyPayPhase>("idle");
   const [error, setError] = useState<string>();
 
   const onSepolia = chain?.id === SEPOLIA_CHAIN_ID;
+  const balance = decryptedBal !== undefined && decryptedBal.handle === balanceHandle ? decryptedBal.value : undefined;
+  // Revealed is DERIVED from the data, never a stored flag: everything the
+  // scan found has a plaintext, and the balance on display matches the chain.
+  const revealed = payments !== undefined && payments.every((p) => p.amount !== undefined) && balance !== undefined;
 
   // A wallet-account switch must never keep showing the previous account's pay.
   useEffect(() => {
     setPayments(undefined);
     setBalanceHandle(undefined);
-    setBalance(undefined);
+    setDecryptedBal(undefined);
     setPhase("idle");
     setError(undefined);
   }, [me]);
@@ -121,7 +129,13 @@ export function useMyPay() {
               timestamp: log.blockNumber != null ? timeByBlock.get(log.blockNumber) : undefined,
             }))
             .reverse();
-          setPayments(incoming);
+          // A rescan must never throw away plaintexts the user already
+          // decrypted — carry known amounts over by handle. Only genuinely
+          // new payments arrive sealed.
+          setPayments((prev) => {
+            const known = new Map((prev ?? []).map((p) => [p.handle, p.amount] as const));
+            return incoming.map((p) => ({ ...p, amount: known.get(p.handle) }));
+          });
           const handle = (await client.readContract({
             address: TOKEN,
             abi: erc7984Abi,
@@ -145,21 +159,26 @@ export function useMyPay() {
     setPhase("revealing");
     setError(undefined);
     try {
+      // Only what is still sealed: already-decrypted rows keep their plaintext
+      // (a reveal after a rescan signs for just the new arrivals).
+      const sealed = payments.filter((p) => p.amount === undefined);
+      const needBalance = balance === undefined && balanceHandle !== undefined;
+      const requests = [
+        ...sealed.map((p) => ({ handle: p.handle, contractAddress: TOKEN })),
+        ...(needBalance ? [{ handle: balanceHandle, contractAddress: TOKEN }] : []),
+      ];
+      if (requests.length === 0) {
+        // Nothing on-chain to decrypt: an empty wallet's balance is zero.
+        setDecryptedBal({ handle: balanceHandle, value: 0n });
+        setPhase("idle");
+        return;
+      }
       const instance = await withTimeout(
         getFhevmInstance(FHE_NETWORK),
         45_000,
         "Couldn't reach Zama's encryption service in time. Check your connection and try again.",
       );
       // Every handle came from the token contract → one ACL scope, one signature.
-      const requests = [
-        ...payments.map((p) => ({ handle: p.handle, contractAddress: TOKEN })),
-        ...(balanceHandle ? [{ handle: balanceHandle, contractAddress: TOKEN }] : []),
-      ];
-      if (requests.length === 0) {
-        setBalance(0n);
-        setPhase("revealed");
-        return;
-      }
       const results = await withTimeout(
         userDecryptHandles({
           instance,
@@ -172,15 +191,19 @@ export function useMyPay() {
         REVEAL_TIMEOUT_MS,
         "Zama's decryption service took too long to respond. Your pay is safe on-chain · try the reveal again.",
       );
-      setPayments((ps) => ps?.map((p) => ({ ...p, amount: results[p.handle] })));
-      setBalance(balanceHandle ? results[balanceHandle] : 0n);
-      setPhase("revealed");
+      setPayments((ps) => ps?.map((p) => (p.amount !== undefined ? p : { ...p, amount: results[p.handle] })));
+      setDecryptedBal((prev) => {
+        if (needBalance) return { handle: balanceHandle, value: results[balanceHandle] };
+        if (balanceHandle === undefined) return { handle: undefined, value: 0n };
+        return prev;
+      });
+      setPhase("idle");
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       setError(humanizeError(message) ?? message);
       setPhase("idle");
     }
-  }, [walletClient, me, payments, balanceHandle]);
+  }, [walletClient, me, payments, balanceHandle, balance]);
 
   return {
     me,
@@ -191,6 +214,8 @@ export function useMyPay() {
     ready: isConnected && onSepolia,
     payments,
     balance,
+    /** True only when every scanned amount AND the current balance are plaintext. */
+    revealed,
     phase,
     error,
     scan,
