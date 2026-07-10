@@ -18,8 +18,14 @@ import { OrbitGraphic } from "./OrbitGraphic";
 const EASE = [0.22, 1, 0.36, 1] as const;
 const CARD_W = 316;
 
-const GLYPHS = "*#$%";
-const glyphMask = (s: string) => s.split("").map((ch) => (ch === " " ? " " : GLYPHS[Math.floor(Math.random() * GLYPHS.length)])).join("");
+// Character pool and random casing lifted verbatim from the reference pen
+// (codepen.io/creativeocean/pen/JjemXGY).
+const GLYPHS = "abcdefghijklmnopqrstuvwxyz1234567890!@#$^&*()…æ_+-=;[]/~`";
+const randChar = () => {
+  const c = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+  return Math.random() > 0.5 ? c : c.toUpperCase();
+};
+const glyphMask = (s: string) => s.split("").map((ch) => (ch === " " ? " " : randChar())).join("");
 function useDecryptScramble(target: string, startDelayMs: number) {
   const reduced = useReducedMotion();
   // Starts as glyph noise (not blank) so the word holds its slot in the line.
@@ -46,7 +52,7 @@ function useDecryptScramble(target: string, startDelayMs: number) {
         const out = target.split("").map((ch, i) => {
           if (ch === " ") return " ";
           if (t >= i * PER + HOLD) return ch;
-          if (reroll || cache[i] === undefined) cache[i] = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+          if (reroll || cache[i] === undefined) cache[i] = randChar();
           return cache[i];
         });
         setText(out.join(""));
