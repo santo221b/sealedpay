@@ -751,15 +751,21 @@ function VerificationsView({ pay }: { pay: MyPay }) {
 
 function SalaryChartCard({ pay, sym }: { pay: MyPay; sym: string }) {
   // Like the employer's Payout Activity, one month is ALWAYS active (halo +
-  // tooltip): the current month by default, snapping once to the newest
-  // payment's month after the first scan. Hovering moves it, leaving keeps it.
-  const [activeBar, setActiveBar] = useState<string>(() => new Date().toLocaleString("en-US", { month: "short" }));
+  // tooltip), defaulting to the THIRD-LAST bar (same deterministic rule as the
+  // employer shell): third-last scaffold month up front, then third-last month
+  // with data once the first scan lands. Hovering moves it, leaving keeps it.
+  const [activeBar, setActiveBar] = useState<string>(SCAFFOLD_MONTHS[SCAFFOLD_MONTHS.length - 3]);
   const snapped = useRef(false);
   useEffect(() => {
     if (snapped.current || !pay.payments || pay.payments.length === 0) return;
     snapped.current = true;
-    const newest = pay.payments[0];
-    if (newest.timestamp) setActiveBar(new Date(newest.timestamp).toLocaleString("en-US", { month: "short" }));
+    const nowMonth = new Date().toLocaleString("en-US", { month: "short" });
+    const months: string[] = [];
+    for (const p of [...pay.payments].reverse()) {
+      const m = p.timestamp ? new Date(p.timestamp).toLocaleString("en-US", { month: "short" }) : nowMonth;
+      if (!months.includes(m)) months.push(m);
+    }
+    if (months.length) setActiveBar(months[Math.max(0, months.length - 3)]);
   }, [pay.payments]);
   const { switchChain, isPending: switchingChain } = useSwitchChain();
   const revealed = pay.revealed;
