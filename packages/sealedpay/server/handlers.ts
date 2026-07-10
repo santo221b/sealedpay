@@ -42,6 +42,8 @@ export interface Profile {
   walletAddress?: `0x${string}`;
   notifyPayments?: boolean;
   notifyVerifications?: boolean;
+  /** The account's surface. Written once, never overwritten (role exclusivity). */
+  role?: "employer" | "employee";
 }
 
 export interface HandlerResult {
@@ -175,17 +177,20 @@ export async function handleProfile(authorization: string | undefined, method: s
   }
   if (method === "PUT") {
     const p = (body as { profile?: Record<string, unknown> })?.profile;
-    if (!p || !str(p.name, 120) || !str(p.avatar, 300)) {
+    const hasIdentity = Boolean(p && str(p.name, 120) && str(p.avatar, 300));
+    const hasRole = Boolean(p && (p.role === "employer" || p.role === "employee"));
+    if (!p || (!hasIdentity && !hasRole)) {
       throw new ApiFail(400, "That profile update looks malformed. Reload and try again.");
     }
     // Field-presence MERGE: the employer surface writes name/avatar/wallet; the
-    // employee portal writes name/avatar/notify prefs. Absent keys keep their
-    // stored value (JSON.stringify drops undefined, so "missing" is reliable),
-    // so the two surfaces don't clobber each other's fields.
+    // employee portal writes name/avatar/notify prefs; the Gate writes role on
+    // its own before onboarding has a name. Absent keys keep their stored value
+    // (JSON.stringify drops undefined, so "missing" is reliable), so the
+    // surfaces don't clobber each other's fields.
     const prev = (await store.get<Profile>(keys.profile(userId))) ?? ({} as Profile);
     const profile: Profile = {
-      name: p.name as string,
-      avatar: p.avatar as string,
+      name: hasIdentity ? (p.name as string) : (prev.name ?? ""),
+      avatar: hasIdentity ? (p.avatar as string) : (prev.avatar ?? ""),
       walletAddress:
         "walletAddress" in p
           ? str(p.walletAddress, 42) && ADDR_RE.test(p.walletAddress as string)
@@ -194,6 +199,9 @@ export async function handleProfile(authorization: string | undefined, method: s
           : prev.walletAddress,
       notifyPayments: typeof p.notifyPayments === "boolean" ? p.notifyPayments : prev.notifyPayments,
       notifyVerifications: typeof p.notifyVerifications === "boolean" ? p.notifyVerifications : prev.notifyVerifications,
+      // Role exclusivity: the FIRST role written for an account is permanent.
+      // A later PUT can never flip an employer into an employee or vice versa.
+      role: prev.role ?? (hasRole ? (p.role as Profile["role"]) : undefined),
     };
     await store.set(keys.profile(userId), profile);
     return ok({ ok: true });

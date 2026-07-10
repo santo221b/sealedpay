@@ -47,7 +47,6 @@ import { NotificationsPanel } from "./dashboard/modals/NotificationsPanel";
 import { PermissionPrompt } from "./dashboard/modals/PermissionPrompt";
 import { ProfilePopup } from "./dashboard/modals/ProfilePopup";
 import { ReminderModal } from "./dashboard/modals/ReminderModal";
-import { RecipientNoticeModal } from "./dashboard/modals/RecipientNoticeModal";
 import { SettingsPanel } from "./dashboard/modals/SettingsPanel";
 import { Toast } from "./dashboard/modals/Toast";
 import { EmployeeView } from "./dashboard/screens/EmployeeView";
@@ -104,9 +103,16 @@ export function App() {
  *   employer door → employer onboarding (once) → payroll dashboard
  *   employee door → employee onboarding (once) → employee portal
  * A ?view=mypay deep link keeps working as the employee door.
+ *
+ * ROLE EXCLUSIVITY: an email is either an employer or an employee, never
+ * both. The first sign-in writes the account's role to its server profile
+ * (permanent — the server refuses to overwrite it); every later sign-in
+ * through the wrong door is signed out with a calm toast. Accounts that
+ * predate the role field are inferred: on someone's payroll → employee,
+ * has a stored roster → employer.
  */
 function Gate() {
-  const { ready, authenticated, user } = usePrivy();
+  const { ready, authenticated, user, logout: privyLogout } = usePrivy();
   // Keep signing + balance-decrypt on the embedded (email) wallet by default,
   // so an email login never falls through to an injected MetaMask.
   useActiveWalletSync();
@@ -173,20 +179,66 @@ function Gate() {
     setDoor(d);
   }, []);
 
-  // Switch surface without logging out (for people who are both). An employer
-  // who has already onboarded shouldn't be forced through the whole employee
-  // onboarding just to peek at their own pay — mark it done on the way over.
-  const switchDoor = useCallback(
-    (d: Door) => {
-      if (d === "employee" && onboarded && !employeeOnboarded) {
-        setEmployeeOnboarded(true);
-        setEmployeeOnboardedState(true);
+  /* Role exclusivity check — runs once per (account, door) before routing. */
+  const [roleOk, setRoleOk] = useState(false);
+  const [roleToast, setRoleToast] = useState<ToastState | null>(null);
+  const roleToastTimer = useRef<number>(undefined);
+  const roleCheckFor = useRef<string>(undefined);
+  useEffect(() => () => window.clearTimeout(roleToastTimer.current), []);
+  useEffect(() => {
+    if (!ready || !authenticated || !door || !user?.id) return;
+    const key = `${user.id}:${door}`;
+    if (roleCheckFor.current === key) return;
+    roleCheckFor.current = key;
+    setRoleOk(false);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { profile } = await api.getProfile();
+        let actual = profile?.role;
+        if (!actual) {
+          // Account predates the role field (or first sign-in): infer a
+          // conflict from existing data before granting the door.
+          if (door === "employer") {
+            const me = await api.me();
+            if (me.employments.length > 0) actual = "employee";
+          } else {
+            const { employees: roster } = await api.getRoster();
+            if (roster !== null) actual = "employer";
+          }
+        }
+        if (cancelled) return;
+        if (actual && actual !== door) {
+          window.clearTimeout(roleToastTimer.current);
+          setRoleToast({
+            kind: "err",
+            msg:
+              actual === "employer"
+                ? "This email belongs to an employer account. Sign in as employer to continue."
+                : "This email belongs to an employee account. Sign in as employee to continue.",
+            id: Date.now(),
+          });
+          roleToastTimer.current = window.setTimeout(() => setRoleToast(null), 5200);
+          roleCheckFor.current = undefined;
+          void privyLogout();
+          onLoggedOut();
+          return;
+        }
+        // First time through this door: claim the role (server makes it
+        // permanent — first write wins).
+        if (!profile?.role) void api.putProfile({ role: door }).catch(() => undefined);
+        setRoleOk(true);
+      } catch {
+        // Connectivity must never lock the app out — the check reruns on the
+        // next session, and the server-side first-write rule still holds.
+        if (!cancelled) setRoleOk(true);
       }
-      saveDoor(d);
-      setDoor(d);
-    },
-    [onboarded, employeeOnboarded],
-  );
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, authenticated, door, user?.id]);
 
   const identity = loadIdentity();
   const returning = identity.name.trim().length > 0;
@@ -201,11 +253,28 @@ function Gate() {
     );
   }
 
-  if (!authenticated || !door) return <Landing onEnter={enter} />;
+  if (!authenticated || !door) {
+    return (
+      <>
+        <Landing onEnter={enter} />
+        <Toast toast={roleToast} />
+      </>
+    );
+  }
+
+  // Hold routing until the role check clears (a brief settle at most) so a
+  // wrong-door sign-in never flashes the other role's surface.
+  if (!roleOk) {
+    return (
+      <div className="flex min-h-screen items-center justify-center" style={{ background: "#070c0a" }}>
+        <span aria-hidden style={{ width: 22, height: 22, borderRadius: "50%", border: "2.4px solid rgba(120,233,192,0.25)", borderTopColor: "#78e9c0", animation: "dc-spin .7s linear infinite" }} />
+      </div>
+    );
+  }
 
   if (door === "employee") {
     return employeeOnboarded ? (
-      <EmployeePortal onLoggedOut={onLoggedOut} onSwitchDoor={() => switchDoor("employer")} />
+      <EmployeePortal onLoggedOut={onLoggedOut} />
     ) : (
       <Onboarding
         variant="employee"
@@ -220,7 +289,7 @@ function Gate() {
   }
 
   return onboarded ? (
-    <Dashboard onViewMyPay={() => switchDoor("employee")} onLoggedOut={onLoggedOut} />
+    <Dashboard onLoggedOut={onLoggedOut} />
   ) : (
     <Onboarding
       variant="employer"
@@ -231,7 +300,7 @@ function Gate() {
   );
 }
 
-function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLoggedOut: () => void }) {
+function Dashboard({ onLoggedOut }: { onLoggedOut: () => void }) {
   /* ── toast (top-center) — also surfaces balance reveal / decrypt errors ── */
   const [toast, setToastState] = useState<ToastState | null>(null);
   const toastTimer = useRef<number>(undefined);
@@ -263,15 +332,6 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
   const [activeBar, setActiveBar] = useState(""); // defaulted to the third-last bar on load (effect below)
   const [popup, setPopup] = useState<PopupKind>(null);
   const [logoutOpen, setLogoutOpen] = useState(false);
-  // Testing-only entry to the recipient view — gated behind a one-off notice so
-  // it is clearly a testing convenience, not a real product feature.
-  const [recipientNoticeOpen, setRecipientNoticeOpen] = useState(false);
-  const requestRecipientView = () => {
-    setPopup(null);
-    setPayrollOpen(false);
-    setRecipientNoticeOpen(true);
-  };
-
   // Keep the browser toolbar tinted to the dashboard (Safari).
   useEffect(() => {
     setThemeColor(THEME_COLORS.dashboard);
@@ -840,7 +900,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
           <NotificationsPanel open={popup === "bell"} onClose={() => setPopup(null)} notifs={notifs} onRead={markRead} onMarkAllRead={markAllRead} />
         }
         gearPopover={
-          <SettingsPanel open={popup === "gear"} onClose={() => setPopup(null)} maskDefault={settings.maskDefault} reminders={settings.reminders} autoverify={settings.autoverify} onToggle={(key, value) => setSetting(key, value)} onViewRecipient={requestRecipientView} onClearSamples={clearSamples} hasSamples={!samplesCleared} />
+          <SettingsPanel open={popup === "gear"} onClose={() => setPopup(null)} maskDefault={settings.maskDefault} reminders={settings.reminders} autoverify={settings.autoverify} onToggle={(key, value) => setSetting(key, value)} onClearSamples={clearSamples} hasSamples={!samplesCleared} />
         }
       />
 
@@ -977,7 +1037,6 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
         }}
       />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); disconnect(); void privyLogout(); onLoggedOut(); }} />
-      <RecipientNoticeModal open={recipientNoticeOpen} onClose={() => setRecipientNoticeOpen(false)} onConfirm={() => { setRecipientNoticeOpen(false); onViewMyPay(); }} />
       <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} />
       <ReminderModal
         open={remindOpen}
@@ -1000,7 +1059,7 @@ function Dashboard({ onViewMyPay, onLoggedOut }: { onViewMyPay: () => void; onLo
           setPermPrompt(false);
         }}
       />
-      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} onTxLocked={() => showToast("err", "Transaction in progress · please wait")} onValidatePayOne={payrollOnlyId ? validatePayOne : undefined} balance={payrollOnlyId ? data.balance : undefined} myAddress={employer} onViewMyPay={requestRecipientView} />
+      <RunPayrollModal open={payrollOpen} people={payrollOnlyId ? people.filter((p) => p.id === payrollOnlyId) : people} flow={flow} decimals={decimals} autoverify={settings.autoverify} onStart={startRun} onClose={closePayroll} onTxLocked={() => showToast("err", "Transaction in progress · please wait")} onValidatePayOne={payrollOnlyId ? validatePayOne : undefined} balance={payrollOnlyId ? data.balance : undefined} myAddress={employer} />
       {tourStep !== null && (
         <TourOverlay
           step={TOUR_STEPS[tourStep]}

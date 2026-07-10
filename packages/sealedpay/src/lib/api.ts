@@ -111,6 +111,9 @@ export interface Profile {
   /** In-app notification prefs (employee portal). */
   notifyPayments?: boolean;
   notifyVerifications?: boolean;
+  /** The account's surface, written ONCE on first sign-in. An email is either
+   * an employer or an employee, never both (enforced by the Gate + server). */
+  role?: "employer" | "employee";
 }
 
 export interface Employment {
@@ -137,9 +140,9 @@ export const api = {
   getRuns: () => call<{ runs: RunRecord[] | null }>("GET", "/api/runs"),
   putRuns: (runs: RunRecord[]) => call<{ ok: true }>("PUT", "/api/runs", { runs }),
 
-  /** Either side: display profile. */
+  /** Either side: display profile. Partial updates merge on the server. */
   getProfile: () => call<{ profile: Profile | null }>("GET", "/api/profile"),
-  putProfile: (profile: Profile) => call<{ ok: true }>("PUT", "/api/profile", { profile }),
+  putProfile: (profile: Partial<Profile>) => call<{ ok: true }>("PUT", "/api/profile", { profile }),
 
   /** Employer: email → pregenerated wallet address (creates the Privy user +
    * embedded wallet if the email has never signed in). Never reveals whether

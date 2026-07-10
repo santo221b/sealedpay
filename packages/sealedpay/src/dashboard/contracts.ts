@@ -167,8 +167,6 @@ export interface SettingsPanelProps {
   reminders: boolean;
   autoverify: boolean;
   onToggle: (key: "maskDefault" | "reminders" | "autoverify", value: boolean) => void;
-  /** Testing shortcut: jump to the recipient "My pay" view (via a notice). */
-  onViewRecipient: () => void;
   /** Remove the pre-loaded demo team + history, keeping only real data. */
   onClearSamples: () => void;
   /** Whether any sample data is still present (hides the clear button once gone). */

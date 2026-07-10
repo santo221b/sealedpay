@@ -154,7 +154,7 @@ type Jobs = ReturnType<typeof useEmployments>;
 
 /* ── Shell ───────────────────────────────────────────────────────────────── */
 
-export function EmployeePortal({ onLoggedOut, onSwitchDoor }: { onLoggedOut: () => void; onSwitchDoor: () => void }) {
+export function EmployeePortal({ onLoggedOut }: { onLoggedOut: () => void }) {
   const pay = useMyPay();
   const { user, logout } = usePrivy();
   const identity = loadIdentity();
@@ -348,7 +348,6 @@ export function EmployeePortal({ onLoggedOut, onSwitchDoor }: { onLoggedOut: () 
               prefs={profile.prefs}
               onToggle={profile.toggle}
               embedded={embedded}
-              onSwitchDoor={onSwitchDoor}
             />
           }
         />
@@ -1142,14 +1141,12 @@ function EmployeeSettingsPanel({
   prefs,
   onToggle,
   embedded,
-  onSwitchDoor,
 }: {
   open: boolean;
   onClose: () => void;
   prefs: { payments: boolean; verifications: boolean };
   onToggle: (key: "payments" | "verifications") => void;
   embedded: boolean;
-  onSwitchDoor: () => void;
 }) {
   const reduced = useReducedMotion();
 
@@ -1221,20 +1218,6 @@ function EmployeeSettingsPanel({
             <span style={{ fontSize: 11, color: "#9db3aa" }}>{embedded ? "From your email" : "External"}</span>
           </div>
 
-          <button
-            type="button"
-            onClick={onSwitchDoor}
-            className="mt-2.5 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full transition-colors hover:bg-[rgba(255,255,255,0.07)]"
-            style={{ fontSize: 11.5, fontWeight: 500, color: "#cfdcd6", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", padding: "8px 0" }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M8 3 4 7l4 4" />
-              <path d="M4 7h16" />
-              <path d="m16 21 4-4-4-4" />
-              <path d="M20 17H4" />
-            </svg>
-            Switch to employer view
-          </button>
         </motion.div>
       )}
     </AnimatePresence>
