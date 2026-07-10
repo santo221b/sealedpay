@@ -170,8 +170,8 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
         transition={{ duration: 0.6, ease: EASE }}
       >
         <div className="relative mb-4 flex items-center justify-center" style={{ width: 96, height: 96 }}>
-          <div className="dc-glow absolute rounded-full" style={{ inset: -12, background: "radial-gradient(circle, rgba(90,200,150,0.14), rgba(0,0,0,0) 72%)", animation: reduced ? undefined : "dc-glowpulse 3.4s ease-in-out infinite" }} />
-          <div className="dc-floaty" style={{ animation: reduced ? undefined : "dc-floaty 5s ease-in-out infinite" }}>
+          <div className="dc-glow absolute rounded-full" style={{ inset: -12, background: "radial-gradient(circle, rgba(90,200,150,0.11), rgba(0,0,0,0) 72%)", animation: reduced ? undefined : "dc-glowpulse 3.4s ease-in-out infinite" }} />
+          <div className="dc-floaty" style={{ animation: reduced ? undefined : "sp-floaty-subtle 5s ease-in-out infinite" }}>
             <SealLogo size={72} />
           </div>
         </div>

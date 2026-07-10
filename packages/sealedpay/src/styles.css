@@ -140,6 +140,16 @@ textarea:focus-visible {
     transform: translateY(-9px);
   }
 }
+/* Landing seal: a whisper of the float above (4px, not 9px). */
+@keyframes sp-floaty-subtle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
 @keyframes dc-glowpulse {
   0%,
   100% {
