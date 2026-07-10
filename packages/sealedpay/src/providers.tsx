@@ -229,12 +229,11 @@ export function SealedPayProviders({ children }: { children: ReactNode }) {
         },
         embeddedWallets: {
           ethereum: { createOnLogin: "users-without-wallets" },
-          // Our own modals narrate every transaction phase (fund: confirming ->
-          // minting; payroll: encrypt -> authorize -> disperse -> verify), so
-          // the embedded wallet signs silently - no Privy dialog layer, no
-          // second confirmation wait. External wallets (MetaMask) still show
-          // their own extension prompts; this flag only governs embedded.
-          showWalletUIs: false,
+          // Deliberate: keep Privy's confirmation dialogs for embedded-wallet
+          // actions. With the fallback RPC transport the dialogs confirm fast,
+          // and the only cost of showing them is the modal + one click - a
+          // fair price for an explicit consent beat on every signature.
+          showWalletUIs: true,
         },
         defaultChain: sepoliaChain,
         supportedChains: [sepoliaChain],
