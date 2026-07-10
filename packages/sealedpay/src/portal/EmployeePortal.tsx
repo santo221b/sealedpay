@@ -688,8 +688,7 @@ function VerificationsView({ pay }: { pay: MyPay }) {
       <GlassCard style={{ padding: "20px 23px" }}>
         <div style={{ fontWeight: 400, fontSize: 17 }}>Verifications</div>
         <p style={{ fontSize: 11.5, color: tokens.text.muted, lineHeight: 1.5, marginTop: 5 }}>
-          Amounts stay encrypted on-chain. A revealed payment was decrypted with your signature, locally in this
-          browser · nobody else can read it.
+          Amounts stay encrypted on-chain. Revealed ones decrypt locally, only for you.
         </p>
         {payments.length === 0 ? (
           <CenterNote
