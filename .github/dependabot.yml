@@ -1,0 +1,26 @@
+# Supply-chain layer 2 (see SECURITY.md). Security PRs open immediately;
+# routine updates wait out a cooldown so a hijacked release gets noticed
+# and yanked BEFORE this repo installs it.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    cooldown:
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
+    groups:
+      types-and-tooling:
+        applies-to: version-updates
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "prettier*"
+        update-types: ["minor", "patch"]
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
