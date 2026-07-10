@@ -47,6 +47,42 @@ textarea:focus-visible {
   background-image: repeating-linear-gradient(135deg, #87a69a 0 1.35px, #28382f 1.35px 5.85px);
 }
 
+/* Landing orbit graphic (OrbitGraphic.tsx). */
+@keyframes sp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes sp-spin-rev {
+  from {
+    transform: rotate(24deg);
+  }
+  to {
+    transform: rotate(-336deg);
+  }
+}
+@keyframes sp-globe-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes sp-orbit-node {
+  to {
+    offset-distance: 100%;
+  }
+}
+@keyframes sp-halo {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
 /* Loading skeleton shimmer (employee portal payment rows). */
 .dc-shimmer {
   position: relative;

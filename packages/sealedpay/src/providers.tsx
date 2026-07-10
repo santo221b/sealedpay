@@ -13,9 +13,46 @@
 import { PrivyProvider } from "@privy-io/react-auth";
 import { createConfig, WagmiProvider } from "@privy-io/wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { http } from "viem";
 import { sepolia } from "viem/chains";
+
+/**
+ * Re-skin the Privy modal to the SealedPay dark-green glass. Privy's SDK theme
+ * only exposes light|dark + an accent color, so we override its (STABLE) modal
+ * ids with one scoped stylesheet — the styled-components hashes are unstable,
+ * but #privy-dialog / #privy-dialog-backdrop are not. Injected once, globally.
+ */
+const PRIVY_SKIN_ID = "sp-privy-skin";
+function ensurePrivySkin() {
+  if (typeof document === "undefined" || document.getElementById(PRIVY_SKIN_ID)) return;
+  const style = document.createElement("style");
+  style.id = PRIVY_SKIN_ID;
+  style.textContent = `
+    #privy-dialog {
+      background: rgba(16,26,22,0.85) !important;
+      -webkit-backdrop-filter: blur(26px) saturate(1.3) !important;
+      backdrop-filter: blur(26px) saturate(1.3) !important;
+      border: 1px solid rgba(95,230,175,0.22) !important;
+      box-shadow: 0 30px 90px -30px rgba(0,0,0,0.75), 0 0 70px -22px rgba(46,148,116,0.4) !important;
+      font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif !important;
+    }
+    #privy-dialog-backdrop {
+      background: rgba(6,12,10,0.66) !important;
+      -webkit-backdrop-filter: blur(4px) !important;
+      backdrop-filter: blur(4px) !important;
+    }
+    /* The app-style avatar glow: the modal logo lifts + glows on hover. */
+    #privy-dialog img {
+      transition: filter .25s ease, transform .25s ease;
+    }
+    #privy-dialog img:hover {
+      filter: drop-shadow(0 0 14px rgba(120,233,192,0.85));
+      transform: scale(1.06);
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 // Public client-side identifier (not a secret). The env var wins so a fork can
 // point at its own Privy app without touching source.
@@ -30,6 +67,7 @@ export const wagmiConfig = createConfig({
 });
 
 export function SealedPayProviders({ children }: { children: ReactNode }) {
+  useEffect(() => ensurePrivySkin(), []);
   return (
     <PrivyProvider
       appId={PRIVY_APP_ID}

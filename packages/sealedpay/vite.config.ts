@@ -13,6 +13,12 @@ export default defineConfig({
     // The relayer SDK's WASM/worker files resolve relative to import.meta.url;
     // dep pre-bundling would break those paths (same as the other apps).
     exclude: ["@zama-fhe/relayer-sdk"],
+    // Privy lazy-loads its email-code and wallet screens as separate chunks.
+    // Force the optimizer to pre-bundle the whole package up front (esbuild
+    // follows the dynamic imports of an included dep), so the first navigation
+    // to those screens doesn't trigger a mid-session re-optimize that 504s the
+    // in-flight chunk ("Outdated Optimize Dep") and renders a blank modal.
+    include: ["@privy-io/react-auth", "@privy-io/wagmi"],
   },
   server: {
     port: 5175,
