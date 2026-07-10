@@ -282,7 +282,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
       </div>
 
       <p className="absolute inset-x-0 z-[2] text-center" style={{ bottom: 26, fontSize: 11, color: "rgba(233,244,238,0.55)", textShadow: "0 1px 5px rgba(6,20,14,0.55)" }}>
-        SealedPay · Powered by <a href="https://dispersekit-demo.vercel.app" target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "underline", textDecorationColor: "rgba(233,244,238,0.28)", textUnderlineOffset: "2px" }}>DisperseKit</a> · TokenOps disperse · Zama FHE
+        SealedPay · Powered by <a href="https://dispersekit-demo.vercel.app" target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "underline", textDecorationColor: "rgba(233,244,238,0.28)", textUnderlineOffset: "2px" }}>DisperseKit</a> · TokenOps · Zama FHE
       </p>
     </div>
   );
