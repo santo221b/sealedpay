@@ -177,8 +177,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
             <SealLogo size={72} />
           </div>
         </div>
-        <p style={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.5px", color: "#78e9c0" }}>SealedPay</p>
-        <h1 className="mt-2.5" style={{ fontWeight: 700, fontSize: 38, lineHeight: 1.1, letterSpacing: "0.2px", minHeight: 44 }}>
+        <h1 className="mt-1" style={{ fontWeight: 700, fontSize: 38, lineHeight: 1.1, letterSpacing: "0.2px", minHeight: 44 }}>
           {headline}
         </h1>
         <p className="mt-3" style={{ fontSize: 14.5, color: "#9db3aa" }}>
