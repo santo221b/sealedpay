@@ -60,6 +60,7 @@ import { useHistory } from "./lib/history";
 import { useNotifications } from "./lib/notifications";
 import { savePendingRun, useOrphanRun } from "./lib/orphan";
 import { THEME_COLORS, setThemeColor } from "./lib/themeColor";
+import { setPreferExternal, useActiveWalletSync } from "./lib/activeWallet";
 import { api } from "./lib/api";
 import { clearDoor, clearOnboarded, loadDoor, loadEmployeeOnboarded, loadIdentity, loadLastUser, loadTourSeen, saveDoor, saveLastUser, setEmployeeOnboarded, setTourSeenPref, type Door } from "./lib/prefs";
 import { useSettings } from "./lib/prefs";
@@ -106,6 +107,9 @@ export function App() {
  */
 function Gate() {
   const { ready, authenticated, user } = usePrivy();
+  // Keep signing + balance-decrypt on the embedded (email) wallet by default,
+  // so an email login never falls through to an injected MetaMask.
+  useActiveWalletSync();
   const [door, setDoor] = useState<Door | null>(() => {
     try {
       if (new URLSearchParams(window.location.search).get("view") === "mypay") return "employee";
@@ -146,6 +150,7 @@ function Gate() {
       clearOnboarded();
       setEmployeeOnboarded(false);
       clearDoor();
+      setPreferExternal(null);
       setOnboarded(false);
       setEmployeeOnboardedState(false);
       setDoor(null);
@@ -158,6 +163,7 @@ function Gate() {
   const onLoggedOut = useCallback(() => {
     clearOnboarded();
     clearDoor();
+    setPreferExternal(null);
     setOnboarded(false);
     setDoor(null);
   }, []);

@@ -14,10 +14,12 @@
  * keys) and hands off to the dashboard/portal.
  */
 import { DEMO_TOKEN_ADDRESS, SEPOLIA_CHAIN_ID, useTokenMeta } from "@dispersekit/widget";
-import { usePrivy } from "@privy-io/react-auth";
+import { useConnectWallet, usePrivy } from "@privy-io/react-auth";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAccount, useSwitchChain } from "wagmi";
+
+import { setPreferExternal } from "../lib/activeWallet";
 
 import { SealLogo } from "../design/SealLogo";
 import { saveIdentity } from "../lib/prefs";
@@ -148,7 +150,12 @@ export function Onboarding({
   // Auth already happened on the landing page — the wallet step CONFIRMS the
   // signed-in wallet (embedded or external) instead of opening a connect modal.
   const { address, isConnected, chain } = useAccount();
-  const { connectWallet, user } = usePrivy();
+  const { user } = usePrivy();
+  // Deliberately connecting an external wallet (funded employer): remember it as
+  // the preferred signer; useActiveWalletSync then makes it the active wallet.
+  const { connectWallet } = useConnectWallet({
+    onSuccess: ({ wallet }) => setPreferExternal(wallet.address),
+  });
   const { switchChain, isPending: switching } = useSwitchChain();
   const onSepolia = chain?.id === SEPOLIA_CHAIN_ID;
   const walletReady = isConnected && onSepolia;
