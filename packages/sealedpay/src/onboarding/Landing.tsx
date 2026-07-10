@@ -19,9 +19,11 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 const CARD_W = 316;
 
 const GLYPHS = "*#$%";
+const glyphMask = (s: string) => s.split("").map((ch) => (ch === " " ? " " : GLYPHS[Math.floor(Math.random() * GLYPHS.length)])).join("");
 function useDecryptScramble(target: string, startDelayMs: number) {
   const reduced = useReducedMotion();
-  const [text, setText] = useState(reduced ? target : "");
+  // Starts as glyph noise (not blank) so the word holds its slot in the line.
+  const [text, setText] = useState(() => (reduced ? target : glyphMask(target)));
   useEffect(() => {
     if (reduced) {
       setText(target);
@@ -94,7 +96,8 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
   const reduced = useReducedMotion();
   const { authenticated } = usePrivy();
   useEffect(() => setThemeColor(THEME_COLORS.onboarding), []);
-  const headline = useDecryptScramble("Payroll that stays sealed", 280);
+  // Only the brand word decodes — the lead-in reads instantly.
+  const sealedWord = useDecryptScramble("sealed", 280);
 
   const [active, setActive] = useState(0); // 0 = employer centred, 1 = employee centred
   const [hoverPeek, setHoverPeek] = useState(false);
@@ -216,7 +219,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
           </div>
         </div>
         <h1 className="mt-1" style={{ fontWeight: 700, fontSize: 38, lineHeight: 1.1, letterSpacing: "0.2px", minHeight: 44 }}>
-          {headline}
+          Payroll that stays {sealedWord}
         </h1>
         <p className="mt-3" style={{ fontSize: 14.5, color: "#9db3aa" }}>
           Confidential on-chain payroll.

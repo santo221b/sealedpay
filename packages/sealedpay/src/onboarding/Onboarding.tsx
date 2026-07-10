@@ -49,9 +49,11 @@ const ALLOW_DEMO_DATA = (() => {
 /* ── Welcome decrypt-scramble (exact prototype parameters) ───────────────── */
 
 const GLYPHS = "*#$%";
+const glyphMask = (s: string) => s.split("").map((ch) => (ch === " " ? " " : GLYPHS[Math.floor(Math.random() * GLYPHS.length)])).join("");
 function useDecryptScramble(target: string, startDelayMs: number) {
   const reduced = useReducedMotion();
-  const [text, setText] = useState(reduced ? target : "");
+  // Starts as glyph noise (not blank) so the word holds its slot in the line.
+  const [text, setText] = useState(() => (reduced ? target : glyphMask(target)));
   useEffect(() => {
     if (reduced) {
       setText(target);
@@ -176,7 +178,8 @@ export function Onboarding({
 
   const first = name.trim().split(" ")[0] || "";
   const nameComma = first ? `, ${first}.` : ".";
-  const welcome = useDecryptScramble("Welcome to SealedPay", 280);
+  // Only the brand name decodes — "Welcome to" reads instantly.
+  const brand = useDecryptScramble("SealedPay", 280);
 
   const canContinue = (
     employee
@@ -292,7 +295,7 @@ export function Onboarding({
               exit="exit"
               className={`flex flex-1 flex-col justify-center ${step === 0 || step === TOTAL - 1 ? "items-center text-center" : ""}`}
             >
-              {step === 0 && <StepWelcome welcome={welcome} employee={employee} />}
+              {step === 0 && <StepWelcome brand={brand} employee={employee} />}
               {step === 1 && <StepName name={name} setName={setName} company={company} setCompany={setCompany} employee={employee} />}
               {step === 2 && <StepRole nameComma={nameComma} employee={employee} />}
               {step === 3 && <StepAvatar avatar={avatar} setAvatar={setAvatar} />}
@@ -378,7 +381,7 @@ export function Onboarding({
 
 /* ── Steps ───────────────────────────────────────────────────────────────── */
 
-function StepWelcome({ welcome, employee }: { welcome: string; employee: boolean }) {
+function StepWelcome({ brand, employee }: { brand: string; employee: boolean }) {
   return (
     <>
       <Item i={0} center>
@@ -403,7 +406,7 @@ function StepWelcome({ welcome, employee }: { welcome: string; employee: boolean
       </Item>
       <Item i={2}>
         <h1 className="mt-3" style={{ fontWeight: 700, fontSize: 34, lineHeight: 1.15, letterSpacing: "0.2px", minHeight: 40 }}>
-          {welcome}
+          Welcome to {brand}
         </h1>
       </Item>
       <Item i={3}>
