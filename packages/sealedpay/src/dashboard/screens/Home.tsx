@@ -33,7 +33,7 @@ const DONUT_COLORS = ["#8b7cf6", "#d7ee59", "#5fe3ab"];
 
 /* ── Payout Activity scale (data-assets §8) ─────────────────────────────── */
 
-function yScale(maxVal: number) {
+export function yScale(maxVal: number) {
   // Auto-hug the data with a GUARANTEED top gap: the ceiling is the smallest
   // "nice" number at or above 1.25x the tallest month, so the tallest bar is
   // always <= 80% of the axis (>= 20% headroom) and never touches the top. e.g.

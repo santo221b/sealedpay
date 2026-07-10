@@ -28,7 +28,8 @@ export function TopBar({
   onHome: () => void;
   /** Connect / reconnect / switch-network control (owns the wallet state). */
   walletControl?: React.ReactNode;
-  search: {
+  /** Omit to hide the search pill (the employee portal has nothing to search). */
+  search?: {
     open: boolean;
     query: string;
     setQuery: (q: string) => void;
@@ -57,44 +58,46 @@ export function TopBar({
       </button>
 
       {/* Search field + its dropdown, lifted above the dimming overlay via z-60 */}
-      <div className="relative" style={{ zIndex: 60, marginLeft: 32 }}>
-        <div
-          className="flex items-center"
-          style={{
-            gap: 9,
-            width: 306,
-            border: `1px solid ${tokens.glass.railBorder}`,
-            background: tokens.glass.rail,
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            boxShadow: tokens.glass.cardShadow,
-            borderRadius: tokens.radius.pill,
-            padding: "11px 18px",
-          }}
-        >
-          <SearchGlyph size={14} />
-          <input
-            value={search.query}
-            onFocus={search.onOpen}
-            onChange={(e) => search.setQuery(e.target.value)}
-            placeholder="Search employees or payouts"
-            aria-label="Search employees or payouts"
-            className="flex-1 bg-transparent outline-none"
-            style={{ color: "#e8f0ec", fontSize: 12, fontFamily: "'Manrope', sans-serif" }}
+      {search && (
+        <div className="relative" style={{ zIndex: 60, marginLeft: 32 }}>
+          <div
+            className="flex items-center"
+            style={{
+              gap: 9,
+              width: 306,
+              border: `1px solid ${tokens.glass.railBorder}`,
+              background: tokens.glass.rail,
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              boxShadow: tokens.glass.cardShadow,
+              borderRadius: tokens.radius.pill,
+              padding: "11px 18px",
+            }}
+          >
+            <SearchGlyph size={14} />
+            <input
+              value={search.query}
+              onFocus={search.onOpen}
+              onChange={(e) => search.setQuery(e.target.value)}
+              placeholder="Search employees or payouts"
+              aria-label="Search employees or payouts"
+              className="flex-1 bg-transparent outline-none"
+              style={{ color: "#e8f0ec", fontSize: 12, fontFamily: "'Manrope', sans-serif" }}
+            />
+          </div>
+
+          <SearchPalette
+            open={search.open}
+            onClose={search.onClose}
+            query={search.query}
+            setQuery={search.setQuery}
+            people={search.people}
+            runs={search.runs}
+            onPickPerson={search.onPickPerson}
+            onPickRun={search.onPickRun}
           />
         </div>
-
-        <SearchPalette
-          open={search.open}
-          onClose={search.onClose}
-          query={search.query}
-          setQuery={search.setQuery}
-          people={search.people}
-          runs={search.runs}
-          onPickPerson={search.onPickPerson}
-          onPickRun={search.onPickRun}
-        />
-      </div>
+      )}
 
       {/* Right cluster: wallet control (connect / switch network) + profile avatar */}
       <div className="ml-auto flex items-center" style={{ gap: 14 }}>

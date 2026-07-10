@@ -1,21 +1,33 @@
 /**
  * Left icon rail — fixed shell chrome (dashboard handoff §Side rail).
- * Three nav pucks (Home / Team / Insights), then a bell + gear cluster whose
- * Notifications / Settings popovers open ANCHORED beside their icon
- * (left ~50px, top ~-7px), and a logout button pinned to the bottom.
+ * Nav pucks (Home / Team / Insights by default; the employee portal passes its
+ * own two), then a bell + gear cluster whose Notifications / Settings popovers
+ * open ANCHORED beside their icon (left ~50px, top ~-7px), and a logout
+ * button pinned to the bottom.
  *
  * The popover content is passed in as ReactNodes so the rail stays
  * presentation-only; when either is open a transparent full-screen catcher
  * closes it on an outside click (no dimming, per the design).
  */
 import { AnimatePresence, motion } from "framer-motion";
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
 
 import { BellGlyph, GearGlyph, HomeNav, InsightsNav, LogoutGlyph, TeamNav } from "../design/icons";
 import { tokens } from "../design/tokens";
 
 const SELECTED_ICON = "#568570";
 const IDLE_ICON = "#9db3aa";
+
+export interface RailNavItem {
+  label: string;
+  Icon: (props: { size?: number; color?: string }) => ReactElement;
+}
+
+const DEFAULT_ITEMS: RailNavItem[] = [
+  { label: "Home", Icon: HomeNav },
+  { label: "Team", Icon: TeamNav },
+  { label: "Insights", Icon: InsightsNav },
+];
 
 const clusterStyle: CSSProperties = {
   border: `1px solid ${tokens.glass.railBorder}`,
@@ -36,6 +48,7 @@ export function Rail({
   bellPopover,
   gearPopover,
   onClosePopover,
+  items,
 }: {
   navSel: 0 | 1 | 2;
   onNav: (n: 0 | 1 | 2) => void;
@@ -48,12 +61,10 @@ export function Rail({
   bellPopover: ReactNode;
   gearPopover: ReactNode;
   onClosePopover: () => void;
+  /** Override the nav pucks (the employee portal passes Home + Payslips). */
+  items?: RailNavItem[];
 }) {
-  const navItems = [
-    { label: "Home", Icon: HomeNav },
-    { label: "Team", Icon: TeamNav },
-    { label: "Insights", Icon: InsightsNav },
-  ] as const;
+  const navItems = items ?? DEFAULT_ITEMS;
 
   return (
     <div className="z-[5] flex w-[58px] shrink-0 flex-col items-center" style={{ padding: "97px 0 22px 0" }}>

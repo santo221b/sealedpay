@@ -123,9 +123,16 @@ export interface EmployeeViewProps {
 }
 
 export interface WalletSidebarProps {
-  data: DashboardData;
+  /** Only the fields the sidebar reads — the employee portal passes a slice. */
+  data: Pick<DashboardData, "showAll" | "balance" | "employerAddress">;
   onFund: () => void;
   activity: ActivityRow[];
+  /** Card heading; defaults to the employer's "Payroll Wallet". */
+  title?: string;
+  /** Replaces the circular Fund button (the employee portal wires Reveal). */
+  action?: { label: string; aria: string; icon: import("react").ReactElement; onClick: () => void; busy?: boolean };
+  /** Copy for the empty Recent-activity state; defaults to the employer's. */
+  emptyNote?: { title: string; sub: string };
 }
 
 export interface ActivityRow {
