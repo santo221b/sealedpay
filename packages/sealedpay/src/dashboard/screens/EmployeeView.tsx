@@ -148,10 +148,26 @@ export function EmployeeView({
       <GlassCard style={{ padding: "20px 23px" }}>
         <div className="flex items-center justify-between">
           <div style={{ fontWeight: 400, fontSize: 17 }}>Payment history</div>
-          <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
-            {rows.length} payments
-          </div>
+          {rows.length > 0 && (
+            <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
+              {rows.length} payments
+            </div>
+          )}
         </div>
+        {rows.length === 0 && (
+          <div className="flex flex-col items-center text-center" style={{ padding: "26px 8px 16px", gap: 4 }}>
+            <span
+              className="flex items-center justify-center rounded-full"
+              style={{ width: 44, height: 44, background: "rgba(95,230,175,0.1)", border: "1px solid rgba(95,230,175,0.18)", marginBottom: 6 }}
+            >
+              <ReceiptCheckGlyph size={18} />
+            </span>
+            <div style={{ fontSize: 13.5, fontWeight: 500, color: tokens.text.secondary }}>No payments yet</div>
+            <div style={{ fontSize: 11.5, color: tokens.text.muted, maxWidth: 260, lineHeight: 1.5 }}>
+              Pay {person.name.split(" ")[0]} individually or run payroll, and every payment lands here.
+            </div>
+          </div>
+        )}
         <div
           className="slim-scroll flex flex-col overflow-y-auto overflow-x-hidden"
           style={{ gap: 5, margin: "11px -13px 0 -13px", padding: "0 13px", maxHeight: 271 }}
