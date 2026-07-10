@@ -102,6 +102,38 @@ function ensurePrivySkin() {
       pointer-events: none;
       z-index: 2;
     }
+    /* Privy overlays scroll-fade gradients on its content wrappers to blend
+       into ITS opaque background — against our glass they render as smears
+       (e.g. a band under the last login button). Fade divs are the only
+       gradient-painted divs in the modal, so clear them wholesale. */
+    #privy-modal-content div {
+      background-image: none !important;
+    }
+    /* Close button — restyled to the app's shared CloseButton (34px circle,
+       soft fill, brighter + 1.12 scale on hover, squish on press). */
+    #privy-dialog button[aria-label="close modal"] {
+      width: 34px !important;
+      height: 34px !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: rgba(255,255,255,0.06) !important;
+      color: #9db3aa !important;
+      cursor: pointer !important;
+      transition: transform .18s ease, background .18s ease !important;
+    }
+    #privy-dialog button[aria-label="close modal"]:hover {
+      background: rgba(255,255,255,0.14) !important;
+      transform: scale(1.12);
+    }
+    #privy-dialog button[aria-label="close modal"]:active {
+      transform: scale(0.9);
+    }
+    #privy-dialog button[aria-label="close modal"] svg {
+      width: 15px !important;
+      height: 15px !important;
+    }
     /* The modal logo is our app avatar — give it the exact TopBar hover
        (lift, small counter-tilt, green shadow). Scoped to the avatar asset so
        wallet-brand icons inside the dialog do not inherit it. */
