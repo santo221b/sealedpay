@@ -11,28 +11,19 @@ import { useEffect, useState } from "react";
 
 import { DepositBoxGlyph } from "../../design/icons";
 import { ModalShell, StaggerItem } from "../../design/kit2";
+import { copyText } from "../../lib/clipboard";
 import type { FundWalletModalProps } from "../contracts";
 
-export function FundWalletModal({ open, onClose, employerShort, employerFull, busy, phase, onFund }: FundWalletModalProps) {
+export function FundWalletModal({ open, onClose, employerShort, employerFull, busy, phase, onFund, onCopied }: FundWalletModalProps) {
   const [amount, setAmount] = useState("");
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      setAmount("");
-      setCopied(false);
-    }
+    if (open) setAmount("");
   }, [open]);
 
   function copyAddress() {
     if (!employerFull) return;
-    try {
-      void navigator.clipboard.writeText(employerFull);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      /* clipboard unavailable */
-    }
+    void copyText(employerFull).then((ok) => ok && onCopied?.());
   }
 
   const valid = amount.trim().length > 0;
@@ -130,21 +121,15 @@ export function FundWalletModal({ open, onClose, employerShort, employerFull, bu
                   <button
                     type="button"
                     onClick={copyAddress}
-                    aria-label={copied ? "Address copied" : "Copy wallet address"}
-                    title={copied ? "Copied" : "Copy address"}
+                    aria-label="Copy wallet address"
+                    title="Copy address"
                     className="flex shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-[rgba(255,255,255,0.08)]"
-                    style={{ width: 26, height: 26, border: "1px solid rgba(255,255,255,0.1)", color: copied ? "#78e9c0" : "#9db3aa" }}
+                    style={{ width: 26, height: 26, border: "1px solid rgba(255,255,255,0.1)", color: "#9db3aa" }}
                   >
-                    {copied ? (
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    ) : (
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                        <rect x="9" y="9" width="13" height="13" rx="2" />
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                      </svg>
-                    )}
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <rect x="9" y="9" width="13" height="13" rx="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
                   </button>
                 )}
               </span>

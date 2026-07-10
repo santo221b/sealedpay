@@ -196,6 +196,8 @@ export interface FundWalletModalProps {
   phase: "idle" | "confirming" | "minting";
   /** Real faucet mint; resolves true on success (shell closes + refreshes balance). */
   onFund: (amount: string) => Promise<boolean>;
+  /** Fires after the address is copied (the shell shows the toast). */
+  onCopied?: () => void;
 }
 
 export interface SearchPaletteProps {

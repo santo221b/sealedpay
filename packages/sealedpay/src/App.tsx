@@ -1049,6 +1049,7 @@ function Dashboard({ onLoggedOut }: { onLoggedOut: () => void }) {
         employer={employer}
         decimals={decimals}
         onFail={(m) => showToast("err", m)}
+        onCopied={() => showToast("ok", "Copied wallet address")}
         onFunded={({ amountText, hash }) => {
           const shown = Number(amountText).toLocaleString("en-US", { maximumFractionDigits: 6 });
           setFundings((f) => [{ key: `fund-${hash}`, amountText: shown, url: `https://sepolia.etherscan.io/tx/${hash}` }, ...f].slice(0, 3));
@@ -1108,6 +1109,7 @@ function FundWalletModalWired({
   decimals,
   onFunded,
   onFail,
+  onCopied,
 }: {
   open: boolean;
   onClose: () => void;
@@ -1115,6 +1117,7 @@ function FundWalletModalWired({
   decimals?: number;
   onFunded: (info: { amountText: string; hash: `0x${string}` }) => void;
   onFail: (msg: string) => void;
+  onCopied?: () => void;
 }) {
   const fund = useFundWallet(decimals, onFunded, onFail);
   return (
@@ -1123,6 +1126,7 @@ function FundWalletModalWired({
       onClose={onClose}
       employerShort={employer ? midWallet(employer) : "Connect a wallet"}
       employerFull={employer}
+      onCopied={onCopied}
       busy={fund.busy}
       phase={fund.phase}
       onFund={async (amount) => {
