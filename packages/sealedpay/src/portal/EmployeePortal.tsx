@@ -331,6 +331,7 @@ export function EmployeePortal({ onLoggedOut }: { onLoggedOut: () => void }) {
         <Rail
           navSel={nav}
           items={railItems}
+          gearAnchor="icon"
           onNav={(n) => {
             setNav(n === 1 ? 1 : 0);
             setPopup(null);

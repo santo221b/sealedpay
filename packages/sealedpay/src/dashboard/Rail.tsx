@@ -49,6 +49,7 @@ export function Rail({
   gearPopover,
   onClosePopover,
   items,
+  gearAnchor = "viewport",
 }: {
   navSel: 0 | 1 | 2;
   onNav: (n: 0 | 1 | 2) => void;
@@ -63,6 +64,10 @@ export function Rail({
   onClosePopover: () => void;
   /** Override the nav pucks (the employee portal passes Home + Payslips). */
   items?: RailNavItem[];
+  /** Where the settings popover hangs: "viewport" pins it to the bottom-left
+   * (the employer's panel is tall), "icon" opens it beside the gear, top
+   * aligned with the bell (the employee's panel is short). */
+  gearAnchor?: "viewport" | "icon";
 }) {
   const navItems = items ?? DEFAULT_ITEMS;
 
@@ -138,14 +143,21 @@ export function Rail({
           >
             <GearGlyph size={15} />
           </button>
-          {gearPopover && (
-            // The gear sits low on the rail and the settings popover is tall, so
-            // pin it to the viewport bottom-left (beside the rail). It opens
-            // upward and can never clip off the top or bottom of the screen.
-            <div className="fixed z-[10]" style={{ left: 92, bottom: 22 }} onMouseDown={(e) => e.stopPropagation()}>
-              {gearPopover}
-            </div>
-          )}
+          {gearPopover &&
+            (gearAnchor === "icon" ? (
+              // Short panel: hang it beside the gear, top raised to the bell's
+              // height (the bell sits 40px + 6px gap above, same -7 overshoot).
+              <div className="absolute z-[10]" style={{ left: 50, top: -53 }} onMouseDown={(e) => e.stopPropagation()}>
+                {gearPopover}
+              </div>
+            ) : (
+              // The gear sits low on the rail and the employer's settings panel
+              // is tall, so pin it to the viewport bottom-left (beside the
+              // rail). It opens upward and can never clip off the screen.
+              <div className="fixed z-[10]" style={{ left: 92, bottom: 22 }} onMouseDown={(e) => e.stopPropagation()}>
+                {gearPopover}
+              </div>
+            ))}
         </div>
       </div>
 
