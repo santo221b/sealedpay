@@ -321,7 +321,7 @@ function DoorPanel({
           {def.icon}
         </span>
         <span className="mt-4 block" style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
-          <span style={{ fontWeight: 600, color: "rgba(242,247,244,0.55)" }}>{def.titlePrefix}</span> {def.titleMain}
+          <span style={{ fontWeight: 500, color: "rgba(242,247,244,0.55)" }}>{def.titlePrefix}</span> {def.titleMain}
         </span>
         <span className="mt-2 block" style={{ fontSize: 12.5, color: "#9db3aa", lineHeight: 1.55 }}>
           {def.sub}
