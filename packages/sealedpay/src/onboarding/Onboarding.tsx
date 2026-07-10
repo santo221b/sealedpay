@@ -381,11 +381,15 @@ function StepWelcome({ welcome, employee }: { welcome: string; employee: boolean
     <>
       <Item i={0} center>
         <div className="relative mb-2 flex items-center justify-center" style={{ width: 128, height: 128 }}>
+          {/* Same treatment as the landing seal: silhouette drop-shadow glow
+              breathing alongside the subtle 2px float. */}
           <div
-            className="dc-glow absolute rounded-full"
-            style={{ inset: -14, background: "radial-gradient(circle, rgba(90,200,150,0.12), rgba(0,0,0,0) 72%)", animation: "dc-glowpulse 3.4s ease-in-out infinite" }}
-          />
-          <div className="dc-floaty" style={{ animation: "dc-floaty 5s ease-in-out infinite" }}>
+            className="dc-floaty"
+            style={{
+              filter: "drop-shadow(0 0 12px rgba(90,200,150,0.26))",
+              animation: "sp-floaty-subtle 5s ease-in-out infinite, sp-seal-glow 3.4s ease-in-out infinite",
+            }}
+          >
             <SealLogo size={92} />
           </div>
         </div>
