@@ -548,7 +548,7 @@ function StepAvatar({ avatar, setAvatar }: { avatar: string; setAvatar: (v: stri
                 aria-pressed={selected}
                 aria-label="Avatar"
               >
-                <img src={src} alt="Avatar" className="block h-full w-full rounded-full object-cover" style={{ background: "rgba(236,238,237,0.4)" }} />
+                <img src={src} alt="Avatar" className="block h-full w-full rounded-full object-cover" style={{ background: "rgba(236,238,237,0.32)" }} />
                 {selected && (
                   <span className="absolute flex items-center justify-center" style={{ bottom: 2, right: 2, width: 28, height: 28, borderRadius: "50%", background: "#5fe3ab", border: "3px solid #101915" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#08331f" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -874,7 +874,7 @@ function StepAllSet({ nameComma, avatar, employee }: { nameComma: string; avatar
       <Item i={0} center>
         <div className="relative mb-1.5" style={{ width: 96, height: 96 }}>
           <span className="absolute inset-0 rounded-full" style={{ background: "rgba(95,230,175,0.14)", border: "1px solid rgba(95,230,175,0.3)" }} />
-          <img src={avatar} alt="You" className="absolute rounded-full object-cover" style={{ inset: 6, width: 84, height: 84, background: "rgba(236,238,237,0.4)" }} />
+          <img src={avatar} alt="You" className="absolute rounded-full object-cover" style={{ inset: 6, width: 84, height: 84, background: "rgba(236,238,237,0.32)" }} />
           <span className="absolute flex items-center justify-center" style={{ bottom: 0, right: 0, width: 30, height: 30, borderRadius: "50%", background: "#5fe3ab", border: "3px solid #101915" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#08331f" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <polyline points="20 6 9 17 4 12" />
