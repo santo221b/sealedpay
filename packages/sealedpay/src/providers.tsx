@@ -104,6 +104,16 @@ function ensurePrivySkin() {
       box-shadow: 0 30px 90px -30px rgba(0,0,0,0.75), 0 0 70px -22px rgba(46,148,116,0.4) !important;
       font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif !important;
     }
+    /* Privy embeds full tx hashes in its own headings and error copy — an
+       unbreakable 66-char string overflows any card width. Let text break
+       anywhere when it would otherwise overflow (no effect on normal copy). */
+    #privy-modal-content h1,
+    #privy-modal-content h2,
+    #privy-modal-content h3,
+    #privy-modal-content p,
+    #privy-modal-content span {
+      overflow-wrap: anywhere;
+    }
     /* iOS glass hairline rim (same technique as .sp-glass-card). */
     #privy-modal-content::before {
       content: "";
