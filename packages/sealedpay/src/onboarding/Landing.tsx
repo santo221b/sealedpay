@@ -86,7 +86,7 @@ const EMPLOYEE_ICON = (
 );
 
 const DOORS: DoorDef[] = [
-  { door: "employer", titlePrefix: "For", titleMain: "Employers", sub: "Run payroll for your whole team in one confidential transaction.", cta: "Sign in as employer", icon: EMPLOYER_ICON },
+  { door: "employer", titlePrefix: "For", titleMain: "Employers", sub: "Run payroll for your whole team in a single confidential transaction.", cta: "Sign in as employer", icon: EMPLOYER_ICON },
   { door: "employee", titlePrefix: "For", titleMain: "Employees", sub: "View your salary and payment history. Only you can decrypt the amounts.", cta: "Sign in as employee", icon: EMPLOYEE_ICON },
 ];
 
