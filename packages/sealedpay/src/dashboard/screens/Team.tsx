@@ -169,7 +169,7 @@ export function Team({ data, onRunPayroll, onAddEmployee, onLoadSamples, onOpenE
               type="button"
               onClick={onLoadSamples}
               className="cursor-pointer transition-colors hover:text-[#cfe0d8]"
-              style={{ marginTop: 9, fontSize: 11, color: tokens.text.muted, background: "none", textDecoration: "underline", textUnderlineOffset: 3 }}
+              style={{ marginTop: 9, fontSize: 11, color: tokens.text.muted, background: "none", textDecoration: "underline", textDecorationColor: "rgba(157,179,170,0.3)", textUnderlineOffset: 3 }}
             >
               Or load sample data to explore
             </button>

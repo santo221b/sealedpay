@@ -471,7 +471,7 @@ export function Home({ data, tab, setTab, onAddEmployee, onLoadSamples, onViewIn
                 type="button"
                 onClick={onLoadSamples}
                 className="cursor-pointer transition-colors hover:text-[#cfe0d8]"
-                style={{ marginTop: 8, fontSize: 11, color: tokens.text.muted, background: "none", textDecoration: "underline", textUnderlineOffset: 3 }}
+                style={{ marginTop: 8, fontSize: 11, color: tokens.text.muted, background: "none", textDecoration: "underline", textDecorationColor: "rgba(157,179,170,0.3)", textUnderlineOffset: 3 }}
               >
                 Or load sample data to explore
               </button>
@@ -589,7 +589,7 @@ function TabEmpty({
           type="button"
           onClick={secondary.onClick}
           className="cursor-pointer transition-colors hover:text-[#cfe0d8]"
-          style={{ marginTop: 7, fontSize: 11, color: tokens.text.muted, background: "none", textDecoration: "underline", textUnderlineOffset: 3 }}
+          style={{ marginTop: 7, fontSize: 11, color: tokens.text.muted, background: "none", textDecoration: "underline", textDecorationColor: "rgba(157,179,170,0.3)", textUnderlineOffset: 3 }}
         >
           {secondary.label}
         </button>
