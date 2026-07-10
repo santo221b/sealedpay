@@ -34,8 +34,11 @@ import { sepolia } from "viem/chains";
  */
 const PRIVY_SKIN_ID = "sp-privy-skin";
 function ensurePrivySkin() {
-  if (typeof document === "undefined" || document.getElementById(PRIVY_SKIN_ID)) return;
-  const style = document.createElement("style");
+  if (typeof document === "undefined") return;
+  // Refresh the CSS even when the tag already exists — an early-return here
+  // left dev sessions running a STALE skin after HMR updates to these rules.
+  const existing = document.getElementById(PRIVY_SKIN_ID);
+  const style = existing ?? document.createElement("style");
   style.id = PRIVY_SKIN_ID;
   style.textContent = `
     /* Overlay wrapper — force a centered full-screen box (see note above). */
@@ -151,7 +154,7 @@ function ensurePrivySkin() {
       transform: scale(1.06) rotate(-2.5deg);
     }
   `;
-  document.head.appendChild(style);
+  if (!existing) document.head.appendChild(style);
 }
 
 // Public client-side identifier (not a secret). The env var wins so a fork can
