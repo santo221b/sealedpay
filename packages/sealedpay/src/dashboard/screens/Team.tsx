@@ -151,9 +151,11 @@ export function Team({ data, onRunPayroll, onAddEmployee, onLoadSamples, onOpenE
       <GlassCard dataTour="tour-team-roster" style={{ padding: "20px 23px" }}>
         <div className="flex items-center justify-between">
           <div style={{ fontWeight: 400, fontSize: 17 }}>Employees</div>
-          <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
-            {data.people.length} people
-          </div>
+          {data.people.length > 0 && (
+            <div className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
+              {data.people.length} people
+            </div>
+          )}
         </div>
         {data.people.length === 0 ? (
           <div className="flex flex-col items-center text-center" style={{ padding: "34px 0 26px" }}>
