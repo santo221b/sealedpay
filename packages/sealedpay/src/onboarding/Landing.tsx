@@ -130,6 +130,30 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
     }
   };
 
+  // Retitle Privy's generic "Log in or sign up" heading to the chosen door
+  // ("Employer sign in" / "Employee sign in") so the modal confirms the choice
+  // right where the user commits their email. Privy's config only supports a
+  // STATIC header, so this rewrites the (structurally stable) h3 the moment
+  // the dialog or a lazy-loaded screen renders. The pattern also matches the
+  // other door's title so switching doors re-titles a still-open modal.
+  useEffect(() => {
+    if (!waiting) return;
+    const title = waiting === "employer" ? "Employer sign in" : "Employee sign in";
+    const GENERIC = /log in or sign up|employer sign in|employee sign in/i;
+    const rewrite = () => {
+      const dlg = document.getElementById("privy-dialog");
+      if (!dlg) return;
+      for (const h of dlg.querySelectorAll("h3")) {
+        if (GENERIC.test(h.textContent ?? "") && h.textContent !== title) h.textContent = title;
+      }
+      if (dlg.getAttribute("aria-label") !== title) dlg.setAttribute("aria-label", title);
+    };
+    rewrite();
+    const mo = new MutationObserver(rewrite);
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => mo.disconnect();
+  }, [waiting]);
+
   // Watch the Privy dialog itself: the spinner shows ONLY while the modal is
   // actually in the DOM (checked shortly after opening, then observed). This is
   // sturdier than relying on onError firing for every dismissal path.
