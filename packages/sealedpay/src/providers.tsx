@@ -59,6 +59,13 @@ function ensurePrivySkin() {
       box-shadow: none !important;
       z-index: 2147483000 !important;
     }
+    /* Privy transiently mounts EMPTY dialog shells between its screens (and
+       between back-to-back wallet prompts in the payroll flow). Forced into
+       our full-screen overlay those read as a dark flash — suppress any
+       dialog that has no content card. */
+    #privy-dialog:not(:has(#privy-modal-content)) {
+      display: none !important;
+    }
     #privy-dialog-backdrop {
       position: fixed !important;
       inset: 0 !important;
@@ -67,6 +74,11 @@ function ensurePrivySkin() {
       background: rgba(6,12,10,0.66) !important;
       -webkit-backdrop-filter: blur(4px) !important;
       backdrop-filter: blur(4px) !important;
+      animation: sp-privy-backdrop-in 0.22s ease-out;
+    }
+    @keyframes sp-privy-backdrop-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
     /* Privy paints a full-bleed inner panel with its own theme background
        (--privy-color-background: #020713), which sits ON TOP of any glass we
