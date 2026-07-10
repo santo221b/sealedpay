@@ -72,7 +72,7 @@ export function exportPayslip(opts: {
 
   <p class="note">
     This amount was transferred as an encrypted value (Zama FHE · ERC-7984 confidential token). On-chain, the amount is
-    an opaque ciphertext handle — it was decrypted locally in the recipient's browser with their wallet signature to
+    an opaque ciphertext handle. It was decrypted locally in the recipient's browser with their wallet signature to
     produce this document. Verify the transaction independently on Etherscan via the hash above.
   </p>
 

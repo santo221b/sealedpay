@@ -526,11 +526,11 @@ function Dashboard({ onLoggedOut }: { onLoggedOut: () => void }) {
       // verify step — the funds moved, so never say "Payroll failed · no funds
       // moved". Surface it as a soft "couldn't verify", matching the finale.
       if (phaseRef.current === "delivered") {
-        addNotif({ title: "Couldn't verify amounts", sub: "the payment was still delivered", color: "#e3b25f", tone: "warn" });
+        addNotif({ title: "Couldn't verify amounts", sub: "The payment was still delivered", color: "#e3b25f", tone: "warn" });
         showToast("err", "Couldn't verify amounts · the payment was still delivered");
         return;
       }
-      addNotif({ title: "Payroll failed", sub: "no funds moved · retry", color: "#e07a6a", tone: "err" });
+      addNotif({ title: "Payroll failed", sub: "No funds moved · retry", color: "#e07a6a", tone: "err" });
       showToast("err", "Payroll failed · no funds moved · retry");
     },
     [addNotif, showToast],
@@ -560,7 +560,7 @@ function Dashboard({ onLoggedOut }: { onLoggedOut: () => void }) {
       toastedFlowErr.current = e;
     } else if (cancelled) {
       toastedFlowErr.current = e;
-      addNotif({ title: "Payroll cancelled", sub: "you declined the request · nothing was sent", color: "#e3b25f", tone: "warn" });
+      addNotif({ title: "Payroll cancelled", sub: "You declined the request · nothing was sent", color: "#e3b25f", tone: "warn" });
       showToast("err", "Payroll cancelled · nothing was sent");
     } else if (/transaction was sent|confirmation failed|couldn.t confirm/i.test(e)) {
       // Broadcast but not yet confirmed — the modal keeps a Retry; surface why.
@@ -1097,7 +1097,7 @@ function FundWalletModalWired({
     <FundWalletModal
       open={open}
       onClose={onClose}
-      employerShort={employer ? midWallet(employer) : "connect a wallet"}
+      employerShort={employer ? midWallet(employer) : "Connect a wallet"}
       employerFull={employer}
       busy={fund.busy}
       phase={fund.phase}

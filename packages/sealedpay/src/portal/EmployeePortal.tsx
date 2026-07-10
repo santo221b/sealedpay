@@ -522,7 +522,7 @@ function HomeScreen({
                 {lastPay
                   ? lastPay.from === zeroAddress
                     ? "Faucet mint · Test funds"
-                    : `from ${shortWallet(lastPay.from)}`
+                    : `From ${shortWallet(lastPay.from)}`
                   : "Payments land here automatically"}
               </span>
               <LockPuck locked={false} />
@@ -619,7 +619,7 @@ function PaymentsLedger({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block" style={{ fontSize: 13, fontWeight: 500, color: "#eef4f1" }}>
-                    {p.from === zeroAddress ? "Faucet mint · Test funds" : `from ${shortWallet(p.from)}`}
+                    {p.from === zeroAddress ? "Faucet mint · Test funds" : `From ${shortWallet(p.from)}`}
                   </span>
                   <span className="tnum block whitespace-nowrap" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
                     {p.timestamp ? `${fmtPaymentTime(p.timestamp)} · ` : ""}
@@ -716,7 +716,7 @@ function VerificationsView({ pay }: { pay: MyPay }) {
                       {p.timestamp ? fmtPaymentTime(p.timestamp) : shortHash(p.txHash)}
                     </span>
                     <span className="block whitespace-nowrap" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
-                      {p.from === zeroAddress ? "Faucet mint · Test funds" : `from ${shortWallet(p.from)}`} · encrypted on-chain
+                      {p.from === zeroAddress ? "Faucet mint · Test funds" : `From ${shortWallet(p.from)}`} · encrypted on-chain
                     </span>
                   </span>
                   <span className="ml-auto shrink-0">
@@ -1107,7 +1107,7 @@ function PayslipsScreen({
                     {p.timestamp ? fmtPaymentTime(p.timestamp) : shortHash(p.txHash)}
                   </span>
                   <span className="tnum block whitespace-nowrap" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
-                    {p.from === zeroAddress ? "Faucet mint · Test funds" : `from ${shortWallet(p.from)}`} ·{" "}
+                    {p.from === zeroAddress ? "Faucet mint · Test funds" : `From ${shortWallet(p.from)}`} ·{" "}
                     <a href={p.url} target="_blank" rel="noreferrer" className="hover:underline" style={{ color: "#4ecba0", textDecoration: "none" }}>
                       Etherscan
                     </a>
@@ -1386,7 +1386,7 @@ function PaySearch({
                           {p.timestamp ? fmtPaymentTime(p.timestamp) : shortHash(p.txHash)}
                         </span>
                         <span className="tnum block truncate" style={{ fontSize: 12, color: "#9db3aa", marginTop: 1 }}>
-                          {p.from === zeroAddress ? "Faucet mint · Test funds" : `from ${shortWallet(p.from)}`}
+                          {p.from === zeroAddress ? "Faucet mint · Test funds" : `From ${shortWallet(p.from)}`}
                         </span>
                       </span>
                       {p.amount !== undefined ? (

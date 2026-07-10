@@ -269,7 +269,7 @@ export function EmployeeView({
 
       {/* Footnote */}
       <div style={{ fontSize: 11, color: tokens.text.muted, lineHeight: 1.6 }}>
-        Amounts are encrypted on-chain. Etherscan proves each payment happened; the amount itself stays private.
+        Amounts are encrypted on-chain. Etherscan proves each payment happened. The amount itself stays private.
       </div>
     </div>
   );
