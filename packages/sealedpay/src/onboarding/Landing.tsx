@@ -250,7 +250,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
               x={x}
               rotate={rotate}
               scale={isActive ? 1 : hoverPeek ? 0.76 : 0.73}
-              opacity={isActive ? 1 : hoverPeek ? 0.82 : 0.42}
+              opacity={isActive ? 1 : hoverPeek ? 0.82 : 0.48}
               busy={waiting === d.door && !authenticated}
               onPeekEnter={() => !isActive && setHoverPeek(true)}
               onPeekLeave={() => setHoverPeek(false)}
