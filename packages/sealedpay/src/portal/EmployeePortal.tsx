@@ -468,7 +468,7 @@ function HomeScreen({
 
       {/* Bottom row — mirrors the employer's Team + stat cards (overview only) */}
       {tab === "All" && (
-      <div className="grid" style={{ gridTemplateColumns: "1.35fr 1fr", gap: 20 }}>
+      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <GlassCard className="flex flex-col" style={{ padding: "16px 23px" }}>
           <div className="flex items-center justify-between">
             <div style={{ fontWeight: 400, fontSize: 17 }}>{(jobs.employments?.length ?? 0) > 1 ? "Your employers" : "Your employer"}</div>
@@ -1486,7 +1486,7 @@ function EmploymentRow({ job, sym }: { job: Employment; sym: string }) {
           {job.employerName || (job.employerAddress ? shortWallet(job.employerAddress) : "Employer")}
         </span>
         <span className="block" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
-          {job.me.role ?? "Employee"}
+          Employs you as {job.me.role ?? "Employee"}
           {job.me.dept ? ` · ${job.me.dept}` : ""}
         </span>
       </span>
