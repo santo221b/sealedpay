@@ -223,6 +223,8 @@ export interface ProfilePopupProps {
   employerShort?: string;
   /** Role line under the name; defaults to the employer's "Payroll administrator". */
   role?: string;
+  /** Employer only: company name, appended to the role line. */
+  company?: string;
   /** The signed-in login email, shown under the role line. */
   email?: string;
   /** Full wallet address behind the chip; clicking the chip copies it. */

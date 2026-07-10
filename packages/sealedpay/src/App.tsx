@@ -1038,7 +1038,7 @@ function Dashboard({ onLoggedOut }: { onLoggedOut: () => void }) {
         }}
       />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={() => { setLogoutOpen(false); disconnect(); void privyLogout(); onLoggedOut(); }} />
-      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} email={privyUser?.email?.address} walletFull={employer} onCopied={() => showToast("ok", "Copied wallet address")} />
+      <ProfilePopup open={profileOpen} onClose={() => setProfileOpen(false)} name={identity.name || "there"} avatar={identity.avatar} employerShort={employer ? shortWallet(employer) : undefined} company={identity.company || undefined} email={privyUser?.email?.address} walletFull={employer} onCopied={() => showToast("ok", "Copied wallet address")} />
       <ReminderModal
         open={remindOpen}
         onClose={() => setRemindOpen(false)}
