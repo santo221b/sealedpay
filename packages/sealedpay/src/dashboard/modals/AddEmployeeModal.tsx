@@ -204,7 +204,7 @@ export function AddEmployeeModal({ open, onClose, onAdd, initial, onRemove }: Ad
                         Their wallet <span className="tnum" style={{ color: "#9db3aa" }}>{shortWallet(initial.wallet)}</span> stays linked to this email.
                       </>
                     ) : (
-                      "A private wallet is created from this email · they sign in with it to reveal their pay. No extension needed."
+                      "A private wallet is created from this email."
                     )}
                   </p>
                 </motion.div>
