@@ -10,13 +10,18 @@
  */
 import { motion, useReducedMotion } from "framer-motion";
 
-export function OrbitGraphic() {
+export function OrbitGraphic({ scale = 1 }: { scale?: number }) {
   const reduced = useReducedMotion();
+  const s = scale;
   return (
     <motion.div
       aria-hidden
       className="pointer-events-none absolute left-1/2"
-      style={{ bottom: "-69%", width: 1150, height: 1150, x: "-50%", zIndex: 0, transformOrigin: "50% 100%" }}
+      // -621px is the old -69% at the 900px reference viewport, frozen in px:
+      // the SAME slice of sphere rises above the fold at every window height
+      // (percentage offsets made it sink as the viewport grew), and the whole
+      // drawing shares the hero's scale factor.
+      style={{ bottom: -621 * s, width: 1150 * s, height: 1150 * s, x: "-50%", zIndex: 0, transformOrigin: "50% 100%" }}
       initial={reduced ? false : { scale: 0.72, opacity: 0 }}
       animate={{ scale: 1, opacity: 0.75 }}
       transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
@@ -25,15 +30,15 @@ export function OrbitGraphic() {
       <div
         className="absolute left-1/2 top-1/2 rounded-full"
         style={{
-          width: 720,
-          height: 720,
+          width: 720 * s,
+          height: 720 * s,
           transform: "translate(-50%,-50%)",
           background: "radial-gradient(circle, rgba(78,206,152,0.063), rgba(46,148,116,0.018) 44%, rgba(0,0,0,0) 68%)",
           filter: "blur(12px)",
           animation: reduced ? undefined : "sp-halo 8s ease-in-out infinite",
         }}
       />
-      <svg viewBox="0 0 1150 1150" width="1150" height="1150" fill="none" className="absolute inset-0">
+      <svg viewBox="0 0 1150 1150" width={1150 * s} height={1150 * s} fill="none" className="absolute inset-0">
         <defs>
           <radialGradient id="sp-globe" cx="42%" cy="36%" r="72%">
             <stop offset="0%" stopColor="rgba(120,233,192,0.072)" />

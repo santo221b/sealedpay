@@ -18,6 +18,24 @@ import { OrbitGraphic } from "./OrbitGraphic";
 const EASE = [0.22, 1, 0.36, 1] as const;
 const CARD_W = 316;
 
+/**
+ * The hero scales as ONE unit from a 1440x900 reference: scale 1 reproduces
+ * today's look exactly, larger displays get the identical composition up to
+ * 20% bigger, small windows down to 15% smaller. Because everything inside
+ * shares the factor, internal proportions can never drift across resolutions.
+ */
+const heroScale = () =>
+  Math.round(Math.min(Math.max(Math.min(window.innerWidth / 1440, window.innerHeight / 900), 0.85), 1.2) * 1000) / 1000;
+function useViewportScale() {
+  const [scale, setScale] = useState(heroScale);
+  useEffect(() => {
+    const onResize = () => setScale(heroScale());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return scale;
+}
+
 // Character pool and random casing lifted verbatim from the reference pen
 // (codepen.io/creativeocean/pen/JjemXGY).
 const GLYPHS = "abcdefghijklmnopqrstuvwxyz1234567890!@#$^&*()…æ_+-=;[]/~`";
@@ -101,6 +119,7 @@ const DOORS: DoorDef[] = [
 export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
   const reduced = useReducedMotion();
   const { authenticated } = usePrivy();
+  const pageScale = useViewportScale();
   useEffect(() => setThemeColor(THEME_COLORS.onboarding), []);
   // Only the brand word decodes — the lead-in reads instantly.
   const sealedWord = useDecryptScramble("sealed", 280);
@@ -200,12 +219,20 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
           "radial-gradient(120% 70% at 50% 128%, rgba(46,148,116,0.22), rgba(0,0,0,0) 60%), linear-gradient(180deg, #060a08 0%, #080f0c 52%, #0a120f 100%)",
       }}
     >
-      <OrbitGraphic />
+      <OrbitGraphic scale={pageScale} />
+
+      {/* Spare height splits above/below the hero in the reference ratio
+          (roughly 1:3, matching the old 8.5vh top gap at 900px), so the
+          composition sits at the same relative height at every window size. */}
+      <div aria-hidden style={{ flexGrow: 1, minHeight: 18 }} />
+
+      {/* The whole hero zooms as one poster — see heroScale. */}
+      <div className="relative z-[2] flex flex-col items-center" style={{ zoom: pageScale }}>
 
       {/* Copy — trimmed to a headline + one line */}
       <motion.div
         className="relative z-[2] flex flex-col items-center text-center"
-        style={{ marginTop: "8.5vh", padding: "0 24px" }}
+        style={{ padding: "0 24px" }}
         initial={reduced ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: EASE }}
@@ -290,7 +317,11 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
         ))}
       </div>
 
-      <p className="absolute inset-x-0 z-[2] text-center" style={{ bottom: 26, fontSize: 11, color: "rgba(233,244,238,0.55)", textShadow: "0 1px 5px rgba(6,20,14,0.55)" }}>
+      </div>
+
+      <div aria-hidden style={{ flexGrow: 3, minHeight: 40 }} />
+
+      <p className="absolute inset-x-0 z-[2] text-center" style={{ bottom: 26, fontSize: 11 * pageScale, color: "rgba(233,244,238,0.55)", textShadow: "0 1px 5px rgba(6,20,14,0.55)" }}>
         SealedPay · Powered by <a href="https://dispersekit-demo.vercel.app" target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "underline", textDecorationColor: "rgba(233,244,238,0.28)", textUnderlineOffset: "2px" }}>DisperseKit</a> · TokenOps · Zama FHE
       </p>
     </div>
