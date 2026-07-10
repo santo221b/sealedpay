@@ -765,7 +765,7 @@ function Dashboard({ onLoggedOut }: { onLoggedOut: () => void }) {
     },
     encryptedCount: encryptedAmountsCount(runsView),
     employerAddress: employer,
-    profile: { name: identity.name || "there", avatar: identity.avatar, company: identity.company || undefined },
+    profile: { name: identity.name || "there", avatar: identity.avatar },
     showAll,
     activeBar,
     setActiveBar,

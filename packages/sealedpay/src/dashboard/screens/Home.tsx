@@ -208,15 +208,10 @@ export function Home({ data, tab, setTab, onAddEmployee, onLoadSamples, onViewIn
 
   return (
     <div className="flex flex-col" style={{ gap: 20 }}>
-      {/* Title, with the company beneath so the workspace reads as theirs */}
-      <div>
-        <h1 style={{ fontWeight: 500, fontSize: 38, color: tokens.text.heading, letterSpacing: 0.45, lineHeight: 1.06, margin: 0 }}>
-          Payroll
-        </h1>
-        {data.profile.company && (
-          <p style={{ fontSize: 13, color: tokens.text.muted, marginTop: 7 }}>{data.profile.company}</p>
-        )}
-      </div>
+      {/* Title */}
+      <h1 style={{ fontWeight: 500, fontSize: 38, color: tokens.text.heading, letterSpacing: 0.45, lineHeight: 1.06, margin: 0 }}>
+        Payroll
+      </h1>
 
       {/* Tab row */}
       <div className="flex" style={{ gap: 13 }}>

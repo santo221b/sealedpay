@@ -74,7 +74,7 @@ export interface DashboardData {
   balance: { value: string | undefined; revealed: boolean; pending: boolean; toggle: () => void; error?: string };
   encryptedCount: number; // privacy scorecard: total amounts encrypted across history
   employerAddress?: string; // full address when connected
-  profile: { name: string; avatar: string; company?: string };
+  profile: { name: string; avatar: string };
   showAll: boolean; // settings.maskDefault === false
   activeBar: string; // Payout Activity active month
   setActiveBar: (month: string) => void;
