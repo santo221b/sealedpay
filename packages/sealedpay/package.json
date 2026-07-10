@@ -22,7 +22,7 @@
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.7",
     "viem": "^2.38.0",
-    "wagmi": "^2.19.0"
+    "wagmi": "^3.6.21"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.0",
