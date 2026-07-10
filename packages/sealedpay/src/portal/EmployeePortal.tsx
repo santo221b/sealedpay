@@ -362,7 +362,7 @@ export function EmployeePortal({ onLoggedOut, onSwitchDoor }: { onLoggedOut: () 
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div key={nav} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}>
                   {nav === 0 ? (
-                    <HomeScreen pay={pay} jobs={jobs} sym={sym} fmt={fmt} email={email} identity={identity} onPayslip={onPayslip} />
+                    <HomeScreen pay={pay} jobs={jobs} sym={sym} fmt={fmt} email={email} />
                   ) : (
                     <PayslipsScreen pay={pay} sym={sym} fmt={fmt} onPayslip={onPayslip} />
                   )}
@@ -410,16 +410,12 @@ function HomeScreen({
   sym,
   fmt,
   email,
-  identity,
-  onPayslip,
 }: {
   pay: MyPay;
   jobs: Jobs;
   sym: string;
   fmt: (v: bigint) => string | undefined;
   email?: string;
-  identity: { name: string; avatar: string };
-  onPayslip: (p: MyPayment) => void;
 }) {
   const lastPay = pay.payments?.[0];
   const totalReceived = useMemo(() => {
@@ -430,12 +426,10 @@ function HomeScreen({
   return (
     <div className="flex flex-col" style={{ gap: 20 }}>
       <h1 style={{ fontWeight: 500, fontSize: 38, color: tokens.text.heading, letterSpacing: 0.45, lineHeight: 1.06, margin: 0 }}>
-        {identity.name ? `My pay, ${identity.name.split(" ")[0]}` : "My pay"}
+        Your pay
       </h1>
 
       <SalaryChartCard pay={pay} sym={sym} />
-
-      <PaymentsCard pay={pay} jobs={jobs} sym={sym} fmt={fmt} onPayslip={onPayslip} />
 
       {/* Bottom row — mirrors the employer's Team + stat cards */}
       <div className="grid" style={{ gridTemplateColumns: "1.35fr 1fr", gap: 20 }}>
@@ -456,10 +450,23 @@ function HomeScreen({
           ) : jobs.error ? (
             <p style={{ fontSize: 11.5, color: tokens.text.muted, marginTop: 10, lineHeight: 1.5 }}>{jobs.error}</p>
           ) : !jobs.employments || jobs.employments.length === 0 ? (
-            <p style={{ fontSize: 11.5, color: tokens.text.muted, marginTop: 10, lineHeight: 1.5 }}>
-              No employer has added {email ? <span style={{ color: "#cfe0d8" }}>{email}</span> : "your email"} yet.
-              Once they do, your role and salary appear here.
-            </p>
+            <div className="flex flex-1 flex-col items-center justify-center text-center" style={{ gap: 4, padding: "20px 8px 12px" }}>
+              <span
+                className="flex items-center justify-center rounded-full"
+                style={{ width: 44, height: 44, background: "rgba(95,230,175,0.1)", border: "1px solid rgba(95,230,175,0.18)", marginBottom: 6 }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <rect x="2" y="7" width="20" height="14" rx="2" />
+                  <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                  <path d="M2 13h20" />
+                </svg>
+              </span>
+              <div style={{ fontSize: 13.5, fontWeight: 500, color: tokens.text.secondary }}>No employer yet</div>
+              <div style={{ fontSize: 11.5, color: tokens.text.muted, lineHeight: 1.5, maxWidth: 260 }}>
+                Once one adds {email ? <span style={{ color: "#cfe0d8" }}>{email}</span> : "your email"} to their roster,
+                your role and salary appear here.
+              </div>
+            </div>
           ) : (
             <div className="mt-2 flex flex-col" style={{ gap: 2 }}>
               {jobs.employments.map((j) => (
@@ -518,11 +525,14 @@ function HomeScreen({
 }
 
 /* ── The Salary received chart — same bones as the employer's Payout Activity.
-     Until the amounts are revealed, months with payments render as hatched
-     bars (heights hint at payment count, never at amounts). ───────────────── */
+     Empty months render the same hatched placeholder bars as the employer's
+     chart; until the amounts are revealed, months with payments stay hatched
+     too (heights hint at payment count, never at amounts). Owns the whole
+     scan-state ladder: wrong network, preparing wallet, scan error. ────────── */
 
 function SalaryChartCard({ pay, sym }: { pay: MyPay; sym: string }) {
   const [activeBar, setActiveBar] = useState<string | null>(null);
+  const { switchChain, isPending: switchingChain } = useSwitchChain();
   const revealed = pay.revealed;
 
   // Hover-intent, same 300ms beat as the employer chart.
@@ -558,28 +568,71 @@ function SalaryChartCard({ pay, sym }: { pay: MyPay; sym: string }) {
     <GlassCard style={{ padding: "20px 23px 16px 23px" }}>
       <div className="flex items-center justify-between">
         <div style={{ fontWeight: 400, fontSize: 17 }}>Salary received</div>
-        {scanned && !revealed && pay.payments!.length > 0 && (
-          <span className="flex items-center" style={{ gap: 5, fontSize: 10.5, color: tokens.text.muted }}>
-            <PadlockGlyph size={10} color="#9db3aa" />
-            Sealed until you reveal
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {scanned && !revealed && pay.payments!.length > 0 && (
+            <span className="flex items-center" style={{ gap: 5, fontSize: 10.5, color: tokens.text.muted }}>
+              <PadlockGlyph size={10} color="#9db3aa" />
+              Sealed until you reveal
+            </span>
+          )}
+          {pay.ready && (
+            <button
+              type="button"
+              onClick={() => void pay.scan()}
+              disabled={pay.phase === "scanning"}
+              className="cursor-pointer rounded-full transition-colors hover:bg-[rgba(255,255,255,0.07)] disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ fontSize: 11.5, color: "#cfe0d8", border: "1px solid rgba(255,255,255,0.13)", padding: "6px 13px" }}
+            >
+              {pay.phase === "scanning" ? "Scanning" : "Rescan"}
+            </button>
+          )}
+        </div>
       </div>
 
-      {scanned && pay.payments!.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center" style={{ height: CH + 44, gap: 4 }}>
-          <span className="flex items-center justify-center rounded-full" style={{ width: 44, height: 44, background: "rgba(95,230,175,0.1)", border: "1px solid rgba(95,230,175,0.18)", marginBottom: 6 }}>
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M3 3v18h18" />
-              <rect x="7" y="12" width="3" height="5" rx="1" />
-              <rect x="12.5" y="8" width="3" height="9" rx="1" />
-              <rect x="18" y="5" width="3" height="12" rx="1" />
+      {pay.connected && !pay.onSepolia ? (
+        <div className="mt-2 flex flex-col items-center text-center" style={{ padding: "28px 20px" }}>
+          <span className="flex items-center justify-center rounded-full" style={{ width: 52, height: 52, background: "rgba(224,122,106,0.14)" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#eb9a8d" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12 9v4" /><path d="M12 17h.01" />
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
             </svg>
           </span>
-          <div style={{ fontSize: 13.5, fontWeight: 500, color: tokens.text.secondary }}>No payments yet</div>
-          <div style={{ fontSize: 11.5, color: tokens.text.muted, maxWidth: 250, lineHeight: 1.5 }}>
-            Once your employer runs payroll, your months fill in here.
-          </div>
+          <p style={{ fontSize: 14, fontWeight: 500, color: "#eef4f1", marginTop: 13 }}>Wrong network</p>
+          <p style={{ fontSize: 12, color: tokens.text.muted, marginTop: 5, maxWidth: 320, lineHeight: 1.55 }}>
+            Your pay lives on Sepolia. Switch networks to see and reveal it.
+          </p>
+          <button
+            type="button"
+            onClick={() => switchChain({ chainId: SEPOLIA_CHAIN_ID })}
+            disabled={switchingChain}
+            className="mt-4 cursor-pointer rounded-full font-medium disabled:opacity-60"
+            style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 12.5, padding: "9px 20px" }}
+          >
+            {switchingChain ? "Switching" : "Switch to Sepolia"}
+          </button>
+        </div>
+      ) : !pay.ready ? (
+        <CenterNote
+          icon={<PadlockGlyph size={22} color="#78e9c0" />}
+          title="Preparing your wallet"
+          sub="Your email wallet is connecting. This takes a moment on first sign-in."
+          spinner
+        />
+      ) : pay.error && pay.payments === undefined ? (
+        <div className="mt-2 flex flex-col items-center text-center" style={{ padding: "28px 20px" }}>
+          <span className="flex items-center justify-center rounded-full" style={{ width: 52, height: 52, background: "rgba(224,122,106,0.12)" }}>
+            <PadlockGlyph size={22} color="#eb9a8d" />
+          </span>
+          <p style={{ fontSize: 14, fontWeight: 500, color: "#eef4f1", marginTop: 13 }}>Couldn't read your payments</p>
+          <p style={{ fontSize: 12, color: tokens.text.muted, marginTop: 5, maxWidth: 340, lineHeight: 1.55 }}>{pay.error}</p>
+          <button
+            type="button"
+            onClick={() => void pay.scan()}
+            className="mt-4 cursor-pointer rounded-full font-medium"
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.13)", color: "#cfe0d8", fontSize: 12.5, padding: "9px 20px" }}
+          >
+            Try again
+          </button>
         </div>
       ) : (
         <>
@@ -700,173 +753,6 @@ function SalaryChartCard({ pay, sym }: { pay: MyPay; sym: string }) {
             ))}
           </div>
         </>
-      )}
-    </GlassCard>
-  );
-}
-
-/* ── Payments received (list card with the full state ladder) ────────────── */
-
-function PaymentsCard({
-  pay,
-  jobs,
-  sym,
-  fmt,
-  onPayslip,
-}: {
-  pay: MyPay;
-  jobs: Jobs;
-  sym: string;
-  fmt: (v: bigint) => string | undefined;
-  onPayslip: (p: MyPayment) => void;
-}) {
-  const reduced = useReducedMotion();
-  const { switchChain, isPending: switchingChain } = useSwitchChain();
-
-  return (
-    <GlassCard style={{ padding: "20px 22px" }}>
-      <div className="flex items-center justify-between">
-        <div style={{ fontWeight: 400, fontSize: 17 }}>Payments received</div>
-        <div className="flex items-center gap-3">
-          {pay.payments !== undefined && pay.payments.length > 0 && (
-            <span className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
-              {pay.payments.length} found
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => void pay.scan()}
-            disabled={pay.phase === "scanning" || !pay.ready}
-            className="cursor-pointer rounded-full transition-colors hover:bg-[rgba(255,255,255,0.07)] disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ fontSize: 11.5, color: "#cfe0d8", border: "1px solid rgba(255,255,255,0.13)", padding: "6px 13px" }}
-          >
-            {pay.phase === "scanning" ? "Scanning" : "Rescan"}
-          </button>
-        </div>
-      </div>
-
-      {/* States: wrong-network → preparing wallet → scan error →
-          scanning skeleton → empty → rows */}
-      {pay.connected && !pay.onSepolia ? (
-        <div className="mt-2 flex flex-col items-center text-center" style={{ padding: "28px 20px" }}>
-          <span className="flex items-center justify-center rounded-full" style={{ width: 52, height: 52, background: "rgba(224,122,106,0.14)" }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#eb9a8d" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M12 9v4" /><path d="M12 17h.01" />
-              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
-            </svg>
-          </span>
-          <p style={{ fontSize: 14, fontWeight: 500, color: "#eef4f1", marginTop: 13 }}>Wrong network</p>
-          <p style={{ fontSize: 12, color: tokens.text.muted, marginTop: 5, maxWidth: 320, lineHeight: 1.55 }}>
-            Your pay lives on Sepolia. Switch networks to see and reveal it.
-          </p>
-          <button
-            type="button"
-            onClick={() => switchChain({ chainId: SEPOLIA_CHAIN_ID })}
-            disabled={switchingChain}
-            className="mt-4 cursor-pointer rounded-full font-medium disabled:opacity-60"
-            style={{ background: "#5fe3ab", color: "#0b1512", fontSize: 12.5, padding: "9px 20px" }}
-          >
-            {switchingChain ? "Switching" : "Switch to Sepolia"}
-          </button>
-        </div>
-      ) : !pay.ready ? (
-        <CenterNote
-          icon={<PadlockGlyph size={22} color="#78e9c0" />}
-          title="Preparing your wallet"
-          sub="Your email wallet is connecting. This takes a moment on first sign-in."
-          spinner
-        />
-      ) : pay.error && pay.payments === undefined ? (
-        <div className="mt-2 flex flex-col items-center text-center" style={{ padding: "28px 20px" }}>
-          <span className="flex items-center justify-center rounded-full" style={{ width: 52, height: 52, background: "rgba(224,122,106,0.12)" }}>
-            <PadlockGlyph size={22} color="#eb9a8d" />
-          </span>
-          <p style={{ fontSize: 14, fontWeight: 500, color: "#eef4f1", marginTop: 13 }}>Couldn't read your payments</p>
-          <p style={{ fontSize: 12, color: tokens.text.muted, marginTop: 5, maxWidth: 340, lineHeight: 1.55 }}>{pay.error}</p>
-          <button
-            type="button"
-            onClick={() => void pay.scan()}
-            className="mt-4 cursor-pointer rounded-full font-medium"
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.13)", color: "#cfe0d8", fontSize: 12.5, padding: "9px 20px" }}
-          >
-            Try again
-          </button>
-        </div>
-      ) : pay.payments === undefined ? (
-        <div className="mt-4 flex flex-col" style={{ gap: 7 }}>
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="dc-shimmer" style={{ height: 56, borderRadius: 14, background: "rgba(255,255,255,0.04)", animationDelay: `${i * 0.12}s` }} />
-          ))}
-        </div>
-      ) : pay.payments.length === 0 ? (
-        <CenterNote
-          icon={<ReceiptCheckGlyph size={22} />}
-          title="No payments yet"
-          sub={
-            jobs.employments && jobs.employments.length > 0
-              ? "You're on the payroll · your first payment will appear here the moment it lands."
-              : "Once your employer adds you and runs payroll, payments appear here automatically."
-          }
-        />
-      ) : (
-        <div className="mt-3 flex flex-col" style={{ gap: 4 }}>
-          <AnimatePresence initial={false}>
-            {pay.payments.map((p, i) => (
-              <motion.div
-                key={p.txHash + p.handle}
-                initial={reduced ? false : { opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.32, delay: reduced ? 0 : Math.min(i * 0.045, 0.4), ease: EASE }}
-                className="group flex items-center"
-                style={{ gap: 12, padding: "9px 6px", borderRadius: 12 }}
-              >
-                <span className="flex shrink-0 items-center justify-center rounded-full" style={{ width: 36, height: 36, background: tokens.accent.puckBg, border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <ReceiptCheckGlyph size={17} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block" style={{ fontSize: 13, fontWeight: 500, color: "#eef4f1" }}>
-                    {p.from === zeroAddress ? "Faucet mint · Test funds" : `from ${shortWallet(p.from)}`}
-                  </span>
-                  <span className="tnum block whitespace-nowrap" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
-                    {p.timestamp ? `${fmtPaymentTime(p.timestamp)} · ` : ""}
-                    {shortHash(p.txHash)} ·{" "}
-                    <a href={p.url} target="_blank" rel="noreferrer" className="hover:underline" style={{ color: "#4ecba0", textDecoration: "none" }}>
-                      Etherscan
-                    </a>
-                  </span>
-                </span>
-                {p.amount !== undefined && (
-                  <button
-                    type="button"
-                    onClick={() => onPayslip(p)}
-                    className="cursor-pointer rounded-full opacity-0 transition-opacity group-hover:opacity-100"
-                    title="Download payslip"
-                    style={{ fontSize: 10.5, color: "#9db3aa", border: "1px solid rgba(255,255,255,0.13)", padding: "5px 11px" }}
-                  >
-                    Payslip
-                  </button>
-                )}
-                <span className="flex items-center" style={{ gap: 4, fontSize: 13.5, fontWeight: 500, color: "#eef4f1" }}>
-                  {p.from !== zeroAddress && <span style={{ color: "#78e9c0" }}>+</span>}
-                  <RevealAmount
-                    value={p.amount !== undefined ? fmt(p.amount) : undefined}
-                    revealed={p.amount !== undefined && pay.decimals !== undefined}
-                    pending={pay.phase === "revealing"}
-                    label="payment amount"
-                  />
-                  <span>{sym}</span>
-                </span>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {pay.revealed && (pay.payments?.length ?? 0) > 0 && (
-        <p className="text-center" style={{ fontSize: 11.5, color: tokens.text.muted, marginTop: 14, lineHeight: 1.55 }}>
-          Decrypted locally after your signature. These amounts never appear on-chain or on any server. Only your
-          wallet can read them.
-        </p>
       )}
     </GlassCard>
   );
