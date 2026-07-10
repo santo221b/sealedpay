@@ -117,18 +117,36 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
     }
     waitingRef.current = door;
     setWaiting(door);
-    login();
-  };
-
-  // Backstop: onError clears the "Signing in" spinner on a dismissed modal, but
-  // if that event is ever missed the card must not spin forever — release it.
-  useEffect(() => {
-    if (!waiting) return;
-    const t = window.setTimeout(() => {
+    // login() is idempotent (re-opens/refocuses the modal), and the CTA is
+    // NEVER disabled — a dismissal that slips past onError must not leave a
+    // dead button. A synchronous throw also clears the spinner.
+    try {
+      login();
+    } catch {
       waitingRef.current = null;
       setWaiting(null);
-    }, 120_000);
-    return () => window.clearTimeout(t);
+    }
+  };
+
+  // Watch the Privy dialog itself: the spinner shows ONLY while the modal is
+  // actually in the DOM (checked shortly after opening, then observed). This is
+  // sturdier than relying on onError firing for every dismissal path.
+  useEffect(() => {
+    if (!waiting) return;
+    const check = () => {
+      if (!document.getElementById("privy-dialog")) {
+        waitingRef.current = null;
+        setWaiting(null);
+      }
+    };
+    // Give the modal a beat to mount, then verify it exists; afterwards watch
+    // for its removal (user dismissed it) with a light interval.
+    const first = window.setTimeout(check, 2_500);
+    const watch = window.setInterval(check, 1_200);
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(watch);
+    };
   }, [waiting]);
 
   return (
@@ -284,9 +302,9 @@ function DoorPanel({
       <div
         className="sp-glass-card flex flex-col"
         style={{
-          height: 250,
+          height: 244,
           borderRadius: 24,
-          padding: "24px 24px 22px",
+          padding: "20px 20px 19px",
           background: active ? "rgba(16,27,23,0.55)" : "rgba(12,20,17,0.42)",
           backdropFilter: "blur(22px) saturate(1.3)",
           WebkitBackdropFilter: "blur(22px) saturate(1.3)",
@@ -295,7 +313,7 @@ function DoorPanel({
             : "0 20px 50px -24px rgba(0,0,0,0.7)",
         }}
       >
-        <span className="flex items-center justify-center" style={{ width: 46, height: 46, borderRadius: 14, background: "rgba(95,230,175,0.12)", border: "1px solid rgba(95,230,175,0.24)", color: "#78e9c0" }}>
+        <span className="flex items-center justify-center" style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(95,230,175,0.12)", border: "1px solid rgba(95,230,175,0.24)", color: "#78e9c0" }}>
           {def.icon}
         </span>
         <span className="mt-4 block" style={{ fontSize: 20, fontWeight: 700, color: "#f2f7f4" }}>
@@ -310,11 +328,10 @@ function DoorPanel({
             <motion.button
               type="button"
               onClick={onCta}
-              disabled={busy}
-              whileHover={reduced || busy ? undefined : { scale: 1.02 }}
-              whileTap={reduced || busy ? undefined : { scale: 0.98 }}
-              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full font-medium disabled:cursor-not-allowed"
-              style={{ background: "#5fe3ab", color: "#08331f", fontSize: 13.5, padding: "12px 0" }}
+              whileHover={reduced ? undefined : { scale: 1.02 }}
+              whileTap={reduced ? undefined : { scale: 0.98 }}
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full font-medium"
+              style={{ background: "#5fe3ab", color: "#08331f", fontSize: 13.5, padding: "12px 0", lineHeight: 1 }}
             >
               {busy ? (
                 <>
@@ -324,7 +341,7 @@ function DoorPanel({
               ) : (
                 <>
                   {def.cta}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#08331f" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <svg className="block shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#08331f" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                     <polyline points="9 6 15 12 9 18" />
                   </svg>
                 </>

@@ -13,7 +13,7 @@ export function OrbitGraphic() {
     <div
       aria-hidden
       className="pointer-events-none absolute left-1/2 -translate-x-1/2"
-      style={{ bottom: "-44%", width: 720, height: 720, zIndex: 0 }}
+      style={{ bottom: "-40%", width: 880, height: 880, zIndex: 0 }}
     >
       {/* Soft ground halo */}
       <div
