@@ -208,7 +208,7 @@ export function Landing({ onEnter }: { onEnter: (door: Door) => void }) {
           <div
             className="dc-floaty"
             style={{
-              filter: "drop-shadow(0 0 12px rgba(90,200,150,0.35))",
+              filter: "drop-shadow(0 0 12px rgba(90,200,150,0.30))",
               animation: reduced ? undefined : "sp-floaty-subtle 5s ease-in-out infinite, sp-seal-glow 3.4s ease-in-out infinite",
             }}
           >
