@@ -122,7 +122,7 @@ export function TopBar({
           whileHover={reduced ? undefined : { scale: 1.06, rotate: -2.5, filter: "drop-shadow(0 6px 14px rgba(59,191,142,0.45))" }}
           transition={{ duration: 0.3 }}
           className="cursor-pointer rounded-full object-cover"
-          style={{ width: 40, height: 40, border: "2px solid rgba(255,255,255,0.15)", background: "linear-gradient(135deg,#34d399,#0e9f6e)" }}
+          style={{ width: 40, height: 40, border: "2px solid rgba(255,255,255,0.15)", background: "rgba(236,238,237,0.26)" }}
         />
       </div>
     </div>
