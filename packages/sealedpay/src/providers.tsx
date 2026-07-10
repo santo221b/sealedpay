@@ -111,8 +111,19 @@ function ensurePrivySkin() {
     #privy-modal-content h2,
     #privy-modal-content h3,
     #privy-modal-content p,
-    #privy-modal-content span {
+    #privy-modal-content span,
+    #privy-modal-content div {
       overflow-wrap: anywhere;
+    }
+    /* The sign-message payload view is PREFORMATTED (white-space: pre), which
+       refuses to wrap regardless of overflow-wrap — flip it to pre-wrap so
+       long addresses and keys break instead of bleeding past the card. */
+    #privy-modal-content pre,
+    #privy-modal-content code {
+      white-space: pre-wrap !important;
+      overflow-wrap: anywhere !important;
+      word-break: break-word;
+      max-width: 100%;
     }
     /* iOS glass hairline rim (same technique as .sp-glass-card). */
     #privy-modal-content::before {
