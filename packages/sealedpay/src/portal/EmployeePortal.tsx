@@ -491,10 +491,9 @@ function HomeScreen({
                 className="flex items-center justify-center rounded-full"
                 style={{ width: 44, height: 44, background: "rgba(95,230,175,0.1)", border: "1px solid rgba(95,230,175,0.18)", marginBottom: 6 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <rect x="2" y="7" width="20" height="14" rx="2" />
-                  <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-                  <path d="M2 13h20" />
+                {/* The wallet-receiving-money icon from the landing's employer door. */}
+                <svg width="20" height="20" viewBox="0 0 96 96" fill="#78e9c0" aria-hidden>
+                  <path d="M86 36v14H72c-5.514 0-10 4.486-10 10s4.486 10 10 10h14v14c0 3.309-2.691 6-6 6H16c-3.309 0-6-2.691-6-6V36c0-3.309 2.691-6 6-6h64c3.309 0 6 2.691 6 6zM72 54h14v12H72c-3.309 0-6-2.691-6-6s2.691-6 6-6zm4 4h-4a2 2 0 0 0 0 4h4a2 2 0 0 0 0-4zM52.172 26 63.95 14.222l-2.172-2.172L47.827 26zM58.95 9.221l-.586-.586c-3.51-3.508-9.219-3.508-12.729 0L28.272 26h13.899zM75.728 26l-8.949-8.95L57.828 26z" />
                 </svg>
               </span>
               <div style={{ fontSize: 13.5, fontWeight: 500, color: tokens.text.secondary }}>No employer yet</div>
@@ -858,14 +857,16 @@ function SalaryChartCard({ pay, sym }: { pay: MyPay; sym: string }) {
       ) : (
         <>
           <div className="flex" style={{ gap: 13, marginTop: 16 }}>
-            {/* Y axis — blank while the amounts are still sealed */}
+            {/* Y axis — matches Payout Activity. Ticks blank ONLY while sealed
+                payments exist (their bar heights hint at counts, not amounts,
+                so a cUSDd scale would mislead). */}
             <div
               className="flex shrink-0 flex-col justify-between"
               style={{ height: CH, fontSize: 10, color: "#8ba297", paddingBottom: 2, width: 29 }}
             >
               {chart.labels.map((l, i) => (
                 <span key={i} className="tnum">
-                  {revealed ? l : ""}
+                  {revealed || (pay.payments?.length ?? 0) === 0 ? l : ""}
                 </span>
               ))}
             </div>
