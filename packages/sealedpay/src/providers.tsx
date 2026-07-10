@@ -138,9 +138,11 @@ function ensurePrivySkin() {
       height: 15px !important;
     }
     /* Icon pucks (email, wallet) are 32px rounded squares in Privy's theme —
-       make them perfect circles like every puck in the app. */
+       make them perfect circles like every puck in the app. A pill radius
+       (not 50%) so WIDE svg-carrying chips ("Code sent" on the code screen)
+       round into pills instead of warping into ellipses. */
     #privy-modal-content div:has(> svg) {
-      border-radius: 50% !important;
+      border-radius: 999px !important;
     }
     /* The modal logo is one of our app avatars (door-dependent, see Landing's
        rewrite effect) — give it the exact TopBar hover (lift, small
