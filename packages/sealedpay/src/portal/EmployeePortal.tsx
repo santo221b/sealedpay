@@ -33,6 +33,7 @@ import { CheckGlyph, HomeNav, PadlockGlyph, ReceiptCheckGlyph } from "../design/
 import { GlassCard, SettingToggle } from "../design/kit2";
 import { tokens } from "../design/tokens";
 import { api, type Employment } from "../lib/api";
+import { copyText } from "../lib/clipboard";
 import { useMyPay, type MyPayment } from "../lib/myPay";
 import { loadIdentity } from "../lib/prefs";
 import { fmtAmount, shortHash, shortWallet } from "../lib/seed";
@@ -366,7 +367,7 @@ export function EmployeePortal({ onLoggedOut }: { onLoggedOut: () => void }) {
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div key={nav} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}>
                   {nav === 0 ? (
-                    <HomeScreen pay={pay} jobs={jobs} sym={sym} fmt={fmt} email={email} onPayslip={onPayslip} />
+                    <HomeScreen pay={pay} jobs={jobs} sym={sym} fmt={fmt} email={email} onPayslip={onPayslip} onCopied={() => showToast("ok", "Copied wallet address")} />
                   ) : (
                     <PayslipsScreen pay={pay} sym={sym} fmt={fmt} onPayslip={onPayslip} />
                   )}
@@ -416,6 +417,7 @@ function HomeScreen({
   fmt,
   email,
   onPayslip,
+  onCopied,
 }: {
   pay: MyPay;
   jobs: Jobs;
@@ -423,6 +425,7 @@ function HomeScreen({
   fmt: (v: bigint) => string | undefined;
   email?: string;
   onPayslip: (p: MyPayment) => void;
+  onCopied?: () => void;
 }) {
   const [tab, setTab] = useState("All");
   const lastPay = pay.payments?.[0];
@@ -508,7 +511,7 @@ function HomeScreen({
           ) : (
             <div className="mt-2 flex flex-col" style={{ gap: 2 }}>
               {jobs.employments.map((j) => (
-                <EmploymentRow key={j.employerId} job={j} sym={sym} />
+                <EmploymentRow key={j.employerId} job={j} sym={sym} onCopied={onCopied} />
               ))}
             </div>
           )}
@@ -522,13 +525,21 @@ function HomeScreen({
               {lastPay ? (lastPay.timestamp ? fmtPaymentDate(lastPay.timestamp) : "Recently") : "None yet"}
             </div>
             <div className="flex items-center justify-between" style={{ marginTop: 9 }}>
-              <span className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
-                {lastPay
-                  ? lastPay.from === zeroAddress
-                    ? "Faucet mint · Test funds"
-                    : `From ${shortWallet(lastPay.from)}`
-                  : "Payments land here automatically"}
-              </span>
+              {lastPay && lastPay.from !== zeroAddress ? (
+                <button
+                  type="button"
+                  onClick={() => void copyText(lastPay.from).then((ok) => ok && onCopied?.())}
+                  title="Copy wallet address"
+                  className="tnum cursor-pointer transition-colors hover:bg-[rgba(95,230,175,0.08)]"
+                  style={{ fontSize: 11, color: tokens.text.muted, margin: "-4px -8px", padding: "4px 8px", borderRadius: 999 }}
+                >
+                  From {shortWallet(lastPay.from)}
+                </button>
+              ) : (
+                <span className="tnum" style={{ fontSize: 11, color: tokens.text.muted }}>
+                  {lastPay ? "Faucet mint · Test funds" : "Payments land here automatically"}
+                </span>
+              )}
               <LockPuck locked={false} />
             </div>
           </GlassCard>
@@ -1471,7 +1482,7 @@ function CenterNote({ icon, title, sub, spinner }: { icon: ReactNode; title: str
   );
 }
 
-function EmploymentRow({ job, sym }: { job: Employment; sym: string }) {
+function EmploymentRow({ job, sym, onCopied }: { job: Employment; sym: string; onCopied?: () => void }) {
   const [salaryShown, setSalaryShown] = useState(false);
   const display = job.employerCompany || job.employerName || (job.employerAddress ? shortWallet(job.employerAddress) : "Employer");
   return (
@@ -1511,12 +1522,26 @@ function EmploymentRow({ job, sym }: { job: Employment; sym: string }) {
           <span>{sym}/mo</span>
         </span>
       </button>
-      {job.employerAddress && <EmploymentDetail label="Payroll wallet" value={shortWallet(job.employerAddress)} mono />}
+      {job.employerAddress && <EmploymentDetail label="Payroll wallet" value={shortWallet(job.employerAddress)} mono copy={job.employerAddress} onCopied={onCopied} />}
     </div>
   );
 }
 
-function EmploymentDetail({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+function EmploymentDetail({ label, value, mono, copy, onCopied }: { label: string; value: string; mono?: boolean; copy?: string; onCopied?: () => void }) {
+  if (copy) {
+    return (
+      <button
+        type="button"
+        onClick={() => void copyText(copy).then((ok) => ok && onCopied?.())}
+        title="Copy wallet address"
+        className="flex cursor-pointer items-center justify-between transition-colors hover:bg-[rgba(95,230,175,0.08)]"
+        style={{ width: "calc(100% + 20px)", margin: "0 -10px", padding: "9px 10px", borderRadius: 999 }}
+      >
+        <span style={{ fontSize: 11.5, color: tokens.text.muted }}>{label}</span>
+        <span className={mono ? "tnum" : undefined} style={{ fontSize: 12, fontWeight: 500, color: "#cfe0d8" }}>{value}</span>
+      </button>
+    );
+  }
   return (
     <div className="flex items-center justify-between" style={{ padding: "9px 0" }}>
       <span style={{ fontSize: 11.5, color: tokens.text.muted }}>{label}</span>
