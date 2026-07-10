@@ -44,6 +44,8 @@ export interface Profile {
   notifyVerifications?: boolean;
   /** The account's surface. Written once, never overwritten (role exclusivity). */
   role?: "employer" | "employee";
+  /** Employer only: the company name employees see as their employer. */
+  companyName?: string;
 }
 
 export interface HandlerResult {
@@ -199,6 +201,12 @@ export async function handleProfile(authorization: string | undefined, method: s
           : prev.walletAddress,
       notifyPayments: typeof p.notifyPayments === "boolean" ? p.notifyPayments : prev.notifyPayments,
       notifyVerifications: typeof p.notifyVerifications === "boolean" ? p.notifyVerifications : prev.notifyVerifications,
+      companyName:
+        "companyName" in p
+          ? str(p.companyName, 120) && (p.companyName as string).trim()
+            ? (p.companyName as string).trim()
+            : undefined
+          : prev.companyName,
       // Role exclusivity: the FIRST role written for an account is permanent.
       // A later PUT can never flip an employer into an employee or vice versa.
       role: prev.role ?? (hasRole ? (p.role as Profile["role"]) : undefined),
@@ -252,6 +260,7 @@ export async function handleMe(authorization: string | undefined, method: string
     employments.push({
       employerId,
       employerName: employerProfile?.name ?? "Your employer",
+      employerCompany: employerProfile?.companyName,
       employerAddress: employerProfile?.walletAddress,
       me: { name: me.name, role: me.role, dept: me.dept, salary: me.salary, address: me.address },
     });

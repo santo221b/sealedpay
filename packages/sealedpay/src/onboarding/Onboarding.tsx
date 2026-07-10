@@ -127,11 +127,13 @@ export function Onboarding({
   variant = "employer",
   initialName = "",
   initialAvatar = "",
+  initialCompany = "",
 }: {
   onDone: () => void;
   variant?: OnboardingVariant;
   initialName?: string;
   initialAvatar?: string;
+  initialCompany?: string;
 }) {
   const reduced = useReducedMotion();
   const employee = variant === "employee";
@@ -145,6 +147,7 @@ export function Onboarding({
   // welcome-back click-through; blank for a genuine first run.
   const [name, setName] = useState(initialName);
   const [avatar, setAvatar] = useState(initialAvatar);
+  const [company, setCompany] = useState(initialCompany);
 
   // Auth already happened on the landing page — the wallet step CONFIRMS the
   // signed-in wallet (embedded or external) instead of opening a connect modal.
@@ -178,7 +181,7 @@ export function Onboarding({
   const canContinue = (
     employee
       ? [true, first.length > 0, true, Boolean(avatar), walletReady, true]
-      : [true, first.length > 0, true, Boolean(avatar), walletReady, true, true]
+      : [true, first.length > 0 && company.trim().length > 0, true, Boolean(avatar), walletReady, true, true]
   )[step];
   const continueLabel = step === 0 ? "Get started" : step === TOTAL - 1 ? "Go to dashboard" : "Continue";
 
@@ -188,7 +191,7 @@ export function Onboarding({
     setStep(next);
   }
   function finish() {
-    saveIdentity(name.trim(), avatar || AVATARS[0]);
+    saveIdentity(name.trim(), avatar || AVATARS[0], employee ? undefined : company);
     onDone();
   }
 
@@ -290,7 +293,7 @@ export function Onboarding({
               className={`flex flex-1 flex-col justify-center ${step === 0 || step === TOTAL - 1 ? "items-center text-center" : ""}`}
             >
               {step === 0 && <StepWelcome welcome={welcome} employee={employee} />}
-              {step === 1 && <StepName name={name} setName={setName} />}
+              {step === 1 && <StepName name={name} setName={setName} company={company} setCompany={setCompany} employee={employee} />}
               {step === 2 && <StepRole nameComma={nameComma} employee={employee} />}
               {step === 3 && <StepAvatar avatar={avatar} setAvatar={setAvatar} />}
               {step === 4 && (
@@ -414,7 +417,32 @@ function StepWelcome({ welcome, employee }: { welcome: string; employee: boolean
   );
 }
 
-function StepName({ name, setName }: { name: string; setName: (v: string) => void }) {
+const NAME_INPUT_STYLE = {
+  background: "rgba(255,255,255,0.045)",
+  border: "1px solid rgba(255,255,255,0.14)",
+  borderRadius: 98,
+  padding: "17px 22px",
+  color: "#f2f7f4",
+  fontSize: 17,
+  fontFamily: "'Manrope', sans-serif",
+  backdropFilter: "blur(22px) saturate(1.3)",
+  WebkitBackdropFilter: "blur(22px) saturate(1.3)",
+  boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.12), inset 0 -1px 0 0 rgba(0,0,0,0.15), 0 10px 30px -14px rgba(0,0,0,0.55)",
+} as const;
+
+function StepName({
+  name,
+  setName,
+  company,
+  setCompany,
+  employee,
+}: {
+  name: string;
+  setName: (v: string) => void;
+  company: string;
+  setCompany: (v: string) => void;
+  employee: boolean;
+}) {
   return (
     <>
       <Item i={0}>
@@ -422,12 +450,14 @@ function StepName({ name, setName }: { name: string; setName: (v: string) => voi
       </Item>
       <Item i={1}>
         <h1 className="mt-3" style={{ fontWeight: 700, fontSize: 29, lineHeight: 1.2 }}>
-          Your name
+          {employee ? "Your name" : "Your name and company"}
         </h1>
       </Item>
       <Item i={2}>
         <p className="mt-3" style={{ fontSize: 14, color: "#9db3aa", lineHeight: 1.5 }}>
-          It appears on your workspace profile.
+          {employee
+            ? "It appears on your workspace profile."
+            : "Your name appears on your workspace profile. The company name is what employees see as their employer."}
         </p>
       </Item>
       <Item i={3}>
@@ -437,22 +467,24 @@ function StepName({ name, setName }: { name: string; setName: (v: string) => voi
           placeholder="Enter your first name"
           autoFocus
           className="mt-[26px] w-full outline-none transition-[border]"
-          style={{
-            background: "rgba(255,255,255,0.045)",
-            border: "1px solid rgba(255,255,255,0.14)",
-            borderRadius: 98,
-            padding: "17px 22px",
-            color: "#f2f7f4",
-            fontSize: 17,
-            fontFamily: "'Manrope', sans-serif",
-            backdropFilter: "blur(22px) saturate(1.3)",
-            WebkitBackdropFilter: "blur(22px) saturate(1.3)",
-            boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.12), inset 0 -1px 0 0 rgba(0,0,0,0.15), 0 10px 30px -14px rgba(0,0,0,0.55)",
-          }}
+          style={NAME_INPUT_STYLE}
           onFocus={(e) => (e.currentTarget.style.border = "1px solid rgba(95,230,175,0.6)")}
           onBlur={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.14)")}
         />
       </Item>
+      {!employee && (
+        <Item i={4}>
+          <input
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
+            placeholder="Company name"
+            className="mt-3 w-full outline-none transition-[border]"
+            style={NAME_INPUT_STYLE}
+            onFocus={(e) => (e.currentTarget.style.border = "1px solid rgba(95,230,175,0.6)")}
+            onBlur={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.14)")}
+          />
+        </Item>
+      )}
     </>
   );
 }

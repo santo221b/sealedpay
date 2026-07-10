@@ -296,6 +296,7 @@ function Gate() {
       onDone={() => setOnboarded(true)}
       initialName={returning ? identity.name : ""}
       initialAvatar={returning ? identity.avatar : ""}
+      initialCompany={returning ? identity.company : ""}
     />
   );
 }
@@ -458,7 +459,7 @@ function Dashboard({ onLoggedOut }: { onLoggedOut: () => void }) {
     if (!identity.name) return;
     const t = window.setTimeout(() => {
       api
-        .putProfile({ name: identity.name, avatar: identity.avatar, walletAddress: employer })
+        .putProfile({ name: identity.name, avatar: identity.avatar, walletAddress: employer, companyName: identity.company || undefined })
         .catch(() => {
           /* display-only metadata — a failed push just retries next visit */
         });

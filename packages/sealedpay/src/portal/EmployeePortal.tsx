@@ -210,7 +210,10 @@ export function EmployeePortal({ onLoggedOut }: { onLoggedOut: () => void }) {
       symbol: sym,
       recipient: pay.me ?? "",
       recipientName: identity.name,
-      employerName: jobs.employments?.find((j) => j.employerAddress?.toLowerCase() === p.from.toLowerCase())?.employerName,
+      employerName: (() => {
+        const job = jobs.employments?.find((j) => j.employerAddress?.toLowerCase() === p.from.toLowerCase());
+        return job?.employerCompany || job?.employerName;
+      })(),
     });
     if (!opened) showToast("err", "Allow pop-ups for this site to download your payslip.");
   };
@@ -1479,11 +1482,11 @@ function EmploymentRow({ job, sym }: { job: Employment; sym: string }) {
       style={{ gap: 11, padding: "8px 16px 8px 13px", width: "calc(100% + 26px)", marginLeft: -13, borderRadius: 999 }}
     >
       <span className="flex shrink-0 items-center justify-center rounded-full" style={{ width: 34, height: 34, background: "rgba(59,191,142,0.18)", fontSize: 11, fontWeight: 800, color: "#d3ecdd" }}>
-        {(job.employerName || "E").slice(0, 1).toUpperCase()}
+        {(job.employerCompany || job.employerName || "E").slice(0, 1).toUpperCase()}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate" style={{ fontSize: 12.5, fontWeight: 600, color: "#eef4f1" }}>
-          {job.employerName || (job.employerAddress ? shortWallet(job.employerAddress) : "Employer")}
+          {job.employerCompany || job.employerName || (job.employerAddress ? shortWallet(job.employerAddress) : "Employer")}
         </span>
         <span className="block" style={{ fontSize: 10.5, color: tokens.text.muted, marginTop: 1 }}>
           Employs you as {job.me.role ?? "Employee"}

@@ -114,11 +114,15 @@ export interface Profile {
   /** The account's surface, written ONCE on first sign-in. An email is either
    * an employer or an employee, never both (enforced by the Gate + server). */
   role?: "employer" | "employee";
+  /** Employer only: the company name employees see as their employer. */
+  companyName?: string;
 }
 
 export interface Employment {
   employerId: string;
   employerName: string;
+  /** The employer's company name (what the portal shows when present). */
+  employerCompany?: string;
   employerAddress?: `0x${string}`;
   me: { name: string; role?: string; dept?: string; salary: string; address: `0x${string}` };
 }

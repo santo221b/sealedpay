@@ -9,12 +9,15 @@ import { useCallback, useEffect, useState } from "react";
 export const IDENTITY_KEYS = {
   name: "sealedpay_name",
   avatar: "sealedpay_avatar",
+  company: "sealedpay_company",
   onboarded: "sealedpay_onboarded",
 } as const;
 
 export interface Identity {
   name: string;
   avatar: string; // avatar asset path, e.g. /avatars/avatar-1.svg
+  /** Employer only: the company name employees see as their employer. */
+  company: string;
   onboarded: boolean;
 }
 
@@ -22,13 +25,15 @@ export function loadIdentity(): Identity {
   return {
     name: localStorage.getItem(IDENTITY_KEYS.name) ?? "",
     avatar: localStorage.getItem(IDENTITY_KEYS.avatar) ?? "/avatars/avatar-profile.svg",
+    company: localStorage.getItem(IDENTITY_KEYS.company) ?? "",
     onboarded: localStorage.getItem(IDENTITY_KEYS.onboarded) === "1",
   };
 }
 
-export function saveIdentity(name: string, avatar: string) {
+export function saveIdentity(name: string, avatar: string, company?: string) {
   localStorage.setItem(IDENTITY_KEYS.name, name);
   localStorage.setItem(IDENTITY_KEYS.avatar, avatar);
+  if (company !== undefined) localStorage.setItem(IDENTITY_KEYS.company, company.trim());
   localStorage.setItem(IDENTITY_KEYS.onboarded, "1");
 }
 
