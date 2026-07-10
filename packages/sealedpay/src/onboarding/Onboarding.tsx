@@ -292,7 +292,7 @@ export function Onboarding({
               {step === 0 && <StepWelcome welcome={welcome} employee={employee} />}
               {step === 1 && <StepName name={name} setName={setName} />}
               {step === 2 && <StepRole nameComma={nameComma} employee={employee} />}
-              {step === 3 && <StepAvatar avatar={avatar} setAvatar={setAvatar} employee={employee} />}
+              {step === 3 && <StepAvatar avatar={avatar} setAvatar={setAvatar} />}
               {step === 4 && (
                 <StepWallet
                   employee={employee}
@@ -422,7 +422,7 @@ function StepName({ name, setName }: { name: string; setName: (v: string) => voi
       </Item>
       <Item i={1}>
         <h1 className="mt-3" style={{ fontWeight: 700, fontSize: 29, lineHeight: 1.2 }}>
-          What&rsquo;s your name?
+          Your name
         </h1>
       </Item>
       <Item i={2}>
@@ -492,17 +492,9 @@ function StepRole({ nameComma, employee }: { nameComma: string; employee: boolea
           className="mt-[22px] flex w-full items-start gap-3.5 text-left"
           style={{ background: "rgba(110,196,186,0.17)", border: "1px solid rgba(255,255,255,0.13)", borderRadius: 20, padding: "18px 20px" }}
         >
-          <span
-            className="mt-px flex shrink-0 items-center justify-center"
-            style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(95,230,175,0.16)", border: "1px solid rgba(95,230,175,0.35)" }}
-            aria-hidden
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#78e9c0" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 16v-4" />
-              <path d="M12 8h.01" />
-            </svg>
-          </span>
+          <svg className="mt-px shrink-0" width="24" height="24" viewBox="0 0 48 48" fill="#78e9c0" aria-hidden>
+            <path d="M24 2C11.85 2 2 11.85 2 24s9.85 22 22 22 22-9.85 22-22S36.15 2 24 2zm3 33a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V23a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2zm-3-17a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" />
+          </svg>
           <span style={{ fontSize: 13.5, color: "#c2d0c9", lineHeight: 1.55 }}>
             {employee ? (
               <>
@@ -523,7 +515,7 @@ function StepRole({ nameComma, employee }: { nameComma: string; employee: boolea
   );
 }
 
-function StepAvatar({ avatar, setAvatar, employee }: { avatar: string; setAvatar: (v: string) => void; employee: boolean }) {
+function StepAvatar({ avatar, setAvatar }: { avatar: string; setAvatar: (v: string) => void }) {
   return (
     <>
       <Item i={0}>
@@ -531,12 +523,12 @@ function StepAvatar({ avatar, setAvatar, employee }: { avatar: string; setAvatar
       </Item>
       <Item i={1}>
         <h1 className="mt-3" style={{ fontWeight: 700, fontSize: 29 }}>
-          Choose your avatar
+          Choose a profile picture
         </h1>
       </Item>
       <Item i={2}>
         <p className="mt-3" style={{ fontSize: 14, color: "#9db3aa" }}>
-          {employee ? "Select a profile picture for your account." : "Select a profile picture for your administrator account."}
+          It appears next to your name across SealedPay.
         </p>
       </Item>
       <Item i={3}>
@@ -556,7 +548,7 @@ function StepAvatar({ avatar, setAvatar, employee }: { avatar: string; setAvatar
                 aria-pressed={selected}
                 aria-label="Avatar"
               >
-                <img src={src} alt="Avatar" className="block h-full w-full rounded-full object-cover" style={{ background: "#eceeed" }} />
+                <img src={src} alt="Avatar" className="block h-full w-full rounded-full object-cover" style={{ background: "rgba(236,238,237,0.4)" }} />
                 {selected && (
                   <span className="absolute flex items-center justify-center" style={{ bottom: 2, right: 2, width: 28, height: 28, borderRadius: "50%", background: "#5fe3ab", border: "3px solid #101915" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#08331f" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -882,7 +874,7 @@ function StepAllSet({ nameComma, avatar, employee }: { nameComma: string; avatar
       <Item i={0} center>
         <div className="relative mb-1.5" style={{ width: 96, height: 96 }}>
           <span className="absolute inset-0 rounded-full" style={{ background: "rgba(95,230,175,0.14)", border: "1px solid rgba(95,230,175,0.3)" }} />
-          <img src={avatar} alt="You" className="absolute rounded-full object-cover" style={{ inset: 6, width: 84, height: 84, background: "#eceeed" }} />
+          <img src={avatar} alt="You" className="absolute rounded-full object-cover" style={{ inset: 6, width: 84, height: 84, background: "rgba(236,238,237,0.4)" }} />
           <span className="absolute flex items-center justify-center" style={{ bottom: 0, right: 0, width: 30, height: 30, borderRadius: "50%", background: "#5fe3ab", border: "3px solid #101915" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#08331f" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <polyline points="20 6 9 17 4 12" />
